@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const adminSchema = new mongoose.Schema({
   salonName: { type: String, required: true },
@@ -23,4 +23,23 @@ const adminSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
-module.exports = mongoose.model('Admin', adminSchema);
+// Pre-save middleware for password hashing
+adminSchema.pre('save', async function (next) {
+  if (!this.isModified('password')) return next();
+  try {
+    const bcrypt = (await import('bcryptjs')).default;
+    const salt = await bcrypt.genSalt(12);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Instance method to compare passwords
+adminSchema.methods.matchPassword = async function (enteredPassword) {
+  const bcrypt = (await import('bcryptjs')).default;
+  return await bcrypt.compare(enteredPassword, this.password);
+};
+
+export default mongoose.model('Admin', adminSchema);
