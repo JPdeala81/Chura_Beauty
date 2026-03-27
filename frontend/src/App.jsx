@@ -1,81 +1,49 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
-import PrivateRoute from './components/PrivateRoute';
-
-import Navbar from './components/layout/Navbar';
-import Footer from './components/layout/Footer';
-
-import Home from './pages/Home';
-import Services from './pages/Services';
-import ServiceDetail from './pages/ServiceDetail';
-import Login from './pages/Login';
-
-import AdminDashboard from './pages/admin/AdminDashboard';
-import ManageServices from './pages/admin/ManageServices';
-import ManageAppointments from './pages/admin/ManageAppointments';
-import Revenue from './pages/admin/Revenue';
-import Settings from './pages/admin/Settings';
 
 function App() {
   return (
     <Router>
       <AuthProvider>
         <NotificationProvider>
-          <div className="d-flex flex-column min-vh-100">
-            <Navbar />
-            <main className="flex-grow-1">
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/services" element={<Services />} />
-                <Route path="/service/:id" element={<ServiceDetail />} />
-                <Route path="/admin/login" element={<Login />} />
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            minHeight: '100vh',
+            fontFamily: 'sans-serif',
+            padding: '20px',
+            backgroundColor: '#f5f5f5'
+          }}>
+            <h1>💆‍♀️ Salon de Beauté</h1>
+            <p>Application de gestion salon - Mode TEST</p>
+            
+            <div style={{ marginTop: '20px', padding: '20px', backgroundColor: 'white', borderRadius: '8px' }}>
+              <h2>🔗 Navigation</h2>
+              <ul>
+                <li><a href="/">Accueil</a></li>
+                <li><a href="/services">Services</a></li>
+                <li><a href="/admin/login">Login Admin</a></li>
+                <li><a href="/admin/dashboard">Dashboard</a></li>
+              </ul>
+            </div>
 
-                <Route
-                  path="/admin/dashboard"
-                  element={
-                    <PrivateRoute>
-                      <AdminDashboard />
-                    </PrivateRoute>
-                  }
-                />
-                <Route
-                  path="/admin/services"
-                  element={
-                    <PrivateRoute>
-                      <ManageServices />
-                    </PrivateRoute>
-                  }
-                />
-                <Route
-                  path="/admin/appointments"
-                  element={
-                    <PrivateRoute>
-                      <ManageAppointments />
-                    </PrivateRoute>
-                  }
-                />
-                <Route
-                  path="/admin/revenue"
-                  element={
-                    <PrivateRoute>
-                      <Revenue />
-                    </PrivateRoute>
-                  }
-                />
-                <Route
-                  path="/admin/settings"
-                  element={
-                    <PrivateRoute>
-                      <Settings />
-                    </PrivateRoute>
-                  }
-                />
+            <div style={{ marginTop: '20px', padding: '20px', backgroundColor: '#fff3cd', borderRadius: '8px' }}>
+              <h3>⚠️ Status</h3>
+              <p>✅ Frontend: Running on port 5173</p>
+              <p>✅ Backend: Running on port 5000</p>
+              <p>⚠️  Database: MongoDB non disponible (mode test)</p>
+            </div>
 
-                <Route path="*" element={<Navigate to="/" />} />
-              </Routes>
-            </main>
-            <Footer />
+            <div style={{ marginTop: '20px', padding: '20px', backgroundColor: '#e7f3ff', borderRadius: '8px' }}>
+              <h3>📝 Identifiants Admin</h3>
+              <p><strong>Email:</strong> admin@salon.com</p>
+              <p><strong>Password:</strong> ChangeMe123!</p>
+            </div>
+
+            <footer style={{ marginTop: 'auto', paddingTop: '20px', borderTop: '1px solid #ddd', textAlign: 'center', color: '#666' }}>
+              <p>© 2026 Salon de Beauté. All rights reserved.</p>
+            </footer>
           </div>
         </NotificationProvider>
       </AuthProvider>

@@ -8,7 +8,7 @@ import { Server } from 'socket.io';
 import { fileURLToPath } from 'url';
 import path from 'path';
 
-import { connectDB } from './config/db.js';
+import connectDB from './config/db.js';
 import { setupNotificationSocket } from './sockets/notificationSocket.js';
 import { errorHandler } from './middleware/errorMiddleware.js';
 

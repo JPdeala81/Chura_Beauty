@@ -1,5 +1,3 @@
-/* PACKAGE.JSON ROOT (pour intégrité du projet) */
-
 {
   "name": "salon-beaute",
   "version": "1.0.0",
@@ -25,5 +23,8 @@
     "booking"
   ],
   "author": "",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
 }
