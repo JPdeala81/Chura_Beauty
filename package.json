@@ -1,0 +1,29 @@
+/* PACKAGE.JSON ROOT (pour intégrité du projet) */
+
+{
+  "name": "salon-beaute",
+  "version": "1.0.0",
+  "description": "Application complète de gestion salon de beauté",
+  "main": "backend/server.js",
+  "scripts": {
+    "dev": "concurrently \"cd backend && npm run dev\" \"cd frontend && npm run dev\"",
+    "build:frontend": "cd frontend && npm run build",
+    "build:backend": "cd backend && npm install",
+    "start:backend": "cd backend && npm start",
+    "start:frontend": "cd frontend && npm run dev",
+    "seed:admin": "cd backend && npm run seed:admin"
+  },
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "keywords": [
+    "salon",
+    "beauté",
+    "coiffure",
+    "rendez-vous",
+    "booking"
+  ],
+  "author": "",
+  "license": "MIT"
+}
