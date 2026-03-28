@@ -24,7 +24,7 @@ export default function Navbar() {
         <BootstrapNavbar.Toggle aria-controls="basic-navbar-nav" />
 
         <BootstrapNavbar.Collapse id="basic-navbar-nav">
-          <Nav className="ms-auto">
+          <Nav className="ms-auto align-items-center">
             <Nav.Link as={Link} to="/">
               Accueil
             </Nav.Link>
@@ -50,9 +50,22 @@ export default function Navbar() {
                 </Button>
               </>
             ) : (
-              <Nav.Link as={Link} to="/admin/login">
-                Connexion Admin
-              </Nav.Link>
+              <a 
+                href="/admin/login" 
+                className="btn btn-sm ms-3" 
+                style={{
+                  background: 'linear-gradient(135deg, #28a745, #20c997)',
+                  color: 'white',
+                  borderRadius: '20px',
+                  padding: '6px 16px',
+                  fontWeight: '600',
+                  fontSize: '13px',
+                  textDecoration: 'none',
+                  boxShadow: '0 2px 8px rgba(40,167,69,0.3)'
+                }}
+              >
+                🔐 Connexion
+              </a>
             )}
           </Nav>
         </BootstrapNavbar.Collapse>
