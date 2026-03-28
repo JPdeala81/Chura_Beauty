@@ -77,38 +77,13 @@ const Home = () => {
     <>
       <Navbar />
       {errorMessage && (
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          style={{
-            position: 'fixed',
-            top: '80px',
-            left: 0,
-            right: 0,
-            zIndex: 1000,
-            padding: '16px'
-          }}
-        >
-          <div className="container">
-            <div
-              className="alert alert-danger rounded-3 mb-0"
-              style={{
-                background: 'linear-gradient(135deg, rgba(220, 53, 69, 0.1) 0%, rgba(220, 53, 69, 0.05) 100%)',
-                border: '2px solid #dc3545',
-                color: '#721c24',
-                padding: '16px 20px',
-                boxShadow: '0 4px 15px rgba(220, 53, 69, 0.2)'
-              }}
-            >
-              <div className="d-flex align-items-center gap-3">
-                <i className="bi bi-exclamation-circle-fill" style={{ fontSize: '20px' }}></i>
-                <span style={{ fontWeight: '500' }}>{errorMessage}</span>
-              </div>
-            </div>
-          </div>
-        </motion.div>
+        <div className="alert alert-danger p-3 m-3 rounded-3" style={{ margin: '80px 16px 0 16px' }}>
+          <strong>⚠️</strong> {errorMessage}
+        </div>
       )}
+      <HeroSection onScrollToServices={scrollToServices} />
+
+      {/* Services Section */}
       <section
         ref={servicesRef}
         className="py-5"
