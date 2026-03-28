@@ -18,12 +18,7 @@ const Login = () => {
       await login(email, password)
       navigate('/admin/dashboard')
     } catch (err) {
-      // Redirect to home with error message
-      navigate('/', { 
-        state: { 
-          errorMessage: 'Vous ne pouvez pas vous reconnecter, cet espace ne vous est pas réservé' 
-        } 
-      })
+      setError('Email ou mot de passe incorrect. Veuillez réessayer.')
     } finally {
       setLoading(false)
     }

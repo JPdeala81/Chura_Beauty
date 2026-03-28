@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useLocation } from 'react-router-dom'
 import Navbar from '../components/layout/Navbar'
 import Footer from '../components/layout/Footer'
+import ErrorToast from '../components/layout/ErrorToast'
 import HeroSection from '../components/public/HeroSection'
 import SearchBar from '../components/public/SearchBar'
 import CategoryFilter from '../components/public/CategoryFilter'
@@ -76,11 +77,7 @@ const Home = () => {
   return (
     <>
       <Navbar />
-      {errorMessage && (
-        <div className="alert alert-danger p-3 m-3 rounded-3" style={{ margin: '80px 16px 0 16px' }}>
-          <strong>⚠️</strong> {errorMessage}
-        </div>
-      )}
+      <ErrorToast message={errorMessage} onClose={() => setErrorMessage('')} />
       <HeroSection onScrollToServices={scrollToServices} />
 
       {/* Services Section */}
