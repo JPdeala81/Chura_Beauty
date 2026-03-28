@@ -1,75 +1,76 @@
-import { useContext } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Navbar as BootstrapNavbar, Nav, Container, Badge, Button } from 'react-bootstrap';
-import { AuthContext } from '../context/AuthContext';
-import { NotificationContext } from '../context/NotificationContext';
+import { useState, useEffect } from 'react'
+import { Link, useLocation } from 'react-router-dom'
+import { motion } from 'framer-motion'
+import api from '../../services/api'
 
-export default function Navbar() {
-  const { isAuthenticated, admin, logout } = useContext(AuthContext);
-  const { unreadCount } = useContext(NotificationContext);
-  const navigate = useNavigate();
+const Navbar = () => {
+  const [scrolled, setScrolled] = useState(false)
+  const [salonName, setSalonName] = useState('Chura Beauty Salon')
+  const [menuOpen, setMenuOpen] = useState(false)
+  const location = useLocation()
 
-  const handleLogout = () => {
-    logout();
-    navigate('/');
-  };
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 50)
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  useEffect(() => {
+    const fetchSalonName = async () => {
+      try {
+        const res = await api.get('/auth/profile')
+        if (res.data?.salonName) setSalonName(res.data.salonName)
+      } catch (e) {}
+    }
+    fetchSalonName()
+  }, [])
 
   return (
-    <BootstrapNavbar bg="dark" expand="lg" sticky="top" className="navbar-custom">
-      <Container>
-        <BootstrapNavbar.Brand as={Link} to="/" className="fw-bold">
-          💆‍♀️ Salon de Beauté
-        </BootstrapNavbar.Brand>
+    <nav className={`navbar navbar-expand-lg fixed-top navbar-luxury ${scrolled ? 'scrolled' : ''}`}>
+      <div className="container">
+        <Link className="navbar-brand-luxury" to="/">
+          💆‍♀️ {salonName}
+        </Link>
 
-        <BootstrapNavbar.Toggle aria-controls="basic-navbar-nav" />
+        <button
+          className="navbar-toggler border-0"
+          type="button"
+          onClick={() => setMenuOpen(!menuOpen)}
+          style={{ color: '#d4a574' }}
+        >
+          <i className={`bi ${menuOpen ? 'bi-x-lg' : 'bi-list'}`} style={{ fontSize: '24px' }}></i>
+        </button>
 
-        <BootstrapNavbar.Collapse id="basic-navbar-nav">
-          <Nav className="ms-auto align-items-center">
-            <Nav.Link as={Link} to="/">
-              Accueil
-            </Nav.Link>
-            <Nav.Link as={Link} to="/services">
-              Services
-            </Nav.Link>
+        <div className={`collapse navbar-collapse ${menuOpen ? 'show' : ''}`}>
+          <ul className="navbar-nav mx-auto gap-1">
+            {[
+              { path: '/', label: 'Accueil' },
+              { path: '/services', label: 'Services' }
+            ].map(({ path, label }) => (
+              <li key={path} className="nav-item">
+                <Link
+                  className={`nav-link nav-link-luxury ${location.pathname === path ? 'active' : ''}`}
+                  to={path}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {label}
+                </Link>
+              </li>
+            ))}
+          </ul>
 
-            {isAuthenticated ? (
-              <>
-                <Nav.Link as={Link} to="/admin/dashboard">
-                  Tableau de bord
-                </Nav.Link>
-                <Nav.Link as={Link} to="/admin/dashboard" className="position-relative">
-                  🔔 Notifications
-                  {unreadCount > 0 && (
-                    <Badge bg="danger" className="position-absolute top-0 start-100 translate-middle">
-                      {unreadCount}
-                    </Badge>
-                  )}
-                </Nav.Link>
-                <Button variant="outline-danger" size="sm" onClick={handleLogout}>
-                  Déconnexion
-                </Button>
-              </>
-            ) : (
-              <a 
-                href="/admin/login" 
-                className="btn btn-sm ms-3" 
-                style={{
-                  background: 'linear-gradient(135deg, #28a745, #20c997)',
-                  color: 'white',
-                  borderRadius: '20px',
-                  padding: '6px 16px',
-                  fontWeight: '600',
-                  fontSize: '13px',
-                  textDecoration: 'none',
-                  boxShadow: '0 2px 8px rgba(40,167,69,0.3)'
-                }}
-              >
-                🔐 Connexion
-              </a>
-            )}
-          </Nav>
-        </BootstrapNavbar.Collapse>
-      </Container>
-    </BootstrapNavbar>
-  );
+          <div className="d-flex align-items-center gap-2">
+            <Link to="/services" className="btn-luxury-outline d-none d-lg-inline-block" style={{ padding: '8px 20px', fontSize: '13px' }}>
+              Prendre RDV
+            </Link>
+            <Link to="/admin/login" className="btn-admin-login nav-link-luxury">
+              🔐 Connexion Admin
+            </Link>
+          </div>
+        </div>
+      </div>
+    </nav>
+  )
 }
+
+export default Navbar
