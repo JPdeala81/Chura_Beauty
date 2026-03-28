@@ -37,6 +37,18 @@ export default function Footer() {
         <Row className="mt-3 border-top border-secondary pt-3">
           <Col className="text-center">
             <p>&copy; {year} Salon de Beauté. Tous droits réservés.</p>
+            <div className="text-center mt-3">
+              <a 
+                href="/admin/login" 
+                style={{ 
+                  color: 'rgba(255,255,255,0.3)', 
+                  fontSize: '11px', 
+                  textDecoration: 'none' 
+                }}
+              >
+                Espace administrateur
+              </a>
+            </div>
           </Col>
         </Row>
       </Container>
