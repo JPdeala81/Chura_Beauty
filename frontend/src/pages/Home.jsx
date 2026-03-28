@@ -16,7 +16,6 @@ const Home = () => {
   const [activeCategory, setActiveCategory] = useState('Tous')
   const [searchQuery, setSearchQuery] = useState('')
   const [priceRange, setPriceRange] = useState([0, 100000])
-  const [stats, setStats] = useState({ services: 0, clients: 0, years: 3 })
   const servicesRef = useRef(null)
 
   useEffect(() => { fetchServices() }, [])
@@ -28,7 +27,6 @@ const Home = () => {
       const response = await api.get('/services')
       const data = response.data.services || response.data || []
       setServices(data)
-      setStats(prev => ({ ...prev, services: data.length }))
       const cats = ['Tous', ...new Set(data.map(s => s.category).filter(Boolean))]
       setCategories(cats)
     } catch (error) {
@@ -64,53 +62,10 @@ const Home = () => {
     servicesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
-  const statsData = [
-    { value: `${stats.services}+`, label: 'Services disponibles', icon: '💅' },
-    { value: '500+', label: 'Clientes satisfaites', icon: '❤️' },
-    { value: `${stats.years}ans`, label: "D'expérience", icon: '⭐' },
-    { value: '100%', label: 'Satisfaction garantie', icon: '✨' }
-  ]
-
   return (
     <>
       <Navbar />
       <HeroSection onScrollToServices={scrollToServices} />
-
-      {/* Stats Section */}
-      <section style={{ background: 'var(--gradient-dark)', padding: '60px 0' }}>
-        <div className="container">
-          <div className="row g-4">
-            {statsData.map((stat, i) => (
-              <div key={i} className="col-6 col-md-3">
-                <motion.div
-                  className="text-center"
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: i * 0.1 }}
-                  viewport={{ once: true }}
-                >
-                  <div style={{ fontSize: '2.5rem' }}>{stat.icon}</div>
-                  <h3 style={{
-                    fontFamily: 'Playfair Display, serif',
-                    background: 'linear-gradient(135deg, #b8860b, #d4a574)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text',
-                    fontSize: '2.2rem',
-                    fontWeight: '700',
-                    margin: '8px 0 4px'
-                  }}>
-                    {stat.value}
-                  </h3>
-                  <p style={{ color: 'rgba(248,200,212,0.7)', fontSize: '13px', margin: 0 }}>
-                    {stat.label}
-                  </p>
-                </motion.div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* Services Section */}
       <section
