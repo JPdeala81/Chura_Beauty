@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Spinner, Button } from 'react-bootstrap';
-import RevenueChart from '../admin/RevenueChart';
+import RevenueChart from '../../components/admin/RevenueChart';
 import * as appointmentService from '../../services/appointmentService';
 import * as revenueService from '../../services/revenueService';
 import Sidebar from '../../components/layout/Sidebar';
