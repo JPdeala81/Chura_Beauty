@@ -1,215 +1,273 @@
-import Appointment from '../models/Appointment.js';
-import Service from '../models/Service.js';
-import Notification from '../models/Notification.js';
-import { sendWhatsAppMessage } from '../utils/whatsappUtil.js';
-import { getAvailableSlots } from '../utils/slotUtil.js';
+import { supabase } from '../config/supabase.js'
+import { sendWhatsAppMessage } from '../utils/whatsappUtil.js'
+import { getAvailableSlots } from '../utils/slotUtil.js'
 
 export const createAppointment = async (req, res) => {
   try {
     const {
-      serviceId,
-      clientName,
-      clientPhone,
-      clientWhatsapp,
-      desiredDate,
-      desiredTimeSlot,
-      selectedOptions,
-      customDescription,
-    } = req.body;
+      service_id,
+      client_name,
+      client_phone,
+      client_whatsapp,
+      desired_date,
+      slot_start,
+      slot_end,
+      selected_options,
+      custom_description,
+    } = req.body
 
-    const service = await Service.findById(serviceId);
+    // Vérifier que le service existe
+    const { data: service, error: serviceError } = await supabase
+      .from('services')
+      .select('*')
+      .eq('id', service_id)
+      .limit(1)
+      .single()
 
-    if (!service) {
+    if (serviceError || !service) {
       return res.status(404).json({
         success: false,
         message: 'Service not found',
-      });
+      })
     }
 
-    const appointment = await Appointment.create({
-      serviceId,
-      clientName,
-      clientPhone,
-      clientWhatsapp,
-      desiredDate: new Date(desiredDate),
-      desiredTimeSlot,
-      selectedOptions,
-      customDescription,
-      status: 'pending',
-    });
+    // Créer le rendez-vous
+    const { data: appointment, error } = await supabase
+      .from('appointments')
+      .insert({
+        service_id,
+        client_name,
+        client_phone,
+        client_whatsapp,
+        desired_date,
+        slot_start,
+        slot_end,
+        selected_options: selected_options || [],
+        custom_description,
+        status: 'pending',
+        revenue: 0,
+      })
+      .select()
+      .single()
 
-    const notification = await Notification.create({
-      appointmentId: appointment._id,
-      message: `Nouvelle demande de rendez-vous de ${clientName} pour ${service.title}`,
-      type: 'new_request',
-    });
+    if (error) {
+      return res.status(500).json({
+        success: false,
+        message: error.message,
+      })
+    }
+
+    // Créer une notification
+    await supabase
+      .from('notifications')
+      .insert({
+        appointment_id: appointment.id,
+        message: `Nouvelle demande de rendez-vous de ${client_name} pour ${service.title}`,
+        type: 'new_request',
+      })
 
     res.status(201).json({
       success: true,
       appointment,
-    });
+    })
   } catch (error) {
     res.status(500).json({
       success: false,
       message: error.message,
-    });
+    })
   }
-};
+}
 
 export const getAppointments = async (req, res) => {
   try {
-    const { status, serviceId, startDate, endDate } = req.query;
+    const { status, service_id, start_date, end_date } = req.query
 
-    let filter = {};
+    let query = supabase
+      .from('appointments')
+      .select('*, services!inner(title, price)')
 
     if (status) {
-      filter.status = status;
+      query = query.eq('status', status)
     }
 
-    if (serviceId) {
-      filter.serviceId = serviceId;
+    if (service_id) {
+      query = query.eq('service_id', service_id)
     }
 
-    if (startDate || endDate) {
-      filter.desiredDate = {};
-      if (startDate) filter.desiredDate.$gte = new Date(startDate);
-      if (endDate) filter.desiredDate.$lte = new Date(endDate);
+    if (start_date) {
+      query = query.gte('desired_date', start_date)
     }
 
-    const appointments = await Appointment.find(filter)
-      .populate('serviceId')
-      .sort({ createdAt: -1 });
+    if (end_date) {
+      query = query.lte('desired_date', end_date)
+    }
+
+    const { data: appointments, error } = await query.order('created_at', { ascending: false })
+
+    if (error) {
+      return res.status(500).json({
+        success: false,
+        message: error.message,
+      })
+    }
 
     res.status(200).json({
       success: true,
       appointments,
-    });
+    })
   } catch (error) {
     res.status(500).json({
       success: false,
       message: error.message,
-    });
+    })
   }
-};
+}
 
 export const getAppointmentById = async (req, res) => {
   try {
-    const appointment = await Appointment.findById(req.params.id).populate(
-      'serviceId'
-    );
+    const { data: appointment, error } = await supabase
+      .from('appointments')
+      .select('*, services!inner(title, price)')
+      .eq('id', req.params.id)
+      .limit(1)
+      .single()
 
-    if (!appointment) {
+    if (error || !appointment) {
       return res.status(404).json({
         success: false,
         message: 'Appointment not found',
-      });
+      })
     }
 
     res.status(200).json({
       success: true,
       appointment,
-    });
+    })
   } catch (error) {
     res.status(500).json({
       success: false,
       message: error.message,
-    });
+    })
   }
-};
+}
 
 export const updateAppointmentStatus = async (req, res) => {
   try {
-    const { status, adminNotes } = req.body;
-    const appointmentId = req.params.id;
+    const { status, admin_notes } = req.body
+    const appointmentId = req.params.id
 
-    const appointment = await Appointment.findById(appointmentId).populate('serviceId');
+    // Récupérer le rendez-vous et le service
+    const { data: appointment, error: fetchError } = await supabase
+      .from('appointments')
+      .select('*, services!inner(title, price)')
+      .eq('id', appointmentId)
+      .limit(1)
+      .single()
 
-    if (!appointment) {
+    if (fetchError || !appointment) {
       return res.status(404).json({
         success: false,
         message: 'Appointment not found',
-      });
+      })
     }
 
-    appointment.status = status;
-    appointment.adminNotes = adminNotes || appointment.adminNotes;
+    // Calculer la revenue si accepté
+    const revenue = status === 'accepted' ? appointment.services.price : 0
 
-    if (status === 'accepted') {
-      appointment.revenue = appointment.serviceId.price;
+    // Mettre à jour le status
+    const { data: updatedAppointment, error } = await supabase
+      .from('appointments')
+      .update({
+        status,
+        admin_notes: admin_notes || null,
+        revenue,
+      })
+      .eq('id', appointmentId)
+      .select()
+      .single()
+
+    if (error) {
+      return res.status(500).json({
+        success: false,
+        message: error.message,
+      })
     }
 
-    await appointment.save();
+    // Créer une notification
+    await supabase
+      .from('notifications')
+      .insert({
+        appointment_id: appointmentId,
+        message: `Rendez-vous ${status === 'accepted' ? 'accepté' : 'refusé'}`,
+        type: status === 'accepted' ? 'accepted' : 'refused',
+      })
 
-    await Notification.create({
-      appointmentId: appointment._id,
-      message: `Rendez-vous ${status === 'accepted' ? 'accepté' : 'refusé'}`,
-      type: status === 'accepted' ? 'accepted' : 'refused',
-    });
-
-    const message = generateAppointmentMessage(
-      appointment,
-      status === 'accepted'
-    );
-
-    await sendWhatsAppMessage(appointment.clientWhatsapp, message);
+    // Envoyer message WhatsApp
+    const message = generateAppointmentMessage(appointment, status === 'accepted')
+    if (appointment.client_whatsapp) {
+      await sendWhatsAppMessage(appointment.client_whatsapp, message)
+    }
 
     res.status(200).json({
       success: true,
-      appointment,
-    });
+      appointment: updatedAppointment,
+    })
   } catch (error) {
     res.status(500).json({
       success: false,
       message: error.message,
-    });
+    })
   }
-};
+}
 
 export const deleteAppointment = async (req, res) => {
   try {
-    const appointment = await Appointment.findByIdAndDelete(req.params.id);
+    const { error } = await supabase
+      .from('appointments')
+      .delete()
+      .eq('id', req.params.id)
 
-    if (!appointment) {
-      return res.status(404).json({
+    if (error) {
+      return res.status(500).json({
         success: false,
-        message: 'Appointment not found',
-      });
+        message: error.message,
+      })
     }
 
     res.status(200).json({
       success: true,
       message: 'Appointment deleted successfully',
-    });
+    })
   } catch (error) {
     res.status(500).json({
       success: false,
       message: error.message,
-    });
+    })
   }
-};
+}
 
 const generateAppointmentMessage = (appointment, isAccepted) => {
   if (isAccepted) {
-    return `Bonjour ${appointment.clientName} 👋\nVotre rendez-vous pour ${appointment.serviceId.title} a été confirmé ✅\n📅 Date : ${new Date(appointment.desiredDate).toLocaleDateString('fr-FR')}\n⏰ Heure : ${appointment.desiredTimeSlot.start} - ${appointment.desiredTimeSlot.end}\n📍 Lieu : [Adresse salon]\n📞 Contact : [Téléphone admin]\nÀ bientôt 💆‍♀️`;
+    return `Bonjour ${appointment.client_name} 👋\nVotre rendez-vous pour ${appointment.services.title} a été confirmé ✅\n📅 Date : ${new Date(appointment.desired_date).toLocaleDateString('fr-FR')}\n⏰ Heure : ${appointment.slot_start} - ${appointment.slot_end}\n📍 Lieu : [Adresse salon]\n📞 Contact : [Téléphone admin]\nÀ bientôt 💆‍♀️`
   } else {
-    return `Bonjour ${appointment.clientName},\nNous sommes désolés, votre demande de RDV pour ${appointment.serviceId.title}\nle ${new Date(appointment.desiredDate).toLocaleDateString('fr-FR')} à ${appointment.desiredTimeSlot.start} n'a pas pu être acceptée ❌.\nN'hésitez pas à choisir un autre créneau sur notre site.`;
+    return `Bonjour ${appointment.client_name},\nNous sommes désolés, votre demande de RDV pour ${appointment.services.title}\nle ${new Date(appointment.desired_date).toLocaleDateString('fr-FR')} à ${appointment.slot_start} n'a pas pu être acceptée ❌.\nN'hésitez pas à choisir un autre créneau sur notre site.`
   }
-};
+}
 
 export const getAvailableAppointmentSlots = async (req, res) => {
   try {
-    const { serviceId, date } = req.query;
+    const { service_id, date } = req.query
 
-    const slots = await getAvailableSlots(serviceId, new Date(date));
+    const slots = await getAvailableSlots(service_id, new Date(date))
 
     res.status(200).json({
       success: true,
       slots,
-    });
+    })
   } catch (error) {
     res.status(500).json({
       success: false,
       message: error.message,
-    });
+    })
   }
-};
+}

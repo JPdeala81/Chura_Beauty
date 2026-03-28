@@ -37,6 +37,3 @@ Thumbs.db
 # Misc
 .cache/
 .parcel-cache
-
-# Credentials & Secrets
-backend/admin-credentials.json

@@ -1,11 +1,16 @@
-import Service from '../models/Service.js';
-import Appointment from '../models/Appointment.js';
+import { supabase } from '../config/supabase.js';
 
 export const getAvailableSlots = async (serviceId, date) => {
   try {
-    const service = await Service.findById(serviceId);
+    // Get service details
+    const { data: service, error: serviceError } = await supabase
+      .from('services')
+      .select('*')
+      .eq('id', serviceId)
+      .single();
 
-    if (!service) {
+    if (serviceError || !service) {
+      console.error('Service not found:', serviceError);
       return [];
     }
 
@@ -14,42 +19,45 @@ export const getAvailableSlots = async (serviceId, date) => {
 
     let availableSlots = [];
 
-    const dayAvailability = service.availability.find(
-      (av) => av.dayOfWeek.toLowerCase() === dayOfWeek.toLowerCase()
-    );
+    // Get availability for this service and date
+    const { data: availabilities, error: availError } = await supabase
+      .from('availabilities')
+      .select('*')
+      .eq('service_id', serviceId)
+      .or(`day_of_week.eq.${dayOfWeek},specific_date.eq.${dateStr}`);
 
-    const specificAvailability = service.specificDates.find(
-      (sd) => sd.date.toISOString().split('T')[0] === dateStr
-    );
+    const availability = availabilities?.[0];
 
-    const availability = specificAvailability || dayAvailability;
-
-    if (!availability) {
+    if (availError || !availability) {
+      console.error('Availability not found:', availError);
       return [];
     }
 
     availableSlots = generateSlots(
-      availability.startTime,
-      availability.endTime,
+      availability.start_time,
+      availability.end_time,
       service.duration
     );
 
-    const bookedAppointments = await Appointment.find({
-      serviceId,
-      desiredDate: {
-        $gte: new Date(date.getFullYear(), date.getMonth(), date.getDate()),
-        $lt: new Date(
-          date.getFullYear(),
-          date.getMonth(),
-          date.getDate() + 1
-        ),
-      },
-      status: 'accepted',
-    });
+    // Get booked appointments for this date
+    const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const dayEnd = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1);
+    const startISOStr = dayStart.toISOString();
+    const endISOStr = dayEnd.toISOString();
 
-    const bookedSlots = bookedAppointments.map(
-      (appt) => appt.desiredTimeSlot.start
-    );
+    const { data: bookedAppointments, error: appointError } = await supabase
+      .from('appointments')
+      .select('time_slot')
+      .eq('service_id', serviceId)
+      .eq('status', 'accepted')
+      .gte('appointment_date', startISOStr)
+      .lt('appointment_date', endISOStr);
+
+    if (appointError) {
+      console.error('Error fetching booked appointments:', appointError);
+    }
+
+    const bookedSlots = (bookedAppointments || []).map((appt) => appt.time_slot);
 
     availableSlots = availableSlots.filter(
       (slot) => !bookedSlots.includes(slot.start)

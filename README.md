@@ -1,6 +1,6 @@
 # Salon de Beauté - Application Web Full-Stack
 
-Application web complète pour un salon de beauté/coiffure avec gestion des rendez-vous, services, notifications et tableau de bord administrateur.
+Application web complète pour un salon de beauté/coiffure avec gestion des rendez-vous, services, notifications et tableau de bord administrateur. Utilise **Supabase PostgreSQL** comme base de données.
 
 ## 🎯 Fonctionnalités principales
 
@@ -18,7 +18,7 @@ Application web complète pour un salon de beauté/coiffure avec gestion des ren
 - Tableau de bord avec KPIs et graphiques Recharts
 - Gestion des services : créer, modifier, supprimer, afficher/masquer
 - Upload images vers Cloudinary (drag & drop)
-- Gestion des rendez-vous : acccepter/refuser avec notification WhatsApp auto
+- Gestion des rendez-vous : accepter/refuser avec notification WhatsApp auto
 - Notifications en temps réel (Socket.IO + bip sonore)
 - Chiffre d'affaires avec 3 vues (semaine/mois/année) + répartition par catégorie
 - Paramètres profil : modification infos salon, photo profil/couverture, réseaux sociaux
@@ -40,13 +40,13 @@ salon-beaute/
 │   │   └── styles/
 │   ├── public/
 │   ├── vite.config.js
+│   ├── vercel.json    (déploiement)
 │   └── package.json
 │
 ├── backend/            ← Node.js + Express
-│   ├── config/         (DB, Cloudinary)
-│   ├── models/         (Mongoose)
-│   ├── controllers/
-│   ├── routes/
+│   ├── config/         (Supabase, Cloudinary)
+│   ├── controllers/    (API logique)
+│   ├── routes/         (Endpoints)
 │   ├── middleware/     (Auth JWT, Upload, Erreurs)
 │   ├── sockets/        (Socket.IO)
 │   ├── utils/          (Slots, WhatsApp, Email)
@@ -54,6 +54,7 @@ salon-beaute/
 │   ├── server.js
 │   └── package.json
 │
+├── vercel.json         (déploiement full-stack)
 ├── .env.example
 ├── .gitignore
 └── README.md
@@ -71,11 +72,11 @@ salon-beaute/
 - **React DatePicker** (calendrier)
 - **QR Code** (paiement mobile)
 - **Framer Motion** (animations)
+- **Supabase Client** (base de données)
 
 ### Backend
 - **Node.js 20 + Express**
-- **MongoDB Atlas** (cloud, gratuit)
-- **Mongoose** (ODM)
+- **Supabase PostgreSQL** (cloud, 500MB gratuit)
 - **JWT + Bcrypt** (sécurité)
 - **Multer + Cloudinary** (images)
 - **Socket.IO** (temps réel)
@@ -83,9 +84,8 @@ salon-beaute/
 - **Nodemailer** (email optionnel)
 
 ### Déploiement
-- **Frontend** : GitHub Pages / Vercel (gratuit)
-- **Backend** : Render.com / Railway (gratuit)
-- **DB** : MongoDB Atlas (M0 gratuit, 512MB)
+- **Full-Stack** : Vercel (gratuit)
+- **Database** : Supabase (500MB gratuit)
 - **Images** : Cloudinary (gratuit, 25GB)
 
 ## 🚀 Installation locale
@@ -93,9 +93,9 @@ salon-beaute/
 ### Prérequis
 - Node.js 20+
 - npm ou yarn
-- Compte MongoDB Atlas
-- Compte Cloudinary
-- Compte Twilio
+- Compte Supabase (gratuit)
+- Compte Cloudinary (gratuit)
+- Compte Twilio (optionnel, pour WhatsApp)
 
 ### 1. Clone le repos
 
@@ -104,12 +104,14 @@ git clone <your-repo-url>
 cd salon-beaute
 ```
 
-### 2. Configuration MongoDB Atlas
+### 2. Configuration Supabase PostgreSQL
 
-1. Crée un compte gratuit : https://www.mongodb.com/cloud/atlas
-2. Crée un cluster M0 (gratuit)
-3. Ajoute un utilisateur DB (ex: `admin` / `password123`)
-4. Récupère la connexion string : `mongodb+srv://admin:password123@cluster.mongodb.net/salon_beaute?retryWrites=true&w=majority`
+1. Crée un compte gratuit : https://supabase.com
+2. Crée un nouveau projet
+3. Note les identifiants :
+   - **URL Supabase** : `https://xxxx.supabase.co`
+   - **Service Key** (clé privée)
+4. Va dans l'éditeur SQL et exécute le contenu de `backend/config/database.sql` pour créer les tables
 
 ### 3. Configuration Cloudinary
 
@@ -120,7 +122,7 @@ cd salon-beaute
    - API Key
    - API Secret
 
-### 4. Configuration Twilio WhatsApp
+### 4. Configuration Twilio WhatsApp (optionnel)
 
 1. Crée un compte Twilio : https://www.twilio.com
 2. Récupère un numéro WhatsApp Sandbox
@@ -137,17 +139,134 @@ npm install
 cp ../.env.example .env
 ```
 
-**Modifie `.env` avec tes données :**
+**Modifie `.env` avec tes données Supabase :**
 
 ```env
-MONGODB_URI=mongodb+srv://admin:password123@cluster.mongodb.net/salon_beaute
-JWT_SECRET=your_ultra_secure_jwt_secret
+PORT=5000
+NODE_ENV=development
+SUPABASE_URL=https://xxxx.supabase.co
+SUPABASE_SERVICE_KEY=votre_cle_service_secrete
+JWT_SECRET=your_ultra_secure_jwt_secret_32_chars_min
+JWT_EXPIRE=24h
 CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
 TWILIO_ACCOUNT_SID=your_sid
 TWILIO_AUTH_TOKEN=your_token
 TWILIO_WHATSAPP_FROM=whatsapp:+1415...
+FRONTEND_URL=http://localhost:5173
+ADMIN_EMAIL=admin@salon.com
+ADMIN_PASSWORD=Admin123!
+ADMIN_NAME=Administratrice
+SALON_NAME=Chura Beauty Salon
+ADMIN_PHONE=+241000000000
+ADMIN_WHATSAPP=+241000000000
+ADMIN_ADDRESS=Libreville, Gabon
+```
+
+### 6. Crée l'admin avec seed
+
+```bash
+npm run seed:admin
+```
+
+### 7. Démarre le backend
+
+```bash
+npm run dev
+```
+
+Le backend est accessible sur `http://localhost:5000`
+
+### 8. Installation Frontend
+
+```bash
+cd ../frontend
+npm install
+```
+
+### 9. Démarre le frontend
+
+```bash
+npm run dev
+```
+
+Le frontend est accessible sur `http://localhost:5173`
+
+## 📋 Admin Credentials (Local)
+
+Par défaut, après `npm run seed:admin` :
+
+```
+Email: admin@salon.com
+Password: Admin123!
+```
+
+**À CHANGER en production via les Paramètres Admin !**
+
+## 🗄️ Schéma Supabase
+
+Le schéma PostgreSQL inclut :
+
+- **admins** : Profil admin unique
+- **services** : Catalogue des services
+- **availabilities** : Créneaux de disponibilité
+- **appointments** : Rendez-vous clients
+- **notifications** : Notificationstemps réel
+
+Tous les fichiers sont générés automatiquement avec UUIDs et timestamps.
+
+## 🚢 Déploiement Vercel (Full-Stack)
+
+### Backend
+
+1. Push le code sur GitHub
+2. Va sur https://vercel.com
+3. Importe le repo
+4. Configure les variables d'environnement (SUPABASE_URL, SUPABASE_SERVICE_KEY, etc.)
+5. Déploie !
+
+Le backend sera sur : `https://your-project.vercel.app/api/...`
+
+### Frontend
+
+Le frontend est déployé avec le backend via le même projet Vercel.
+
+## 🔗 Variables d'environnement
+
+Voir `.env.example` pour le template complet.
+
+**IMPORTANT :**
+- Ne jamais commiter `.env` (sauvegardé dans `.gitignore`)
+- Les clés Supabase et Cloudinary sont sécurisées côté serveur
+- En dev local, utilise `.env` ; en prod, configure via Vercel
+
+## 📝 Troubleshooting
+
+### "Supabase connexion échouée"
+→ Vérifiez `SUPABASE_URL` et `SUPABASE_SERVICE_KEY` dans `.env`
+
+### "Admin already exists"
+→ Normal lors du seed. Supprimez la ligne de la table `admins` sur Supabase si vous voulez relancer
+
+### "Port 5173 already in use"
+```bash
+lsof -ti:5173 | xargs kill -9
+```
+
+### "Module not found: @supabase/supabase-js"
+```bash
+npm install @supabase/supabase-js
+```
+
+## 📄 Licence
+
+MIT
+
+## 👨‍💻 Support
+
+Pour toute question, consultez la documentation Supabase : https://supabase.com/docs
+
 FRONTEND_URL=http://localhost:5173
 ADMIN_EMAIL=admin@salon.com
 ADMIN_PASSWORD=ChangeMe123!

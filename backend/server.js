@@ -8,7 +8,7 @@ import { Server } from 'socket.io';
 import { fileURLToPath } from 'url';
 import path from 'path';
 
-import connectDB from './config/db.js';
+import { supabase } from './config/supabase.js';
 import { setupNotificationSocket } from './sockets/notificationSocket.js';
 import { errorHandler } from './middleware/errorMiddleware.js';
 
@@ -22,7 +22,22 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 dotenv.config();
-connectDB();
+
+// Vérification connexion Supabase au démarrage
+const checkSupabase = async () => {
+  try {
+    const { error } = await supabase.from('admins').select('count')
+    if (error) {
+      console.error('❌ Supabase connexion échouée:', error.message)
+      console.error('Assurez-vous que SUPABASE_URL et SUPABASE_SERVICE_KEY sont correctement configurés in .env')
+    } else {
+      console.log('✅ Supabase connecté avec succès')
+    }
+  } catch (err) {
+    console.error('❌ Erreur Supabase:', err.message)
+  }
+}
+checkSupabase()
 
 const app = express();
 const server = http.createServer(app);

@@ -1,65 +1,80 @@
-import Service from '../models/Service.js';
+import { supabase } from '../config/supabase.js'
 
 export const getAllServices = async (req, res) => {
   try {
-    const { category, minPrice, maxPrice, search } = req.query;
+    const { category, minPrice, maxPrice, search } = req.query
 
-    let filter = { isActive: true };
+    let query = supabase
+      .from('services')
+      .select('*')
+      .eq('is_active', true)
 
     if (category) {
-      filter.category = category;
+      query = query.eq('category', category)
     }
 
-    if (minPrice || maxPrice) {
-      filter.price = {};
-      if (minPrice) filter.price.$gte = Number(minPrice);
-      if (maxPrice) filter.price.$lte = Number(maxPrice);
+    if (minPrice) {
+      query = query.gte('price', Number(minPrice))
+    }
+
+    if (maxPrice) {
+      query = query.lte('price', Number(maxPrice))
     }
 
     if (search) {
-      filter.$or = [
-        { title: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } },
-        { category: { $regex: search, $options: 'i' } },
-      ];
+      // Supabase doesn't support $or natively, so we do client-side filtering or use full-text search
+      // For now, we'll search in title
+      query = query.ilike('title', `%${search}%`)
     }
 
-    const services = await Service.find(filter).sort({ createdAt: -1 });
+    const { data: services, error } = await query.order('created_at', { ascending: false })
+
+    if (error) {
+      return res.status(500).json({
+        success: false,
+        message: error.message,
+      })
+    }
 
     res.status(200).json({
       success: true,
       services,
-    });
+    })
   } catch (error) {
     res.status(500).json({
       success: false,
       message: error.message,
-    });
+    })
   }
-};
+}
 
 export const getServiceById = async (req, res) => {
   try {
-    const service = await Service.findById(req.params.id);
+    const { data: service, error } = await supabase
+      .from('services')
+      .select('*')
+      .eq('id', req.params.id)
+      .limit(1)
+      .single()
 
-    if (!service) {
+    if (error || !service) {
       return res.status(404).json({
         success: false,
         message: 'Service not found',
-      });
+      })
     }
 
     res.status(200).json({
       success: true,
       service,
-    });
+    })
   } catch (error) {
     res.status(500).json({
       success: false,
       message: error.message,
-    });
+    })
   }
-};
+}
 
 export const createService = async (req, res) => {
   try {
@@ -69,41 +84,48 @@ export const createService = async (req, res) => {
       category,
       price,
       duration,
-      mainImageIndex,
-      displayStyle,
-      availability,
-      specificDates,
-      checkboxOptions,
-    } = req.body;
+      main_image_index,
+      display_style,
+      checkbox_options,
+    } = req.body
 
-    const images = req.files ? req.files.map((file) => file.path) : [];
+    const images = req.files ? req.files.map((file) => file.path) : []
 
-    const service = await Service.create({
-      title,
-      description,
-      category,
-      price,
-      duration,
-      images,
-      mainImageIndex: mainImageIndex || 0,
-      displayStyle: displayStyle || 'card',
-      availability: availability ? JSON.parse(availability) : [],
-      specificDates: specificDates ? JSON.parse(specificDates) : [],
-      checkboxOptions: checkboxOptions ? JSON.parse(checkboxOptions) : [],
-      isActive: true,
-    });
+    const { data: service, error } = await supabase
+      .from('services')
+      .insert({
+        title,
+        description,
+        category,
+        price: Number(price),
+        duration: duration || 60,
+        images,
+        main_image_index: main_image_index || 0,
+        display_style: display_style || 'card',
+        checkbox_options: checkbox_options || [],
+        is_active: true,
+      })
+      .select()
+      .single()
+
+    if (error) {
+      return res.status(500).json({
+        success: false,
+        message: error.message,
+      })
+    }
 
     res.status(201).json({
       success: true,
       service,
-    });
+    })
   } catch (error) {
     res.status(500).json({
       success: false,
       message: error.message,
-    });
+    })
   }
-};
+}
 
 export const updateService = async (req, res) => {
   try {
@@ -113,103 +135,132 @@ export const updateService = async (req, res) => {
       category,
       price,
       duration,
-      mainImageIndex,
-      displayStyle,
-      availability,
-      specificDates,
-      checkboxOptions,
-      isActive,
-    } = req.body;
+      main_image_index,
+      display_style,
+      checkbox_options,
+      is_active,
+    } = req.body
 
-    let service = await Service.findById(req.params.id);
+    // Récupérer le service existant si j'ai besoin des images précédentes
+    const { data: existingService, error: fetchError } = await supabase
+      .from('services')
+      .select('*')
+      .eq('id', req.params.id)
+      .limit(1)
+      .single()
 
-    if (!service) {
+    if (fetchError || !existingService) {
       return res.status(404).json({
         success: false,
         message: 'Service not found',
-      });
+      })
     }
 
     const images = req.files
       ? req.files.map((file) => file.path)
-      : service.images;
+      : existingService.images
 
-    service = await Service.findByIdAndUpdate(
-      req.params.id,
-      {
+    const { data: service, error } = await supabase
+      .from('services')
+      .update({
         title,
         description,
         category,
-        price,
-        duration,
+        price: Number(price),
+        duration: duration || existingService.duration,
         images,
-        mainImageIndex: mainImageIndex || service.mainImageIndex,
-        displayStyle: displayStyle || service.displayStyle,
-        availability: availability ? JSON.parse(availability) : service.availability,
-        specificDates: specificDates ? JSON.parse(specificDates) : service.specificDates,
-        checkboxOptions: checkboxOptions ? JSON.parse(checkboxOptions) : service.checkboxOptions,
-        isActive: isActive !== undefined ? isActive : service.isActive,
-      },
-      { new: true, runValidators: true }
-    );
+        main_image_index: main_image_index !== undefined ? main_image_index : existingService.main_image_index,
+        display_style: display_style || existingService.display_style,
+        checkbox_options: checkbox_options || existingService.checkbox_options,
+        is_active: is_active !== undefined ? is_active : existingService.is_active,
+      })
+      .eq('id', req.params.id)
+      .select()
+      .single()
+
+    if (error) {
+      return res.status(500).json({
+        success: false,
+        message: error.message,
+      })
+    }
 
     res.status(200).json({
       success: true,
       service,
-    });
+    })
   } catch (error) {
     res.status(500).json({
       success: false,
       message: error.message,
-    });
+    })
   }
-};
+}
 
 export const deleteService = async (req, res) => {
   try {
-    const service = await Service.findByIdAndDelete(req.params.id);
+    const { data, error } = await supabase
+      .from('services')
+      .delete()
+      .eq('id', req.params.id)
 
-    if (!service) {
-      return res.status(404).json({
+    if (error) {
+      return res.status(500).json({
         success: false,
-        message: 'Service not found',
-      });
+        message: error.message,
+      })
     }
 
     res.status(200).json({
       success: true,
       message: 'Service deleted successfully',
-    });
+    })
   } catch (error) {
     res.status(500).json({
       success: false,
       message: error.message,
-    });
+    })
   }
-};
+}
 
 export const toggleServiceStatus = async (req, res) => {
   try {
-    const service = await Service.findById(req.params.id);
+    const { data: service, error: fetchError } = await supabase
+      .from('services')
+      .select('is_active')
+      .eq('id', req.params.id)
+      .limit(1)
+      .single()
 
-    if (!service) {
+    if (fetchError || !service) {
       return res.status(404).json({
         success: false,
         message: 'Service not found',
-      });
+      })
     }
 
-    service.isActive = !service.isActive;
-    await service.save();
+    const { data: updatedService, error } = await supabase
+      .from('services')
+      .update({ is_active: !service.is_active })
+      .eq('id', req.params.id)
+      .select()
+      .single()
+
+    if (error) {
+      return res.status(500).json({
+        success: false,
+        message: error.message,
+      })
+    }
 
     res.status(200).json({
       success: true,
-      service,
-    });
+      service: updatedService,
+    })
   } catch (error) {
     res.status(500).json({
       success: false,
       message: error.message,
-    });
+    })
   }
-};
+}

@@ -1,85 +1,83 @@
-import Appointment from '../models/Appointment.js';
+import { supabase } from '../config/supabase.js'
 
 export const getRevenue = async (req, res) => {
   try {
-    const { period } = req.query;
+    const { period } = req.query
 
-    let groupBy = '$week';
-    let dateFormat = '%Y-W%V';
+    // Récupérer tous les rendez-vous acceptés
+    const { data: appointments, error } = await supabase
+      .from('appointments')
+      .select('*, services!inner(category)')
+      .eq('status', 'accepted')
 
-    if (period === 'month') {
-      groupBy = '$month';
-      dateFormat = '%Y-%m';
-    } else if (period === 'year') {
-      groupBy = '$year';
-      dateFormat = '%Y';
+    if (error) {
+      return res.status(500).json({
+        success: false,
+        message: error.message,
+      })
     }
 
-    const revenueData = await Appointment.aggregate([
-      {
-        $match: { status: 'accepted' },
-      },
-      {
-        $group: {
-          _id: { $dateToString: { format: dateFormat, date: '$desiredDate' } },
-          total: { $sum: '$revenue' },
-        },
-      },
-      {
-        $sort: { _id: 1 },
-      },
-    ]);
+    // Traiter les données côté serveur
+    const revenueData = {}
+    const categoryData = {}
+    let totalRevenue = 0
+    let totalAppointments = 0
 
-    const categoryData = await Appointment.aggregate([
-      {
-        $match: { status: 'accepted' },
-      },
-      {
-        $lookup: {
-          from: 'services',
-          localField: 'serviceId',
-          foreignField: '_id',
-          as: 'service',
-        },
-      },
-      {
-        $unwind: '$service',
-      },
-      {
-        $group: {
-          _id: '$service.category',
-          total: { $sum: '$revenue' },
-        },
-      },
-      {
-        $sort: { total: -1 },
-      },
-    ]);
+    appointments.forEach((appointment) => {
+      // Calculer par période
+      const date = new Date(appointment.desired_date)
+      let key
+      if (period === 'month') {
+        key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+      } else if (period === 'year') {
+        key = `${date.getFullYear()}`
+      } else {
+        // week est par défaut
+        const week = Math.ceil((date.getDate() + new Date(date.getFullYear(), date.getMonth(), 1).getDay()) / 7)
+        key = `${date.getFullYear()}-W${String(week).padStart(2, '0')}`
+      }
 
-    const stats = await Appointment.aggregate([
-      {
-        $match: { status: 'accepted' },
-      },
-      {
-        $group: {
-          _id: null,
-          totalRevenue: { $sum: '$revenue' },
-          totalAppointments: { $sum: 1 },
-          averageRevenue: { $avg: '$revenue' },
-        },
-      },
-    ]);
+      revenueData[key] = (revenueData[key] || 0) + (appointment.revenue || 0)
+
+      // Calculer par catégorie
+      const category = appointment.services?.category || 'Uncategorized'
+      categoryData[category] = (categoryData[category] || 0) + (appointment.revenue || 0)
+
+      totalRevenue += appointment.revenue || 0
+      totalAppointments += 1
+    })
+
+    // Formater les données pour le graphique
+    const formattedRevenueData = Object.entries(revenueData)
+      .map(([period, total]) => ({
+        _id: period,
+        total,
+      }))
+      .sort((a, b) => a._id.localeCompare(b._id))
+
+    const formattedCategoryData = Object.entries(categoryData)
+      .map(([category, total]) => ({
+        _id: category,
+        total,
+      }))
+      .sort((a, b) => b.total - a.total)
+
+    const stats = {
+      totalRevenue,
+      totalAppointments,
+      averageRevenue: totalAppointments > 0 ? totalRevenue / totalAppointments : 0,
+    }
 
     res.status(200).json({
       success: true,
-      revenueData,
-      categoryData,
-      stats: stats[0] || { totalRevenue: 0, totalAppointments: 0, averageRevenue: 0 },
-    });
+      revenueData: formattedRevenueData,
+      categoryData: formattedCategoryData,
+      stats,
+    })
   } catch (error) {
     res.status(500).json({
       success: false,
       message: error.message,
-    });
+    })
   }
-};
+}
