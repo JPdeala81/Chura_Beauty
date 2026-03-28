@@ -178,13 +178,26 @@ const HeroSection = ({ onScrollToServices }) => {
 
       {/* Scroll indicator */}
       <motion.div
-        className="position-absolute bottom-0 start-50 translate-middle-x mb-4"
         animate={{ y: [0, 10, 0] }}
         transition={{ duration: 1.5, repeat: Infinity }}
-        style={{ cursor: 'pointer', zIndex: 2 }}
+        style={{
+          position: 'absolute',
+          bottom: 'max(20px, 4vh)',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          cursor: 'pointer',
+          zIndex: 2,
+          padding: '8px',
+          borderRadius: '50%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
         onClick={onScrollToServices}
+        whileHover={{ scale: 1.15 }}
+        whileTap={{ scale: 0.9 }}
       >
-        <i className="bi bi-chevron-double-down" style={{ color: '#d4a574', fontSize: '24px' }}></i>
+        <i className="bi bi-chevron-double-down" style={{ color: '#d4a574', fontSize: 'clamp(20px, 5vw, 28px)' }}></i>
       </motion.div>
     </section>
   )

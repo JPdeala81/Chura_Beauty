@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import api from '../../services/api'
 
 const Footer = () => {
@@ -65,11 +66,11 @@ const Footer = () => {
             <ul className="list-unstyled mt-3">
               {['Coiffure & Tresses', 'Soins du visage', 'Ongles mains & pieds', 'Soins des sourcils', 'Maquillage'].map((service, i) => (
                 <li key={i} className="mb-2">
-                  <a href="/services" className="text-decoration-none small"
+                  <Link to="/services" className="text-decoration-none small"
                     style={{ color: 'rgba(248,200,212,0.7)' }}>
                     <i className="bi bi-chevron-right me-1" style={{ color: '#d4a574', fontSize: '11px' }}></i>
                     {service}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -96,10 +97,10 @@ const Footer = () => {
                   style={{ color: 'rgba(248,200,212,0.8)' }}>{adminInfo.whatsapp}</a>
               </li>
             </ul>
-            <a href="/admin/login"
+            <Link to="/admin/login"
               style={{ color: 'rgba(255,255,255,0.2)', fontSize: '11px', textDecoration: 'none' }}>
               Espace administrateur
-            </a>
+            </Link>
           </div>
         </div>
 
