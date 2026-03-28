@@ -12,7 +12,9 @@ const router = express.Router();
 
 router.post('/login', login);
 router.get('/admin', protect, getAdmin);
+router.get('/profile', protect, getAdmin); // Alias pour /admin
 router.put('/admin', protect, updateAdmin);
+router.put('/profile', protect, updateAdmin); // Alias pour /admin
 router.put('/admin/password', protect, updatePassword);
 router.put('/admin/payment-config', protect, updatePaymentConfig);
 

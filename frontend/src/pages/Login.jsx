@@ -18,7 +18,12 @@ const Login = () => {
       await login(email, password)
       navigate('/admin/dashboard')
     } catch (err) {
-      setError('Email ou mot de passe incorrect')
+      // Redirect to home with error message
+      navigate('/', { 
+        state: { 
+          errorMessage: 'Vous ne pouvez pas vous reconnecter, cet espace ne vous est pas réservé' 
+        } 
+      })
     } finally {
       setLoading(false)
     }
@@ -47,7 +52,7 @@ const Login = () => {
               <input
                 type="email"
                 className="form-control rounded-3"
-                placeholder="admin@salon.com"
+                placeholder="Rentrer votre email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required

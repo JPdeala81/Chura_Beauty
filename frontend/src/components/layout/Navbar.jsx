@@ -64,7 +64,7 @@ const Navbar = () => {
               Prendre RDV
             </Link>
             <Link to="/admin/login" className="btn-admin-login nav-link-luxury">
-              🔐 Connexion Admin
+              Connexion
             </Link>
           </div>
         </div>

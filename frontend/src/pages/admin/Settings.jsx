@@ -10,6 +10,8 @@ const Settings = () => {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [formData, setFormData] = useState({
+    email: '',
+    password: '',
     salonName: '',
     bio: '',
     heroTitle: 'Révélez Votre Beauté Naturelle',
@@ -152,6 +154,46 @@ const Settings = () => {
                 <Col md={6} className="mb-3">
                   <Form.Label>Facebook</Form.Label>
                   <Form.Control type="url" name="facebook" value={formData.facebook} onChange={handleChange} placeholder="https://facebook.com/..." />
+                </Col>
+              </Row>
+            </Card.Body>
+          </Card>
+
+          {/* Identifiants de Connexion */}
+          <Card className="mb-4" style={{ borderLeft: '5px solid #dc3545' }}>
+            <Card.Header className="bg-dark text-white">
+              <h5 className="mb-0">🔐 Identifiants de Connexion</h5>
+            </Card.Header>
+            <Card.Body>
+              <Alert variant="warning" className="mb-4">
+                <strong>⚠️ Attention :</strong> Modifiez vos identifiants avec précaution. Vous devrez vous reconnecter avec les nouvelles informations.
+              </Alert>
+              <Row>
+                <Col md={6} className="mb-3">
+                  <Form.Label>Email de connexion</Form.Label>
+                  <Form.Control 
+                    type="email" 
+                    name="email" 
+                    value={formData.email || ''} 
+                    onChange={handleChange}
+                    placeholder="Entrez votre nouvel email"
+                  />
+                  <Form.Text className="text-muted">
+                    Cet email sera utilisé pour la connexion à l'espace administrateur
+                  </Form.Text>
+                </Col>
+                <Col md={6} className="mb-3">
+                  <Form.Label>Mot de passe</Form.Label>
+                  <Form.Control 
+                    type="password" 
+                    name="password" 
+                    placeholder="Laissez vide si vous ne voulez pas le modifier"
+                    onChange={handleChange}
+                    autoComplete="new-password"
+                  />
+                  <Form.Text className="text-muted">
+                    Minimum 8 caractères avec majuscule et chiffre(s)
+                  </Form.Text>
                 </Col>
               </Row>
             </Card.Body>

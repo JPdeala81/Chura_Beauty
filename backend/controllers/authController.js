@@ -98,6 +98,8 @@ export const getAdmin = async (req, res) => {
 export const updateAdmin = async (req, res) => {
   try {
     const {
+      email,
+      password,
       salon_name,
       owner_name,
       phone,
@@ -108,22 +110,43 @@ export const updateAdmin = async (req, res) => {
       facebook,
       profile_picture,
       cover_picture,
+      heroTitle,
+      heroSubtitle,
+      heroBgColor,
+      heroTextColor
     } = req.body
+
+    // Préparer l'objet de mise à jour
+    const updateData = {
+      salon_name,
+      owner_name,
+      phone,
+      whatsapp,
+      address,
+      bio,
+      instagram,
+      facebook,
+      profile_picture: profile_picture || undefined,
+      cover_picture: cover_picture || undefined,
+      hero_title: heroTitle,
+      hero_subtitle: heroSubtitle,
+      hero_bg_color: heroBgColor,
+      hero_text_color: heroTextColor
+    }
+
+    // Si email est fourni, ajouter
+    if (email) {
+      updateData.email = email
+    }
+
+    // Si password est fourni, hasher et ajouter
+    if (password && password.trim()) {
+      updateData.password = await bcrypt.hash(password, 12)
+    }
 
     const { data: admin, error } = await supabase
       .from('admins')
-      .update({
-        salon_name,
-        owner_name,
-        phone,
-        whatsapp,
-        address,
-        bio,
-        instagram,
-        facebook,
-        profile_picture: profile_picture || undefined,
-        cover_picture: cover_picture || undefined,
-      })
+      .update(updateData)
       .eq('id', req.admin.id)
       .select()
       .single()
@@ -136,10 +159,11 @@ export const updateAdmin = async (req, res) => {
     }
 
     // Retirer le mot de passe
-    const { password, ...adminWithoutPassword } = admin
+    const { password: _, ...adminWithoutPassword } = admin
 
     res.status(200).json({
       success: true,
+      message: 'Admin updated successfully',
       admin: adminWithoutPassword,
     })
   } catch (error) {
