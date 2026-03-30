@@ -2,9 +2,9 @@ import { createContext, useState, useEffect } from 'react'
 
 export const AuthContext = createContext()
 
-// Generate or get unique device ID
+// Generate or get unique device ID - stored in localStorage to persist across sessions
 const getDeviceId = () => {
-  let deviceId = sessionStorage.getItem('device_id')
+  let deviceId = localStorage.getItem('device_id')
   if (!deviceId) {
     // Use crypto.randomUUID() for modern browsers, fallback to manual generation
     if (crypto.randomUUID) {
@@ -13,7 +13,7 @@ const getDeviceId = () => {
       // Fallback for older browsers
       deviceId = 'device-' + Math.random().toString(36).substr(2, 9)
     }
-    sessionStorage.setItem('device_id', deviceId)
+    localStorage.setItem('device_id', deviceId)
   }
   return deviceId
 }

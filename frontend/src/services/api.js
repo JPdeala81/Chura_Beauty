@@ -9,7 +9,7 @@ const api = axios.create({
 })
 
 api.interceptors.request.use((config) => {
-  const deviceId = sessionStorage.getItem('device_id')
+  const deviceId = localStorage.getItem('device_id')
   const token = deviceId ? sessionStorage.getItem(`token_${deviceId}`) : null
   
   if (token) {
@@ -26,7 +26,7 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      const deviceId = sessionStorage.getItem('device_id')
+      const deviceId = localStorage.getItem('device_id')
       if (deviceId) {
         sessionStorage.removeItem(`token_${deviceId}`)
         sessionStorage.removeItem(`admin_${deviceId}`)

@@ -3,7 +3,7 @@ import { supabase } from './supabaseClient';
 export const subscribeToAppointments = (callback) => {
   // Subscribe to real-time updates on appointments table
   const subscription = supabase
-    .channel('appointments')
+    .channel('appointments-changes')
     .on(
       'postgres_changes',
       {
@@ -12,6 +12,8 @@ export const subscribeToAppointments = (callback) => {
         table: 'appointments',
       },
       (payload) => {
+        console.log('📱 Real-time appointment update received:', payload);
+        
         // Play notification sound
         playNotificationSound();
         
@@ -19,8 +21,11 @@ export const subscribeToAppointments = (callback) => {
         callback(payload);
       }
     )
-    .subscribe((status) => {
-      console.log(`Realtime subscription status: ${status}`);
+    .subscribe((status, err) => {
+      console.log(`[Realtime] Subscription status: ${status}`);
+      if (err) {
+        console.error('[Realtime] Subscription error:', err);
+      }
     });
 
   return subscription;
@@ -30,6 +35,7 @@ export const subscribeToAppointments = (callback) => {
 export const unsubscribeFromAppointments = (subscription) => {
   if (subscription) {
     supabase.removeChannel(subscription);
+    console.log('[Realtime] Unsubscribed from appointments');
   }
 };
 
