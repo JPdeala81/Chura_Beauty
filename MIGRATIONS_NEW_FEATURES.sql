@@ -13,7 +13,7 @@ ALTER TABLE admins ADD COLUMN IF NOT EXISTS hero_animation VARCHAR(50) DEFAULT '
 ALTER TABLE admins ADD COLUMN IF NOT EXISTS hero_colors JSONB DEFAULT '{"primary": "#d4a574", "secondary": "#b8860b"}';
 
 -- Add favicon customization
-ALTER TABLE admins ADD COLUMN IF NOT EXISTS favicon_emoji VARCHAR(2) DEFAULT '💆‍♀️';
+ALTER TABLE admins ADD COLUMN IF NOT EXISTS favicon_emoji VARCHAR(10) DEFAULT '💆‍♀️';
 ALTER TABLE admins ADD COLUMN IF NOT EXISTS favicon_image TEXT;
 
 -- Add CTA customization columns
@@ -43,7 +43,7 @@ ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS navbar_cta_text VARCHAR(255) 
 ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS admin_btn_text VARCHAR(255) DEFAULT 'Bon marché';
 
 -- Add favicon customization
-ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS favicon_emoji VARCHAR(2) DEFAULT '💆‍♀️';
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS favicon_emoji VARCHAR(10) DEFAULT '💆‍♀️';
 ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS favicon_image TEXT;
 
 -- Add maintenance mode system
