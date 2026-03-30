@@ -9,27 +9,27 @@
         "src": "frontend/package.json",
         "use": "@vercel/static-build",
         "config": {
-          "distDir": "dist"
+          "distDir": "frontend/dist"
         }
       }
     ],
-  "routes": [
-    {
-      "src": "^/api/(.*)",
-      "dest": "api/index.js"
-    },
-    {
-      "src": "^/assets/(.*)",
-      "dest": "frontend/dist/assets/$1"
-    },
-    {
-      "src": "^/(.*\\.(js|css|ico|png|jpg|jpeg|svg|woff|woff2|ttf|map))",
-      "dest": "frontend/dist/$1"
-    },
-    {
-      "src": "^/(.*)",
-      "dest": "frontend/dist/index.html",
-      "status": 200
-    }
-  ]
+    "routes": [
+      {
+        "src": "^/api/(.*)",
+        "dest": "api/index.js"
+      },
+      {
+        "src": "^/assets/(.*)",
+        "dest": "frontend/dist/assets/$1"
+      },
+      {
+        "src": "^/(.*\\.(js|css|ico|png|jpg|jpeg|svg|woff|woff2|ttf|eot|map))",
+        "dest": "frontend/dist/$1"
+      },
+      {
+        "src": "^/(.*)",
+        "dest": "frontend/dist/index.html",
+        "status": 200
+      }
+    ]
 }
