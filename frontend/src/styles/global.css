@@ -1816,6 +1816,182 @@ img { max-width: 100%; height: auto; }
   }
 }
 
+/* ADMIN DASHBOARD RESPONSIVE */
+@media (max-width: 1024px) {
+  /* KPI Cards grid - 2 columns instead of 4 */
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 16px !important;
+  }
+
+  /* Quick actions - 2 columns */
+  .quick-actions-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Admin dashboard tabs - stack better */
+  .admin-navbar-tabs {
+    flex-wrap: wrap;
+    gap: 6px !important;
+  }
+
+  .admin-navbar-tabs button {
+    padding: 6px 12px !important;
+    font-size: 12px !important;
+  }
+
+  /* KPI Cards - single column */
+  .kpi-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .kpi-card {
+    padding: 16px !important;
+  }
+
+  .kpi-card h6 {
+    font-size: 12px !important;
+  }
+
+  .kpi-card .value {
+    font-size: 18px !important;
+  }
+
+  /* Quick actions - single column */
+  .quick-actions-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .quick-action-card {
+    padding: 14px !important;
+  }
+
+  /* Forms - full width inputs */
+  .form-control-luxury {
+    padding: 10px 14px !important;
+    font-size: 13px !important;
+  }
+
+  .form-label-luxury {
+    font-size: 12px !important;
+  }
+
+  /* Buttons - touch-friendly size */
+  .btn {
+    min-height: 44px;
+    font-size: 14px !important;
+  }
+
+  /* Tables - better scroll */
+  .table {
+    font-size: 13px;
+  }
+
+  .table th {
+    font-size: 12px;
+    padding: 8px 4px !important;
+  }
+
+  .table td {
+    padding: 6px 4px !important;
+  }
+}
+
+@media (max-width: 576px) {
+  /* Admin dashboard - really compact */
+  .admin-navbar-tabs {
+    gap: 4px !important;
+  }
+
+  .admin-navbar-tabs button {
+    padding: 5px 10px !important;
+    font-size: 11px !important;
+  }
+
+  /* Hide some tabs on very small screens */
+  .admin-navbar-tabs .hide-on-mobile {
+    display: none !important;
+  }
+
+  /* KPI Cards - stacked with smaller font */
+  .kpi-card {
+    padding: 12px !important;
+  }
+
+  .kpi-card h6 {
+    font-size: 11px !important;
+    margin-bottom: 4px !important;
+  }
+
+  .kpi-card .value {
+    font-size: 16px !important;
+  }
+
+  /* Quick actions - smaller text */
+  .quick-action-card {
+    padding: 10px !important;
+  }
+
+  .quick-action-card .label {
+    font-size: 12px !important;
+    font-weight: 600 !important;
+  }
+
+  .quick-action-card .desc {
+    display: none !important;
+  }
+
+  .quick-action-card .icon {
+    font-size: 24px !important;
+  }
+
+  /* Service cards - better for mobile */
+  .service-card-img-wrapper {
+    height: 150px !important;
+  }
+
+  /* Form sections - stack better */
+  .admin-form-section {
+    padding: 12px !important;
+    margin-bottom: 12px !important;
+  }
+
+  /* Responsive typography */
+  h1 { font-size: 20px !important; }
+  h2 { font-size: 18px !important; }
+  h3 { font-size: 16px !important; }
+  h4 { font-size: 14px !important; }
+  h5 { font-size: 12px !important; }
+  h6 { font-size: 11px !important; }
+
+  /* Container padding */
+  .container, .container-fluid {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  /* Reduce gap in flex containers */
+  .gap-2 { gap: 6px !important; }
+  .gap-3 { gap: 8px !important; }
+  .gap-4 { gap: 10px !important; }
+
+  /* Button sizing */
+  .btn {
+    padding: 8px 12px !important;
+    font-size: 12px !important;
+    min-height: 40px !important;
+  }
+
+  .btn-sm {
+    min-height: 36px !important;
+    font-size: 11px !important;
+  }
+}
+
 /* GENERAL RESPONSIVE */
 @media (max-width: 1200px) {
   .footer-grid { grid-template-columns: 1.5fr 1fr 1fr; gap: 32px; }
