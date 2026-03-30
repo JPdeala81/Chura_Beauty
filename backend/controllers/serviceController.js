@@ -4,6 +4,7 @@ export const getAllServices = async (req, res) => {
   try {
     const { category, minPrice, maxPrice, search } = req.query
 
+    // Try to get active services first
     let query = supabase
       .from('services')
       .select('*')
@@ -12,35 +13,55 @@ export const getAllServices = async (req, res) => {
     if (category) {
       query = query.eq('category', category)
     }
-
     if (minPrice) {
       query = query.gte('price', Number(minPrice))
     }
-
     if (maxPrice) {
       query = query.lte('price', Number(maxPrice))
     }
-
     if (search) {
-      // Supabase doesn't support $or natively, so we do client-side filtering or use full-text search
-      // For now, we'll search in title
       query = query.ilike('title', `%${search}%`)
     }
 
-    const { data: services, error } = await query.order('created_at', { ascending: false })
+    let { data: services, error } = await query.order('created_at', { ascending: false })
 
-    if (error) {
+    if (error && error.code !== 'PGRST116') {
+      console.error('Supabase error:', error)
       return res.status(500).json({
         success: false,
-        message: error.message,
+        message: 'Error fetching services',
       })
     }
 
+    // If no active services found, get all services (fallback)
+    if (!services || services.length === 0) {
+      console.warn('⚠️ No active services found, returning all services as fallback')
+      const { data: fallbackServices, error: fallbackError } = await supabase
+        .from('services')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (!fallbackError) {
+        services = fallbackServices || []
+      }
+    }
+
+    // Client-side filtering for search if we switched to fallback
+    if (search) {
+      services = services.filter(s =>
+        (s.title && s.title.toLowerCase().includes(search.toLowerCase())) ||
+        (s.description && s.description.toLowerCase().includes(search.toLowerCase()))
+      )
+    }
+
+    console.log(`✅ Returning ${services?.length || 0} services`)
+
     res.status(200).json({
       success: true,
-      services,
+      services: services || [],
     })
   } catch (error) {
+    console.error('Get all services error:', error)
     res.status(500).json({
       success: false,
       message: error.message,
@@ -300,5 +321,48 @@ export const toggleServiceStatus = async (req, res) => {
       success: false,
       message: error.message,
     })
+  }
+}
+
+// DEBUG ENDPOINT - Get all services with status
+export const debugAllServices = async (req, res) => {
+  try {
+    const { data: services, error } = await supabase
+      .from('services')
+      .select('id, title, is_active, created_at')
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      return res.status(500).json({ error: error.message })
+    }
+
+    res.json({
+      total: services?.length || 0,
+      services,
+    })
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+}
+
+// ACTIVATE ALL SERVICES - for emergency fix
+export const activateAllServices = async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('services')
+      .update({ is_active: true })
+      .neq('id', null)
+      .select('id, title, is_active')
+
+    if (error) {
+      return res.status(500).json({ error: error.message })
+    }
+
+    res.json({
+      message: `Activated ${data?.length || 0} services`,
+      services: data,
+    })
+  } catch (error) {
+    res.status(500).json({ error: error.message })
   }
 }

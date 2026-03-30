@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer'
 import crypto from 'crypto'
+import { sendEmail } from '../utils/emailUtil.js'
 
 // CHANGE PASSWORD
 export const changePassword = async (req, res) => {
@@ -49,31 +50,38 @@ export const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
     if (!email) return res.status(400).json({ message: 'Email requis.' });
+    
     const { data: admin, error } = await supabase.from('admins').select('*').eq('email', email).single();
     if (error || !admin) return res.status(404).json({ message: 'Admin introuvable.' });
+    
     const token = crypto.randomBytes(32).toString('hex');
     const expires = new Date(Date.now() + 1000 * 60 * 30); // 30 min
+    
     await supabase.from('admins').update({ reset_token: token, reset_token_expires: expires.toISOString() }).eq('id', admin.id);
-    // Send email
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: process.env.SMTP_PORT,
-      secure: false,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS
-      }
-    });
+    
     const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/admin/reset-password/${token}`;
-    await transporter.sendMail({
-      from: process.env.SMTP_FROM || process.env.SMTP_USER,
-      to: admin.recovery_email || admin.email,
-      subject: 'Réinitialisation du mot de passe',
-      html: `<p>Bonjour,<br/>Cliquez sur ce lien pour réinitialiser votre mot de passe : <a href="${resetUrl}">${resetUrl}</a><br/>Ce lien expire dans 30 minutes.</p>`
-    });
-    res.json({ message: 'Email envoyé.' });
+    const html = `
+      <h2>Réinitialisation du mot de passe</h2>
+      <p>Bonjour,</p>
+      <p>Vous avez demandé la réinitialisation de votre mot de passe.</p>
+      <p><a href="${resetUrl}" style="background-color: #b8860b; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Réinitialiser le mot de passe</a></p>
+      <p>Ou utilisez ce lien : <a href="${resetUrl}">${resetUrl}</a></p>
+      <p>Ce lien expire dans 30 minutes.</p>
+      <p>Si vous n'avez pas demandé cette réinitialisation, ignorez cet email.</p>
+    `;
+    
+    try {
+      await sendEmail(admin.recovery_email || admin.email, 'Réinitialisation du mot de passe', html);
+      res.json({ message: 'Email de réinitialisation envoyé. Vérifiez votre boîte mail.' });
+    } catch (emailError) {
+      console.error('Email send error:', emailError.message);
+      res.status(500).json({ 
+        message: 'Erreur lors de l\'envoi du email. Service email non configuré. Contactez l\'administrateur système.' 
+      });
+    }
   } catch (e) {
-    res.status(500).json({ message: e.message });
+    console.error('Forgot password error:', e.message);
+    res.status(500).json({ message: 'Erreur serveur: ' + e.message });
   }
 };
 
@@ -81,35 +89,45 @@ export const forgotPassword = async (req, res) => {
 export const recoverWithQuestion = async (req, res) => {
   try {
     const { email, secretAnswer } = req.body;
-    if (!email || !secretAnswer) return res.status(400).json({ message: 'Champs requis.' });
+    if (!email || !secretAnswer) return res.status(400).json({ message: 'Email et réponse requis.' });
+    
     const { data: admin, error } = await supabase.from('admins').select('*').eq('email', email).single();
     if (error || !admin) return res.status(404).json({ message: 'Admin introuvable.' });
+    
+    if (!admin.secret_answer) {
+      return res.status(400).json({ message: 'Question secrète non configurée pour ce compte.' });
+    }
+    
     const isMatch = await bcrypt.compare(secretAnswer, admin.secret_answer);
     if (!isMatch) return res.status(401).json({ message: 'Réponse incorrecte.' });
-    // Générer un token temporaire (réutilise reset_token)
+    
     const token = crypto.randomBytes(32).toString('hex');
     const expires = new Date(Date.now() + 1000 * 60 * 30);
+    
     await supabase.from('admins').update({ reset_token: token, reset_token_expires: expires.toISOString() }).eq('id', admin.id);
-    // Envoyer email
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: process.env.SMTP_PORT,
-      secure: false,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS
-      }
-    });
+    
     const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/admin/reset-password/${token}`;
-    await transporter.sendMail({
-      from: process.env.SMTP_FROM || process.env.SMTP_USER,
-      to: admin.recovery_email || admin.email,
-      subject: 'Réinitialisation du mot de passe',
-      html: `<p>Bonjour,<br/>Cliquez sur ce lien pour réinitialiser votre mot de passe : <a href="${resetUrl}">${resetUrl}</a><br/>Ce lien expire dans 30 minutes.</p>`
-    });
-    res.json({ message: 'Email envoyé.' });
+    const html = `
+      <h2>Réinitialisation du mot de passe</h2>
+      <p>Bonjour,</p>
+      <p>Vous avez répondu correctement à la question secrète.</p>
+      <p><a href="${resetUrl}" style="background-color: #b8860b; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Réinitialiser le mot de passe</a></p>
+      <p>Ou utilisez ce lien : <a href="${resetUrl}">${resetUrl}</a></p>
+      <p>Ce lien expire dans 30 minutes.</p>
+    `;
+    
+    try {
+      await sendEmail(admin.recovery_email || admin.email, 'Réinitialisation du mot de passe', html);
+      res.json({ message: 'Email de réinitialisation envoyé. Vérifiez votre boîte mail.' });
+    } catch (emailError) {
+      console.error('Email send error:', emailError.message);
+      res.status(500).json({ 
+        message: 'Erreur lors de l\'envoi du email. Service email non configuré. Contactez l\'administrateur système.' 
+      });
+    }
   } catch (e) {
-    res.status(500).json({ message: e.message });
+    console.error('Recover with question error:', e.message);
+    res.status(500).json({ message: 'Erreur serveur: ' + e.message });
   }
 };
 
