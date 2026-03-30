@@ -9,6 +9,7 @@ export default function BookingModal({ show, onHide, service, availableSlots = [
   const [formData, setFormData] = useState({
     clientName: '',
     clientPhone: '',
+    clientEmail: '',
     clientWhatsapp: '',
     desiredDate: null,
     desiredTimeSlot: null,
@@ -53,14 +54,16 @@ export default function BookingModal({ show, onHide, service, availableSlots = [
       setError('');
 
       const appointmentData = {
-        serviceId: service._id,
-        clientName: formData.clientName,
-        clientPhone: formData.clientPhone,
-        clientWhatsapp: formData.clientWhatsapp,
-        desiredDate: formData.desiredDate,
-        desiredTimeSlot: formData.desiredTimeSlot,
-        selectedOptions: formData.selectedOptions,
-        customDescription: formData.customDescription,
+        service_id: service.id || service._id,
+        client_name: formData.clientName,
+        client_phone: formData.clientPhone,
+        client_email: formData.clientEmail,
+        client_whatsapp: formData.clientWhatsapp,
+        desired_date: formData.desiredDate,
+        slot_start: formData.desiredTimeSlot?.start,
+        slot_end: formData.desiredTimeSlot?.end,
+        selected_options: formData.selectedOptions,
+        custom_description: formData.customDescription,
       };
 
       await appointmentService.createAppointment(appointmentData);
@@ -82,6 +85,7 @@ export default function BookingModal({ show, onHide, service, availableSlots = [
     setFormData({
       clientName: '',
       clientPhone: '',
+      clientEmail: '',
       clientWhatsapp: '',
       desiredDate: null,
       desiredTimeSlot: null,
@@ -98,6 +102,7 @@ export default function BookingModal({ show, onHide, service, availableSlots = [
   const canProceedToStep4 =
     formData.clientName &&
     formData.clientPhone &&
+    formData.clientEmail &&
     formData.clientWhatsapp;
 
   const handleClose = () => {
@@ -221,6 +226,17 @@ export default function BookingModal({ show, onHide, service, availableSlots = [
             </Form.Group>
 
             <Form.Group className="mb-3">
+              <Form.Label>Email</Form.Label>
+              <Form.Control
+                type="email"
+                name="clientEmail"
+                value={formData.clientEmail}
+                onChange={handleInputChange}
+                required
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-3">
               <Form.Label>WhatsApp</Form.Label>
               <Form.Control
                 type="tel"
@@ -253,6 +269,9 @@ export default function BookingModal({ show, onHide, service, availableSlots = [
                 </p>
                 <p>
                   <strong>Téléphone :</strong> {formData.clientPhone}
+                </p>
+                <p>
+                  <strong>Email :</strong> {formData.clientEmail}
                 </p>
                 <p>
                   <strong>WhatsApp :</strong> {formData.clientWhatsapp}

@@ -37,6 +37,7 @@ export default function AppointmentManager({ appointments, onUpdate }) {
         <thead className="table-dark">
           <tr>
             <th>Client</th>
+            <th>Email</th>
             <th>Service</th>
             <th>Date</th>
             <th>Heure</th>
@@ -50,6 +51,7 @@ export default function AppointmentManager({ appointments, onUpdate }) {
           {appointments.map((appt) => (
             <tr key={appt._id}>
               <td>{appt.clientName}</td>
+              <td>{appt.clientEmail}</td>
               <td>{appt.serviceId?.title}</td>
               <td>
                 {new Date(appt.desiredDate).toLocaleDateString('fr-FR')}

@@ -8,6 +8,7 @@ export const createAppointment = async (req, res) => {
       service_id,
       client_name,
       client_phone,
+      client_email,
       client_whatsapp,
       desired_date,
       slot_start,
@@ -38,6 +39,7 @@ export const createAppointment = async (req, res) => {
         service_id,
         client_name,
         client_phone,
+        client_email,
         client_whatsapp,
         desired_date,
         slot_start,
@@ -248,9 +250,9 @@ export const deleteAppointment = async (req, res) => {
 
 const generateAppointmentMessage = (appointment, isAccepted) => {
   if (isAccepted) {
-    return `Bonjour ${appointment.client_name} 👋\nVotre rendez-vous pour ${appointment.services.title} a été confirmé ✅\n📅 Date : ${new Date(appointment.desired_date).toLocaleDateString('fr-FR')}\n⏰ Heure : ${appointment.slot_start} - ${appointment.slot_end}\n📍 Lieu : [Adresse salon]\n📞 Contact : [Téléphone admin]\nÀ bientôt 💆‍♀️`
+    return `🎉 Bonjour ${appointment.client_name}!\n\nVotre rendez-vous pour *${appointment.services.title}* a été ✅ *CONFIRMÉ*!\n\n📅 *Date* : ${new Date(appointment.desired_date).toLocaleDateString('fr-FR')}\n⏰ *Heure* : ${appointment.slot_start} - ${appointment.slot_end}\n💰 *Prix* : ${appointment.services.price} FCFA\n\nMerci de confirmer votre présence. À très bientôt! 💆‍♀️✨`
   } else {
-    return `Bonjour ${appointment.client_name},\nNous sommes désolés, votre demande de RDV pour ${appointment.services.title}\nle ${new Date(appointment.desired_date).toLocaleDateString('fr-FR')} à ${appointment.slot_start} n'a pas pu être acceptée ❌.\nN'hésitez pas à choisir un autre créneau sur notre site.`
+    return `Bonjour ${appointment.client_name},\n\nNous sommes désolés, votre demande de RDV pour *${appointment.services.title}* n'a pas pu être acceptée pour le ${new Date(appointment.desired_date).toLocaleDateString('fr-FR')} à ${appointment.slot_start}.\n\nN'hésitez pas à visiter notre site pour choisir un autre créneau. Merci de votre compréhension!`
   }
 }
 

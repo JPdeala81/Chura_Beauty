@@ -53,6 +53,7 @@ CREATE TABLE appointments (
   service_id UUID REFERENCES services(id) ON DELETE SET NULL,
   client_name TEXT NOT NULL,
   client_phone TEXT NOT NULL,
+  client_email TEXT,
   client_whatsapp TEXT,
   desired_date DATE NOT NULL,
   slot_start TEXT NOT NULL,
