@@ -11,7 +11,7 @@ export default function ServiceCard({ service }) {
         variant="top"
         src={mainImage}
         alt={service.title}
-        style={{ height: '250px', objectFit: 'cover' }}
+        style={{ height: '250px', objectFit: 'contain', backgroundColor: '#f5f5f5', padding: '10px' }}
       />
 
       <Card.Body className="d-flex flex-column">

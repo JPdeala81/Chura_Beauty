@@ -180,12 +180,14 @@ export default function ServiceDetail() {
                     style={{
                       width: '100%',
                       borderRadius: '12px',
-                      objectFit: 'cover',
-                      height: '400px',
+                      objectFit: 'contain',
+                      maxHeight: '500px',
                       marginBottom: '20px',
                       boxShadow: 'var(--shadow-luxury)',
                       cursor: 'pointer',
                       transition: 'transform 0.3s, filter 0.3s',
+                      display: 'block',
+                      margin: '0 auto 20px auto'
                     }}
                     whileHover={{ filter: 'brightness(0.9)' }}
                   />
@@ -409,9 +411,12 @@ export default function ServiceDetail() {
               alt={service.title}
               style={{
                 width: '100%',
+                maxWidth: '90%',
                 borderRadius: '12px',
-                objectFit: 'cover',
-                maxHeight: '80vh'
+                objectFit: 'contain',
+                maxHeight: '80vh',
+                margin: '0 auto',
+                display: 'block'
               }}
             />
           )}
