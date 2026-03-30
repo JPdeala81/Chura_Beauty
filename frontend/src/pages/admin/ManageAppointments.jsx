@@ -55,9 +55,15 @@ export default function ManageAppointments() {
     try {
       setLoading(true);
       const response = await appointmentService.getAppointments();
-      setAppointments(response.data.appointments);
+      console.log('📋 Appointments response:', response.data);
+      
+      // Handle different response formats
+      const appointmentsList = response.data.appointments || response.data || [];
+      console.log('📋 Parsed appointments:', appointmentsList);
+      
+      setAppointments(appointmentsList);
     } catch (error) {
-      console.error('Error fetching appointments:', error);
+      console.error('❌ Error fetching appointments:', error);
     } finally {
       setLoading(false);
     }

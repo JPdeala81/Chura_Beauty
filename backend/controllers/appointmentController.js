@@ -108,6 +108,7 @@ export const createAppointment = async (req, res) => {
 
 export const getAppointments = async (req, res) => {
   try {
+    console.log('📋 getAppointments called with query:', req.query)
     const { status, service_id, start_date, end_date } = req.query
 
     let query = supabase
@@ -132,18 +133,24 @@ export const getAppointments = async (req, res) => {
 
     const { data: appointments, error } = await query.order('created_at', { ascending: false })
 
+    console.log('📋 Supabase query result - Appointments:', appointments)
+    console.log('📋 Supabase query result - Error:', error)
+
     if (error) {
+      console.error('❌ Supabase error:', error)
       return res.status(500).json({
         success: false,
         message: error.message,
       })
     }
 
+    console.log('✅ Returning appointments:', appointments)
     res.status(200).json({
       success: true,
       appointments,
     })
   } catch (error) {
+    console.error('❌ Controller error:', error)
     res.status(500).json({
       success: false,
       message: error.message,
