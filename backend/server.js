@@ -15,6 +15,8 @@ import serviceRoutes from './routes/serviceRoutes.js'
 import appointmentRoutes from './routes/appointmentRoutes.js'
 import notificationRoutes from './routes/notificationRoutes.js'
 import revenueRoutes from './routes/revenueRoutes.js'
+import siteSettingsRoutes from './routes/siteSettingsRoutes.js'
+import ownerProfileRoutes from './routes/ownerProfileRoutes.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -61,6 +63,8 @@ app.use('/api/services', serviceRoutes)
 app.use('/api/appointments', appointmentRoutes)
 app.use('/api/notifications', notificationRoutes)
 app.use('/api/revenue', revenueRoutes)
+app.use('/api/site-settings', siteSettingsRoutes)
+app.use('/api/owner-profile', ownerProfileRoutes)
 
 // Serve static files from frontend/dist (production) or public (development)
 const distPath = path.join(__dirname, '../frontend/dist')

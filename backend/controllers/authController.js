@@ -264,7 +264,15 @@ export const updateAdmin = async (req, res) => {
       hero_title,
       hero_subtitle,
       hero_bg_color,
-      hero_text_color
+      hero_text_color,
+      favicon_emoji,
+      favicon_image,
+      hero_animation,
+      hero_cta_text,
+      hero_cta2_text,
+      navbar_cta_text,
+      admin_btn_text,
+      profile_photo
     } = req.body
 
     // Préparer l'objet de mise à jour
@@ -280,11 +288,21 @@ export const updateAdmin = async (req, res) => {
     if (instagram !== undefined && instagram !== '') updateData.instagram = instagram
     if (facebook !== undefined && facebook !== '') updateData.facebook = facebook
     if (profile_picture !== undefined) updateData.profile_picture = profile_picture
+    if (profile_photo !== undefined) updateData.profile_photo = profile_photo
     if (cover_picture !== undefined) updateData.cover_picture = cover_picture
     if (hero_title !== undefined && hero_title !== '') updateData.hero_title = hero_title
     if (hero_subtitle !== undefined && hero_subtitle !== '') updateData.hero_subtitle = hero_subtitle
     if (hero_bg_color !== undefined && hero_bg_color !== '') updateData.hero_bg_color = hero_bg_color
     if (hero_text_color !== undefined && hero_text_color !== '') updateData.hero_text_color = hero_text_color
+    
+    // Add new animation and customization fields
+    if (favicon_emoji !== undefined) updateData.favicon_emoji = favicon_emoji
+    if (favicon_image !== undefined) updateData.favicon_image = favicon_image
+    if (hero_animation !== undefined) updateData.hero_animation = hero_animation
+    if (hero_cta_text !== undefined) updateData.hero_cta_text = hero_cta_text
+    if (hero_cta2_text !== undefined) updateData.hero_cta2_text = hero_cta2_text
+    if (navbar_cta_text !== undefined) updateData.navbar_cta_text = navbar_cta_text
+    if (admin_btn_text !== undefined) updateData.admin_btn_text = admin_btn_text
 
     // Si email est fourni, ajouter
     if (email !== undefined && email !== '') {

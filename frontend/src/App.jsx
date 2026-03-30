@@ -12,32 +12,46 @@ import ManageAppointments from './pages/admin/ManageAppointments'
 import Revenue from './pages/admin/Revenue'
 import Settings from './pages/admin/Settings'
 import PrivateRoute from './components/PrivateRoute'
+import Maintenance from './pages/Maintenance'
+import OwnerProfile from './pages/OwnerProfile'
+import DeveloperDashboard from './pages/admin/DeveloperDashboard'
+import { useMaintenanceCheck } from './hooks/useMaintenanceCheck'
 
 function App() {
+  const { isMaintenance } = useMaintenanceCheck()
+
   return (
     <BrowserRouter>
       <AuthProvider>
         <NotificationProvider>
-          <Routes>
-            {/* ✅ ROUTES PUBLIQUES - jamais de redirection */}
-            <Route path="/" element={<Home />} />
-            <Route path="/services" element={<Services />} />
-            <Route path="/service/:id" element={<ServiceDetail />} />
-            <Route path="/admin/login" element={<Login />} />
+          {isMaintenance ? (
+            <Maintenance />
+          ) : (
+            <>
+              <Routes>
+                {/* ✅ ROUTES PUBLIQUES - jamais de redirection */}
+                <Route path="/" element={<Home />} />
+                <Route path="/services" element={<Services />} />
+                <Route path="/service/:id" element={<ServiceDetail />} />
+                <Route path="/admin/login" element={<Login />} />
+                <Route path="/owner-profile/:slug" element={<OwnerProfile />} />
 
-            {/* ✅ ROUTES ADMIN PROTÉGÉES - redirige vers login si pas connecté */}
-            <Route path="/admin" element={<PrivateRoute />}>
-              <Route path="dashboard" element={<AdminDashboard />} />
-              <Route path="services" element={<ManageServices />} />
-              <Route path="appointments" element={<ManageAppointments />} />
-              <Route path="revenue" element={<Revenue />} />
-              <Route path="settings" element={<Settings />} />
-            </Route>
+                {/* ✅ ROUTES ADMIN PROTÉGÉES - redirige vers login si pas connecté */}
+                <Route path="/admin" element={<PrivateRoute />}>
+                  <Route path="dashboard" element={<AdminDashboard />} />
+                  <Route path="services" element={<ManageServices />} />
+                  <Route path="appointments" element={<ManageAppointments />} />
+                  <Route path="revenue" element={<Revenue />} />
+                  <Route path="settings" element={<Settings />} />
+                  <Route path="developer" element={<DeveloperDashboard />} />
+                </Route>
 
-            {/* ✅ TOUTE AUTRE URL - retourne à l'accueil */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-          <ThemeSwitcher />
+                {/* ✅ TOUTE AUTRE URL - retourne à l'accueil */}
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+              <ThemeSwitcher />
+            </>
+          )}
         </NotificationProvider>
       </AuthProvider>
     </BrowserRouter>
