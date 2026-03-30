@@ -115,18 +115,19 @@ const Home = () => {
             className="text-center mb-5"
             style={{ paddingBottom: '20px' }}
           >
-            <span Style="background: rgba(184,134,11,0.1);
-              color: var(--primary-color);
-              padding: 8px 24px;
-              borderRadius: 20px;
-              fontSize: 13px;
-              fontWeight: 700;
-              letterSpacing: 2px;
-              textTransform: uppercase;
-              border: 1px solid rgba(184,134,11,0.2);
-              display: inline-block;
-              marginBottom: 20px;
-            ">
+            <span style={{
+              background: 'rgba(184,134,11,0.1)',
+              color: 'var(--primary-color)',
+              padding: '8px 24px',
+              borderRadius: '20px',
+              fontSize: '13px',
+              fontWeight: '700',
+              letterSpacing: '2px',
+              textTransform: 'uppercase',
+              border: '1px solid rgba(184,134,11,0.2)',
+              display: 'inline-block',
+              marginBottom: '20px'
+            }}>
               ✨ Nos Prestations
             </span>
             <h2 className="section-title centered" style={{ display: 'block', marginBottom: '12px' }}>
