@@ -63,9 +63,27 @@ const Navbar = () => {
             <Link to="/services" className="btn-luxury-outline d-none d-lg-inline-block" style={{ padding: '8px 20px', fontSize: '13px' }}>
               Prendre RDV
             </Link>
-            <Link to="/admin/login" className="btn-admin-login nav-link-luxury">
-              Connexion
-            </Link>
+            {typeof window !== 'undefined' && localStorage.getItem('token') ? (
+              <>
+                <Link to="/admin/dashboard" className="btn-admin-login nav-link-luxury">
+                  📊 Dashboard
+                </Link>
+                <button
+                  className="btn-admin-login nav-link-luxury"
+                  style={{ background: 'none', border: 'none', color: '#ff6b6b', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}
+                  onClick={() => {
+                    localStorage.removeItem('token');
+                    window.location.href = '/';
+                  }}
+                >
+                  🚪 Déconnexion
+                </button>
+              </>
+            ) : (
+              <Link to="/admin/login" className="btn-admin-login nav-link-luxury">
+                Connexion Admin
+              </Link>
+            )}
           </div>
         </div>
       </div>
