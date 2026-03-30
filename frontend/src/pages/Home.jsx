@@ -36,17 +36,18 @@ const Home = () => {
 
   const fetchServices = async () => {
     try {
-      const response = await api.get('/services')
-      const data = response.data.services || response.data || []
-      setServices(data)
+      setLoading(true);
+      const response = await api.get('/services');
+      const data = response.data.services || response.data || [];
+      setServices(Array.isArray(data) ? data : []);
       const cats = ['Tous', ...new Set(data.map(s => s.category).filter(Boolean))]
-      setCategories(cats)
+      setCategories(cats);
     } catch (error) {
-      console.error('Erreur chargement services:', error)
-      setServices([])
-      setFiltered([])
+      console.error('Erreur chargement services:', error);
+      setServices([]);
+      setCategories(['Tous']);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 

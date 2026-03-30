@@ -101,7 +101,7 @@ const AdminDashboard = () => {
       case 'revenue': return <Revenue />
       case 'notifications': return <NotificationPanel />
       case 'site': return <SiteSettings onUpdate={fetchDashboardData} />
-      case 'profile': return <ProfileSettings onUpdate={fetchDashboardData} />
+      case 'profile': return <ProfileSettings admin={adminInfo} onUpdate={fetchDashboardData} />
       case 'security': return <SecuritySettings isFirstLogin={isFirstLogin} onComplete={() => setIsFirstLogin(false)} />
       default: return null
     }

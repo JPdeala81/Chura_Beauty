@@ -89,37 +89,59 @@ export const createService = async (req, res) => {
       checkbox_options,
     } = req.body
 
+    if (!title || !description || !category || !price || !duration) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required fields: title, description, category, price, duration',
+      })
+    }
+
     const images = req.files ? req.files.map((file) => file.path) : []
+    let parsedOptions = []
+    
+    try {
+      if (checkbox_options) {
+        parsedOptions = typeof checkbox_options === 'string' 
+          ? JSON.parse(checkbox_options) 
+          : checkbox_options
+      }
+    } catch (parseError) {
+      console.error('Error parsing checkbox_options:', parseError)
+    }
+
+    const serviceData = {
+      title,
+      description,
+      category,
+      price: Number(price),
+      duration: Number(duration),
+      images: images.length > 0 ? images : [],
+      main_image_index: main_image_index ? Number(main_image_index) : 0,
+      display_style: display_style || 'card',
+      checkbox_options: parsedOptions,
+      is_active: true,
+    }
 
     const { data: service, error } = await supabase
       .from('services')
-      .insert({
-        title,
-        description,
-        category,
-        price: Number(price),
-        duration: duration || 60,
-        images,
-        main_image_index: main_image_index || 0,
-        display_style: display_style || 'card',
-        checkbox_options: checkbox_options || [],
-        is_active: true,
-      })
+      .insert([serviceData])
       .select()
-      .single()
 
     if (error) {
+      console.error('Supabase error:', error)
       return res.status(500).json({
         success: false,
         message: error.message,
+        details: error.details,
       })
     }
 
     res.status(201).json({
       success: true,
-      service,
+      service: service && service.length > 0 ? service[0] : service,
     })
   } catch (error) {
+    console.error('Create service error:', error)
     res.status(500).json({
       success: false,
       message: error.message,

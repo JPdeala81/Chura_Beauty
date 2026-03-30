@@ -20,9 +20,11 @@ export default function ManageServices() {
     try {
       setLoading(true);
       const response = await serviceService.getAllServices();
-      setServices(response.data.services);
+      const servicesData = response.data.services || [];
+      setServices(servicesData);
     } catch (error) {
       console.error('Error fetching services:', error);
+      setServices([]);
     } finally {
       setLoading(false);
     }
@@ -34,12 +36,13 @@ export default function ManageServices() {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Êtes-vous sûr ?')) {
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce service ?')) {
       try {
         await serviceService.deleteService(id);
-        setServices(services.filter((s) => s._id !== id));
+        setServices(services.filter((s) => (s._id || s.id) !== id));
       } catch (error) {
         console.error('Error deleting service:', error);
+        alert('Erreur lors de la suppression du service');
       }
     }
   };

@@ -1,19 +1,36 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Form, Button, Card, Alert } from 'react-bootstrap';
 import * as authService from '../../services/authService';
 
-export default function ProfileSettings({ admin, onSave }) {
+export default function ProfileSettings({ admin, onUpdate }) {
   const [formData, setFormData] = useState({
     email: admin?.email || '',
-    salonName: admin?.salonName || '',
-    ownerName: admin?.ownerName || '',
+    salonName: admin?.salon_name || '',
+    ownerName: admin?.owner_name || '',
     phone: admin?.phone || '',
     whatsapp: admin?.whatsapp || '',
     address: admin?.address || '',
     bio: admin?.bio || '',
-    instagram: admin?.socialLinks?.instagram || '',
-    facebook: admin?.socialLinks?.facebook || '',
+    instagram: admin?.social_links?.instagram || admin?.instagram || '',
+    facebook: admin?.social_links?.facebook || admin?.facebook || '',
   });
+
+  // Update form when admin data changes
+  useEffect(() => {
+    if (admin) {
+      setFormData({
+        email: admin.email || '',
+        salonName: admin.salon_name || '',
+        ownerName: admin.owner_name || '',
+        phone: admin.phone || '',
+        whatsapp: admin.whatsapp || '',
+        address: admin.address || '',
+        bio: admin.bio || '',
+        instagram: admin.social_links?.instagram || admin.instagram || '',
+        facebook: admin.social_links?.facebook || admin.facebook || '',
+      });
+    }
+  }, [admin]);
 
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: '',
@@ -46,12 +63,32 @@ export default function ProfileSettings({ admin, onSave }) {
     setError('');
     setSuccess('');
 
+    if (!formData.email) {
+      setError('L\'adresse email est requise');
+      return;
+    }
+
     try {
       setLoading(true);
-      await onSave(formData);
+      const updateData = {
+        email: formData.email,
+        salon_name: formData.salonName,
+        owner_name: formData.ownerName,
+        phone: formData.phone,
+        whatsapp: formData.whatsapp,
+        address: formData.address,
+        bio: formData.bio,
+        instagram: formData.instagram,
+        facebook: formData.facebook,
+      };
+      
+      await authService.updateAdmin(updateData);
       setSuccess('Profil mis à jour avec succès !');
+      if (onUpdate) {
+        setTimeout(() => onUpdate(), 500);
+      }
     } catch (err) {
-      setError(err.response?.data?.message || 'Erreur');
+      setError(err.response?.data?.message || 'Erreur lors de la mise à jour du profil');
     } finally {
       setLoading(false);
     }

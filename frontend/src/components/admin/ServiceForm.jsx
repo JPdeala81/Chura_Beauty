@@ -102,11 +102,23 @@ export default function ServiceForm({ service, onClose }) {
       setLoading(true);
 
       const data = new FormData();
+      const fieldMap = {
+        'title': 'title',
+        'description': 'description',
+        'category': 'category',
+        'price': 'price',
+        'duration': 'duration',
+        'displayStyle': 'display_style',
+        'checkboxOptions': 'checkbox_options'
+      };
+      
       Object.keys(formData).forEach((key) => {
+        const backendKey = fieldMap[key] || key;
         if (key === 'checkboxOptions') {
-          data.append(key, JSON.stringify(formData[key].split(',').filter(Boolean)));
+          const options = formData[key].split(',').filter(Boolean).map(o => o.trim());
+          data.append(backendKey, JSON.stringify(options));
         } else {
-          data.append(key, formData[key]);
+          data.append(backendKey, formData[key]);
         }
       });
 
@@ -115,16 +127,27 @@ export default function ServiceForm({ service, onClose }) {
       });
 
       if (service) {
-        await serviceService.updateService(service._id, data);
+        await serviceService.updateService(service._id || service.id, data);
         setSuccess('Service mis à jour !');
       } else {
         await serviceService.createService(data);
         setSuccess('Service créé !');
       }
 
+      setFormData({
+        title: '',
+        description: '',
+        category: '',
+        price: '',
+        duration: '',
+        displayStyle: 'card',
+        checkboxOptions: ''
+      });
+      setImages([]);
+
       setTimeout(() => {
         onClose();
-      }, 2000);
+      }, 1500);
     } catch (err) {
       setError(err.response?.data?.message || 'Erreur lors de l\'enregistrement');
     } finally {
