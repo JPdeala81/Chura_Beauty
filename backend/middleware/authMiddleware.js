@@ -17,6 +17,7 @@ export const protect = (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.admin = decoded;
+    req.deviceId = req.headers['x-device-id']; // Store device ID from headers
     next();
   } catch (error) {
     return res.status(401).json({ message: 'Not authorized to access this route' });

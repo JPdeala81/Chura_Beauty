@@ -401,3 +401,38 @@ export const updatePaymentConfig = async (req, res) => {
     })
   }
 }
+
+// VERIFY TOKEN - Check if session is valid
+export const verifyToken = async (req, res) => {
+  try {
+    const { data: admin, error } = await supabase
+      .from('admins')
+      .select('*')
+      .eq('id', req.admin.id)
+      .limit(1)
+      .single()
+
+    if (error || !admin) {
+      return res.status(401).json({
+        success: false,
+        message: 'Session expired',
+      })
+    }
+
+    res.status(200).json({
+      success: true,
+      token: req.headers.authorization.split(' ')[1],
+      admin: {
+        id: admin.id,
+        email: admin.email,
+        salon_name: admin.salon_name,
+        owner_name: admin.owner_name,
+      },
+    })
+  } catch (error) {
+    res.status(401).json({
+      success: false,
+      message: error.message,
+    })
+  }
+}

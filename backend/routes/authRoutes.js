@@ -9,13 +9,15 @@ import {
   updateSecurity,
   forgotPassword,
   recoverWithQuestion,
-  resetPassword
+  resetPassword,
+  verifyToken
 } from '../controllers/authController.js';
 import { protect } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
 router.post('/login', login);
+router.get('/verify', protect, verifyToken);
 router.get('/admin', protect, getAdmin);
 router.get('/profile', protect, getAdmin); // Alias pour /admin
 router.put('/admin', protect, updateAdmin);

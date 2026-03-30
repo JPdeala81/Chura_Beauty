@@ -9,9 +9,14 @@ const api = axios.create({
 })
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token')
+  const deviceId = sessionStorage.getItem('device_id')
+  const token = deviceId ? sessionStorage.getItem(`token_${deviceId}`) : null
+  
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
+  }
+  if (deviceId) {
+    config.headers['X-Device-Id'] = deviceId
   }
   return config
 })
@@ -20,8 +25,11 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('token')
-      // Ne jamais rediriger automatiquement ici !
+      const deviceId = sessionStorage.getItem('device_id')
+      if (deviceId) {
+        sessionStorage.removeItem(`token_${deviceId}`)
+        sessionStorage.removeItem(`admin_${deviceId}`)
+      }
     }
     return Promise.reject(error)
   }
