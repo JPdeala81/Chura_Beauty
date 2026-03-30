@@ -127,7 +127,7 @@ export default function ServiceForm({ service, onClose }) {
       });
 
       if (service) {
-        await serviceService.updateService(service._id || service.id, data);
+        await serviceService.updateService(service.id || service._id, data);
         setSuccess('Service mis à jour !');
       } else {
         await serviceService.createService(data);

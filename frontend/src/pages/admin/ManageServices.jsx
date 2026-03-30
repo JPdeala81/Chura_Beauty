@@ -39,7 +39,7 @@ export default function ManageServices() {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer ce service ?')) {
       try {
         await serviceService.deleteService(id);
-        setServices(services.filter((s) => (s._id || s.id) !== id));
+        setServices(services.filter((s) => s.id !== id && s._id !== id));
       } catch (error) {
         console.error('Error deleting service:', error);
         alert('Erreur lors de la suppression du service');

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import QRCodeBlock from './QRCodeBlock';
 
 export default function ServiceCard({ service }) {
-  const mainImage = service.images?.[service.mainImageIndex] || '/placeholder.jpg';
+  const mainImage = service.images?.[service.main_image_index] || service.images?.[0] || '/placeholder.jpg';
 
   return (
     <Card className="service-card h-100 shadow-sm">
@@ -38,7 +38,7 @@ export default function ServiceCard({ service }) {
         </div>
 
         <Link
-          to={`/service/${service._id}`}
+          to={`/service/${service.id}`}
           className="btn btn-custom btn-primary mt-auto"
         >
           Voir détails & Réserver

@@ -25,6 +25,7 @@ export default function ServiceDetail() {
         setService(response.data.service);
       } catch (error) {
         console.error('Error fetching service:', error);
+        setService(null);
       } finally {
         setLoading(false);
       }

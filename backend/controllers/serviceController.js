@@ -57,7 +57,15 @@ export const getServiceById = async (req, res) => {
       .limit(1)
       .single()
 
-    if (error || !service) {
+    if (error) {
+      console.error('Supabase error fetching service:', error)
+      return res.status(404).json({
+        success: false,
+        message: 'Service not found',
+      })
+    }
+
+    if (!service) {
       return res.status(404).json({
         success: false,
         message: 'Service not found',
@@ -69,6 +77,7 @@ export const getServiceById = async (req, res) => {
       service,
     })
   } catch (error) {
+    console.error('Get service by ID error:', error)
     res.status(500).json({
       success: false,
       message: error.message,
@@ -98,6 +107,13 @@ export const createService = async (req, res) => {
 
     const images = req.files ? req.files.map((file) => file.path) : []
     let parsedOptions = []
+    
+    console.log('📝 Creating service:', {
+      title,
+      imagesCount: images.length,
+      imageUrls: images,
+      is_active: true
+    })
     
     try {
       if (checkbox_options) {

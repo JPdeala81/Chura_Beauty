@@ -67,7 +67,7 @@ const AdminDashboard = () => {
       // Si pas de question secrète définie → premier login
       if (!admin.secret_question || !admin.recovery_email) {
         setIsFirstLogin(true)
-        setActiveTab('security')
+        // Ne plus changer l'onglet automatiquement - l'user peut le gérer lui-même
       }
     } catch (e) {}
   }
