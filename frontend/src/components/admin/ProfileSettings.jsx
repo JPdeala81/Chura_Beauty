@@ -4,6 +4,7 @@ import * as authService from '../../services/authService';
 
 export default function ProfileSettings({ admin, onSave }) {
   const [formData, setFormData] = useState({
+    email: admin?.email || '',
     salonName: admin?.salonName || '',
     ownerName: admin?.ownerName || '',
     phone: admin?.phone || '',
@@ -89,137 +90,267 @@ export default function ProfileSettings({ admin, onSave }) {
 
   return (
     <div>
-      {error && <Alert variant="danger">{error}</Alert>}
-      {success && <Alert variant="success">{success}</Alert>}
+      {error && <Alert variant="danger" style={{ borderRadius: '12px' }}>{error}</Alert>}
+      {success && <Alert variant="success" style={{ borderRadius: '12px' }}>{success}</Alert>}
 
-      <Card className="mb-4">
-        <Card.Header>Profil du salon</Card.Header>
+      <Card className="mb-4" style={{ borderRadius: '16px', border: '1px solid rgba(184,134,11,0.1)' }}>
+        <Card.Header style={{ 
+          background: 'linear-gradient(135deg, rgba(184,134,11,0.08), rgba(212,165,116,0.08))',
+          borderBottom: '1px solid rgba(184,134,11,0.1)',
+          borderRadius: '16px 16px 0 0'
+        }}>
+          <div style={{ fontSize: '16px', fontWeight: '700', color: '#1a0f08', fontFamily: 'Playfair Display, serif' }}>
+            👤 Profil du salon
+          </div>
+        </Card.Header>
         <Card.Body>
           <Form onSubmit={handleSubmit}>
-            <Form.Group className="mb-3">
-              <Form.Label>Nom du salon</Form.Label>
+            {/* Email */}
+            <Form.Group className="mb-4">
+              <Form.Label style={{ fontWeight: '700', color: '#1a0f08', fontSize: '14px' }}>
+                📧 Email *
+              </Form.Label>
+              <Form.Control
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                required
+                className="form-control-luxury"
+                placeholder="admin@salon.com"
+                style={{ borderRadius: '10px', padding: '12px 16px' }}
+              />
+              <small style={{ color: '#6c757d', marginTop: '6px', display: 'block' }}>
+                Utilisé pour les notifications et la récupération de compte
+              </small>
+            </Form.Group>
+
+            {/* Nom du salon */}
+            <Form.Group className="mb-4">
+              <Form.Label style={{ fontWeight: '700', color: '#1a0f08', fontSize: '14px' }}>
+                💆‍♀️ Nom du salon
+              </Form.Label>
               <Form.Control
                 type="text"
                 name="salonName"
                 value={formData.salonName}
                 onChange={handleChange}
+                className="form-control-luxury"
+                placeholder="Chura Beauty"
+                style={{ borderRadius: '10px', padding: '12px 16px' }}
               />
             </Form.Group>
 
-            <Form.Group className="mb-3">
-              <Form.Label>Nom du propriétaire</Form.Label>
+            {/* Nom du propriétaire */}
+            <Form.Group className="mb-4">
+              <Form.Label style={{ fontWeight: '700', color: '#1a0f08', fontSize: '14px' }}>
+                👤 Nom du propriétaire
+              </Form.Label>
               <Form.Control
                 type="text"
                 name="ownerName"
                 value={formData.ownerName}
                 onChange={handleChange}
+                className="form-control-luxury"
+                style={{ borderRadius: '10px', padding: '12px 16px' }}
               />
             </Form.Group>
 
-            <Form.Group className="mb-3">
-              <Form.Label>Téléphone</Form.Label>
-              <Form.Control
-                type="tel"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-              />
-            </Form.Group>
+            {/* Contact Information */}
+            <div style={{ backgroundColor: 'rgba(184,134,11,0.03)', padding: '16px', borderRadius: '12px', marginBottom: '20px', border: '1px solid rgba(184,134,11,0.1)' }}>
+              <h5 style={{ marginBottom: '16px', fontWeight: '700', color: '#1a0f08', fontSize: '14px' }}>
+                📞 Coordonnées
+              </h5>
+              
+              <Form.Group className="mb-4">
+                <Form.Label style={{ fontWeight: '700', color: '#1a0f08', fontSize: '13px' }}>
+                  ☎️ Téléphone
+                </Form.Label>
+                <Form.Control
+                  type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  className="form-control-luxury"
+                  placeholder="+226 XX XX XXXX"
+                  style={{ borderRadius: '10px', padding: '12px 16px' }}
+                />
+              </Form.Group>
 
-            <Form.Group className="mb-3">
-              <Form.Label>WhatsApp</Form.Label>
-              <Form.Control
-                type="tel"
-                name="whatsapp"
-                value={formData.whatsapp}
-                onChange={handleChange}
-              />
-            </Form.Group>
+              <Form.Group className="mb-4">
+                <Form.Label style={{ fontWeight: '700', color: '#1a0f08', fontSize: '13px' }}>
+                  💬 WhatsApp
+                </Form.Label>
+                <Form.Control
+                  type="tel"
+                  name="whatsapp"
+                  value={formData.whatsapp}
+                  onChange={handleChange}
+                  className="form-control-luxury"
+                  placeholder="+226 XX XX XXXX"
+                  style={{ borderRadius: '10px', padding: '12px 16px' }}
+                />
+              </Form.Group>
 
-            <Form.Group className="mb-3">
-              <Form.Label>Adresse</Form.Label>
-              <Form.Control
-                type="text"
-                name="address"
-                value={formData.address}
-                onChange={handleChange}
-              />
-            </Form.Group>
+              <Form.Group className="mb-0">
+                <Form.Label style={{ fontWeight: '700', color: '#1a0f08', fontSize: '13px' }}>
+                  📍 Adresse
+                </Form.Label>
+                <Form.Control
+                  type="text"
+                  name="address"
+                  value={formData.address}
+                  onChange={handleChange}
+                  className="form-control-luxury"
+                  placeholder="Votre adresse complète"
+                  style={{ borderRadius: '10px', padding: '12px 16px' }}
+                />
+              </Form.Group>
+            </div>
 
-            <Form.Group className="mb-3">
-              <Form.Label>Biographie</Form.Label>
+            {/* Biographie */}
+            <Form.Group className="mb-4">
+              <Form.Label style={{ fontWeight: '700', color: '#1a0f08', fontSize: '14px' }}>
+                ✒️ Biographie
+              </Form.Label>
               <Form.Control
                 as="textarea"
                 rows={3}
                 name="bio"
                 value={formData.bio}
                 onChange={handleChange}
+                className="form-control-luxury"
+                placeholder="Présentez votre salon et vos services..."
+                style={{ borderRadius: '10px', padding: '12px 16px' }}
               />
             </Form.Group>
 
-            <Form.Group className="mb-3">
-              <Form.Label>Instagram</Form.Label>
-              <Form.Control
-                type="text"
-                name="instagram"
-                value={formData.instagram}
-                onChange={handleChange}
-              />
-            </Form.Group>
+            {/* Social Links */}
+            <div style={{ backgroundColor: 'rgba(212,165,116,0.03)', padding: '16px', borderRadius: '12px', marginBottom: '20px', border: '1px solid rgba(212,165,116,0.1)' }}>
+              <h5 style={{ marginBottom: '16px', fontWeight: '700', color: '#1a0f08', fontSize: '14px' }}>
+                📱 Réseaux sociaux
+              </h5>
+              
+              <Form.Group className="mb-4">
+                <Form.Label style={{ fontWeight: '700', color: '#1a0f08', fontSize: '13px' }}>
+                  📸 Instagram
+                </Form.Label>
+                <Form.Control
+                  type="text"
+                  name="instagram"
+                  value={formData.instagram}
+                  onChange={handleChange}
+                  className="form-control-luxury"
+                  placeholder="@votre_compte"
+                  style={{ borderRadius: '10px', padding: '12px 16px' }}
+                />
+              </Form.Group>
 
-            <Form.Group className="mb-3">
-              <Form.Label>Facebook</Form.Label>
-              <Form.Control
-                type="text"
-                name="facebook"
-                value={formData.facebook}
-                onChange={handleChange}
-              />
-            </Form.Group>
+              <Form.Group className="mb-0">
+                <Form.Label style={{ fontWeight: '700', color: '#1a0f08', fontSize: '13px' }}>
+                  👍 Facebook
+                </Form.Label>
+                <Form.Control
+                  type="text"
+                  name="facebook"
+                  value={formData.facebook}
+                  onChange={handleChange}
+                  className="form-control-luxury"
+                  placeholder="Votre page Facebook"
+                  style={{ borderRadius: '10px', padding: '12px 16px' }}
+                />
+              </Form.Group>
+            </div>
 
-            <Button variant="primary" type="submit" disabled={loading}>
-              {loading ? 'Enregistrement...' : 'Enregistrer'}
+            <Button 
+              variant="primary" 
+              type="submit" 
+              disabled={loading}
+              style={{ 
+                borderRadius: '10px',
+                fontWeight: '700',
+                background: 'linear-gradient(135deg, #b8860b, #d4a574)',
+                border: 'none',
+                padding: '11px 24px'
+              }}
+            >
+              {loading ? '⏳ Enregistrement...' : '✓ Enregistrer les modifications'}
             </Button>
           </Form>
         </Card.Body>
       </Card>
 
-      <Card>
-        <Card.Header>Modifier le mot de passe</Card.Header>
+      <Card style={{ borderRadius: '16px', border: '1px solid rgba(184,134,11,0.1)' }}>
+        <Card.Header style={{ 
+          background: 'linear-gradient(135deg, rgba(220,53,69,0.08), rgba(255,107,107,0.08))',
+          borderBottom: '1px solid rgba(220,53,69,0.1)',
+          borderRadius: '16px 16px 0 0'
+        }}>
+          <div style={{ fontSize: '16px', fontWeight: '700', color: '#c82333', fontFamily: 'Playfair Display, serif' }}>
+            🔐 Modifier le mot de passe
+          </div>
+        </Card.Header>
         <Card.Body>
           <Form onSubmit={handlePasswordSubmit}>
-            <Form.Group className="mb-3">
-              <Form.Label>Mot de passe actuel</Form.Label>
+            <Form.Group className="mb-4">
+              <Form.Label style={{ fontWeight: '700', color: '#1a0f08', fontSize: '14px' }}>
+                🔑 Mot de passe actuel
+              </Form.Label>
               <Form.Control
                 type="password"
                 name="currentPassword"
                 value={passwordForm.currentPassword}
                 onChange={handlePasswordChange}
+                className="form-control-luxury"
+                required
+                style={{ borderRadius: '10px', padding: '12px 16px' }}
               />
             </Form.Group>
 
-            <Form.Group className="mb-3">
-              <Form.Label>Nouveau mot de passe</Form.Label>
+            <Form.Group className="mb-4">
+              <Form.Label style={{ fontWeight: '700', color: '#1a0f08', fontSize: '14px' }}>
+                ✨ Nouveau mot de passe
+              </Form.Label>
               <Form.Control
                 type="password"
                 name="newPassword"
                 value={passwordForm.newPassword}
                 onChange={handlePasswordChange}
+                className="form-control-luxury"
+                required
+                style={{ borderRadius: '10px', padding: '12px 16px' }}
               />
+              <small style={{ color: '#6c757d', marginTop: '6px', display: 'block' }}>
+                💡 Minimum 8 caractères, avec majuscule et chiffre
+              </small>
             </Form.Group>
 
-            <Form.Group className="mb-3">
-              <Form.Label>Confirmer le mot de passe</Form.Label>
+            <Form.Group className="mb-4">
+              <Form.Label style={{ fontWeight: '700', color: '#1a0f08', fontSize: '14px' }}>
+                ✓ Confirmer le mot de passe
+              </Form.Label>
               <Form.Control
                 type="password"
                 name="confirmPassword"
                 value={passwordForm.confirmPassword}
                 onChange={handlePasswordChange}
+                className="form-control-luxury"
+                required
+                style={{ borderRadius: '10px', padding: '12px 16px' }}
               />
             </Form.Group>
 
-            <Button variant="primary" type="submit" disabled={loading}>
-              {loading ? 'Modification...' : 'Modifier'}
+            <Button 
+              variant="danger" 
+              type="submit" 
+              disabled={loading}
+              style={{ 
+                borderRadius: '10px',
+                fontWeight: '700',
+                padding: '11px 24px'
+              }}
+            >
+              {loading ? '⏳ Modification...' : '🔄 Modifier le mot de passe'}
             </Button>
           </Form>
         </Card.Body>
@@ -227,3 +358,4 @@ export default function ProfileSettings({ admin, onSave }) {
     </div>
   );
 }
+

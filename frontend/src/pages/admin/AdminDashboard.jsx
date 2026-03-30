@@ -14,19 +14,25 @@ import SecuritySettings from '../../components/admin/SecuritySettings'
 import SiteSettings from '../../components/admin/SiteSettings'
 import NotificationPanel from '../../components/admin/NotificationPanel'
 
-const tabs = [
+const primaryTabs = [
   { id: 'home', label: 'Accueil', icon: '🏠' },
   { id: 'services', label: 'Services', icon: '💅' },
   { id: 'appointments', label: 'Rendez-vous', icon: '📅' },
   { id: 'revenue', label: 'Revenus', icon: '📊' },
+]
+
+const secondaryTabs = [
   { id: 'notifications', label: 'Notifications', icon: '🔔' },
   { id: 'site', label: 'Mon Site', icon: '🌐' },
   { id: 'profile', label: 'Profil', icon: '👤' },
   { id: 'security', label: 'Sécurité', icon: '🔒' },
 ]
 
+const tabs = [...primaryTabs, ...secondaryTabs]
+
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('home')
+  const [showMoreMenu, setShowMoreMenu] = useState(false)
   const [stats, setStats] = useState({ services: 0, appointments: 0, pending: 0, revenue: 0 })
   const [adminInfo, setAdminInfo] = useState(null)
   const [unreadCount, setUnreadCount] = useState(0)
@@ -140,7 +146,7 @@ const AdminDashboard = () => {
 
             {/* Tabs navbar - desktop */}
             <div className="d-none d-lg-flex align-items-center gap-1">
-              {tabs.map(tab => (
+              {primaryTabs.map(tab => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
@@ -163,9 +169,9 @@ const AdminDashboard = () => {
                 >
                   <span>{tab.icon}</span>
                   <span>{tab.label}</span>
-                  {tab.id === 'notifications' && unreadCount > 0 && (
+                  {tab.id === 'appointments' && stats.pending > 0 && (
                     <span style={{
-                      background: '#dc3545',
+                      background: '#fd7e14',
                       color: 'white',
                       borderRadius: '50%',
                       width: '18px',
@@ -175,10 +181,95 @@ const AdminDashboard = () => {
                       alignItems: 'center',
                       justifyContent: 'center',
                       fontWeight: '700'
-                    }}>{unreadCount}</span>
+                    }}>{stats.pending}</span>
                   )}
                 </button>
               ))}
+              
+              {/* More menu dropdown */}
+              <div style={{ position: 'relative' }}>
+                <button
+                  onClick={() => setShowMoreMenu(!showMoreMenu)}
+                  style={{
+                    background: showMoreMenu ? 'rgba(184,134,11,0.2)' : 'transparent',
+                    border: showMoreMenu ? '1px solid rgba(184,134,11,0.4)' : '1px solid transparent',
+                    color: 'rgba(248,200,212,0.6)',
+                    borderRadius: '10px',
+                    padding: '7px 14px',
+                    fontSize: '13px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontFamily: 'Nunito, sans-serif'
+                  }}
+                >
+                  <span>⋯ Plus</span>
+                </button>
+                
+                {showMoreMenu && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '100%',
+                    left: 0,
+                    marginTop: '6px',
+                    background: 'linear-gradient(135deg, #1a0f08 0%, #2c1810 100%)',
+                    border: '1px solid rgba(212,165,116,0.2)',
+                    borderRadius: '12px',
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+                    minWidth: '180px',
+                    zIndex: 1001,
+                    overflow: 'hidden'
+                  }}>
+                    {secondaryTabs.map(tab => (
+                      <button
+                        key={tab.id}
+                        onClick={() => {
+                          setActiveTab(tab.id)
+                          setShowMoreMenu(false)
+                        }}
+                        style={{
+                          width: '100%',
+                          background: activeTab === tab.id ? 'rgba(184,134,11,0.2)' : 'transparent',
+                          border: 'none',
+                          color: activeTab === tab.id ? '#d4a574' : 'rgba(248,200,212,0.7)',
+                          padding: '10px 16px',
+                          textAlign: 'left',
+                          fontSize: '13px',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          fontFamily: 'Nunito, sans-serif',
+                          borderBottom: tab !== secondaryTabs[secondaryTabs.length - 1] ? '1px solid rgba(212,165,116,0.1)' : 'none'
+                        }}
+                      >
+                        <span>{tab.icon}</span>
+                        <span>{tab.label}</span>
+                        {tab.id === 'notifications' && unreadCount > 0 && (
+                          <span style={{
+                            marginLeft: 'auto',
+                            background: '#dc3545',
+                            color: 'white',
+                            borderRadius: '50%',
+                            width: '18px',
+                            height: '18px',
+                            fontSize: '10px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontWeight: '700'
+                          }}>{unreadCount}</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Actions droite */}

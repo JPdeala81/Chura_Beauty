@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { NotificationProvider } from './context/NotificationContext'
+import ThemeSwitcher from './components/ThemeSwitcher'
 import Home from './pages/Home'
 import Services from './pages/Services'
 import ServiceDetail from './pages/ServiceDetail'
@@ -36,6 +37,7 @@ function App() {
             {/* ✅ TOUTE AUTRE URL - retourne à l'accueil */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+          <ThemeSwitcher />
         </NotificationProvider>
       </AuthProvider>
     </BrowserRouter>

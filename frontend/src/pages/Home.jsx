@@ -83,48 +83,72 @@ const Home = () => {
       {/* Services Section */}
       <section
         ref={servicesRef}
-        className="py-5"
-        style={{ background: 'var(--light-color)', minHeight: '60vh' }}
+        style={{ 
+          background: 'linear-gradient(135deg, var(--light-color) 0%, var(--light-medium) 100%)',
+          minHeight: '70vh',
+          paddingTop: '80px',
+          paddingBottom: '100px',
+          position: 'relative',
+          overflow: 'hidden'
+        }}
       >
-        <div className="container">
+        {/* Decorative elements */}
+        <div style={{
+          position: 'absolute',
+          top: -80,
+          right: -150,
+          width: 400,
+          height: 400,
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(184,134,11,0.06) 0%, transparent 70%)',
+          pointerEvents: 'none'
+        }}></div>
+
+        <div className="container" style={{ position: 'relative', zIndex: 2 }}>
+          {/* Section Header */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
             className="text-center mb-5"
+            style={{ paddingBottom: '20px' }}
           >
-            <span style={{
-              background: 'rgba(184,134,11,0.1)',
-              color: 'var(--primary-color)',
-              padding: '6px 20px',
-              borderRadius: '20px',
-              fontSize: '13px',
-              fontWeight: '600',
-              letterSpacing: '2px',
-              textTransform: 'uppercase',
-              border: '1px solid rgba(184,134,11,0.2)',
-              display: 'inline-block',
-              marginBottom: '16px'
-            }}>
+            <span Style="background: rgba(184,134,11,0.1);
+              color: var(--primary-color);
+              padding: 8px 24px;
+              borderRadius: 20px;
+              fontSize: 13px;
+              fontWeight: 700;
+              letterSpacing: 2px;
+              textTransform: uppercase;
+              border: 1px solid rgba(184,134,11,0.2);
+              display: inline-block;
+              marginBottom: 20px;
+            ">
               ✨ Nos Prestations
             </span>
-            <h2 className="section-title centered" style={{ display: 'block' }}>
+            <h2 className="section-title centered" style={{ display: 'block', marginBottom: '12px' }}>
               Découvrez Nos Services
             </h2>
-            <p className="text-muted mt-3" style={{ maxWidth: '500px', margin: '12px auto 0' }}>
-              Des soins de beauté personnalisés pour révéler votre éclat naturel
+            <p className="text-muted mt-3" style={{ maxWidth: '520px', margin: '16px auto 0', lineHeight: '1.8', fontSize: '16px' }}>
+              Des soins de beauté personnalisés pour révéler votre éclat naturel avec nos expertes qualifiées
             </p>
           </motion.div>
 
-          <SearchBar onSearch={setSearchQuery} onPriceChange={setPriceRange} />
+          {/* Search and Filters */}
+          <div style={{ marginBottom: '40px' }}>
+            <SearchBar onSearch={setSearchQuery} onPriceChange={setPriceRange} />
+            <div style={{ marginTop: '24px' }}>
+              <CategoryFilter
+                categories={categories}
+                active={activeCategory}
+                onChange={setActiveCategory}
+              />
+            </div>
+          </div>
 
-          <CategoryFilter
-            categories={categories}
-            active={activeCategory}
-            onChange={setActiveCategory}
-          />
-
+          {/* Services Grid */}
           <AnimatePresence mode="wait">
             {loading ? (
               <motion.div
@@ -179,7 +203,7 @@ const Home = () => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="row g-4 mt-2"
+                className="row g-4"
               >
                 {filtered.map((service, index) => (
                   <motion.div
@@ -200,45 +224,71 @@ const Home = () => {
       </section>
 
       {/* Why Us Section */}
-      <section style={{ background: 'white', padding: '80px 0' }}>
-        <div className="container">
+      <section style={{ background: 'linear-gradient(135deg, #ffffff 0%, var(--light-medium) 100%)', padding: '100px 0', position: 'relative', overflow: 'hidden' }}>
+        {/* Decorative background */}
+        <div style={{
+          position: 'absolute',
+          bottom: -100,
+          left: -100,
+          width: 400,
+          height: 400,
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(248,200,212,0.08) 0%, transparent 70%)',
+          pointerEvents: 'none'
+        }}></div>
+
+        <div className="container" style={{ position: 'relative', zIndex: 2 }}>
           <motion.div
             className="text-center mb-5"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
+            style={{ marginBottom: '60px' }}
           >
-            <h2 className="section-title centered" style={{ display: 'block' }}>
+            <span style={{
+              background: 'rgba(184,134,11,0.1)',
+              color: 'var(--primary-color)',
+              padding: '8px 24px',
+              borderRadius: '20px',
+              fontSize: '13px',
+              fontWeight: '700',
+              letterSpacing: '2px',
+              textTransform: 'uppercase',
+              border: '1px solid rgba(184,134,11,0.2)',
+              display: 'inline-block',
+              marginBottom: '20px'
+            }}>
+              ⭐ Nos Avantages
+            </span>
+            <h2 className="section-title centered" style={{ display: 'block', marginBottom: '16px' }}>
               Pourquoi Nous Choisir
             </h2>
+            <p className="text-muted" style={{ maxWidth: '520px', margin: '0 auto', lineHeight: '1.8', fontSize: '16px' }}>
+              Découvrez les raisons pour lesquelles nos clientes nous font confiance et reviennent à chaque visite
+            </p>
           </motion.div>
-          <div className="row g-4">
+          
+          <div className="row g-5">
             {[
-              { icon: '👑', title: 'Expertise Premium', desc: 'Des années de formation et de passion pour la beauté' },
-              { icon: '🌿', title: 'Produits Naturels', desc: 'Nous utilisons uniquement des produits de qualité supérieure' },
+              { icon: '👑', title: 'Expertise Premium', desc: 'Des années de formation et de passion pour la beauté intemporelle' },
+              { icon: '🌿', title: 'Produits Naturels', desc: 'Nous utilisons uniquement des produits de qualité supérieure et naturels' },
               { icon: '💝', title: 'Service Personnalisé', desc: 'Chaque cliente est unique et mérite une attention particulière' },
-              { icon: '📅', title: 'Réservation Facile', desc: 'Prenez rendez-vous en ligne en quelques clics' }
+              { icon: '📅', title: 'Réservation Facile', desc: 'Prenez rendez-vous en ligne en quelques clics, 24h/24' }
             ].map((item, i) => (
               <div key={i} className="col-md-6 col-lg-3">
                 <motion.div
-                  className="text-center p-4"
-                  style={{
-                    borderRadius: '20px',
-                    border: '1px solid rgba(184,134,11,0.1)',
-                    transition: 'all 0.3s ease',
-                    cursor: 'default'
-                  }}
-                  initial={{ opacity: 0, y: 20 }}
+                  className="why-card"
+                  initial={{ opacity: 0, y: 40 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.1 }}
+                  transition={{ delay: i * 0.12, duration: 0.6 }}
                   viewport={{ once: true }}
-                  whileHover={{ y: -8, boxShadow: '0 20px 40px rgba(184,134,11,0.15)' }}
+                  style={{ height: '100%' }}
                 >
-                  <div style={{ fontSize: '3rem', marginBottom: '16px' }}>{item.icon}</div>
-                  <h5 style={{ fontFamily: 'Playfair Display, serif', color: 'var(--dark-color)', marginBottom: '12px' }}>
+                  <div className="why-icon">{item.icon}</div>
+                  <h5 style={{ fontFamily: 'Playfair Display, serif', color: 'var(--dark-color)', marginBottom: '12px', fontSize: '18px', fontWeight: '700' }}>
                     {item.title}
                   </h5>
-                  <p style={{ color: 'var(--text-muted)', fontSize: '14px', lineHeight: '1.7' }}>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '15px', lineHeight: '1.8', margin: 0 }}>
                     {item.desc}
                   </p>
                 </motion.div>
