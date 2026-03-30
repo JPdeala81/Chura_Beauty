@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase';
+import { supabase } from './supabaseClient';
 
 export const subscribeToAppointments = (callback) => {
   // Subscribe to real-time updates on appointments table
