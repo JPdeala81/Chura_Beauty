@@ -2,23 +2,29 @@ import { supabase } from '../config/supabase.js'
 
 export const getNotifications = async (req, res) => {
   try {
+    console.log('📬 Fetching notifications...')
     const { data: notifications, error } = await supabase
       .from('notifications')
-      .select('*, appointments!inner(client_name)')
+      .select('*')
       .order('created_at', { ascending: false })
+      .limit(50)
 
     if (error) {
+      console.error('❌ Error fetching notifications:', error)
       return res.status(500).json({
         success: false,
         message: error.message,
       })
     }
 
+    console.log(`✅ Found ${notifications.length} notifications`)
+
     res.status(200).json({
       success: true,
-      notifications,
+      notifications: notifications || [],
     })
   } catch (error) {
+    console.error('❌ Error in getNotifications:', error)
     res.status(500).json({
       success: false,
       message: error.message,
