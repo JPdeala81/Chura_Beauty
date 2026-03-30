@@ -16,31 +16,22 @@
     ],
     "routes": [
       {
-        "src": "^/api/(.*)",
+        "src": "^/api(/|$)(.*)",
         "dest": "backend/server.js"
       },
       {
-        "src": "^/assets/(.*)",
-        "dest": "frontend/dist/assets/$1"
+        "src": "^/(assets)/(.*)",
+        "dest": "frontend/dist/$1/$2"
       },
       {
-        "src": "^/(.*\\.(js|css|ico|png|jpg|jpeg|svg|woff|woff2|ttf|eot|map|json)$)",
-        "dest": "frontend/dist/$1"
+        "src": "^/.*\\.(js|css|ico|png|jpg|jpeg|svg|woff|woff2|ttf|eot|map|json)$",
+        "dest": "frontend/dist/$0"
       },
       {
-        "src": "^/admin/.*",
-        "dest": "frontend/dist/index.html"
+        "handle": "filesystem"
       },
       {
-        "src": "^/services/.*",
-        "dest": "frontend/dist/index.html"
-      },
-      {
-        "src": "^/settings/.*",
-        "dest": "frontend/dist/index.html"
-      },
-      {
-        "src": "^/(.*)",
+        "src": "/(.*)",
         "dest": "frontend/dist/index.html"
       }
     ]
