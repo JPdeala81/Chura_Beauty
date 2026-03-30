@@ -5,8 +5,7 @@
       "src": "frontend/package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "dist",
-        "buildCommand": "VITE_API_URL=https://chura-beauty-backend.vercel.app/api VITE_SUPABASE_URL=https://crpokewlpjqujxojmmsz.supabase.co VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNycG9rZXdscGpxdWp4b2ptbXN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2OTgyODYsImV4cCI6MjA5MDI3NDI4Nn0.pBmUVGYrwIVWLPJ4aGsFjRiqR47y5upXQnIibE_Cqvo npm run build"
+        "distDir": "dist"
       }
     },
     {
