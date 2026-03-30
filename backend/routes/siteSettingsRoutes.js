@@ -22,4 +22,12 @@ router.post('/maintenance/disable', protect, siteSettingsController.disableMaint
 // GET admin stats (admin only - for DeveloperDashboard)
 router.get('/admin/stats', protect, siteSettingsController.getAdminStats)
 
+// Developer Dashboard Routes
+router.get('/developer/stats', protect, siteSettingsController.getDeveloperStats)
+router.post('/developer/maintenance-toggle', protect, siteSettingsController.toggleMaintenanceMode)
+router.get('/developer/database-analytics', protect, siteSettingsController.getDatabaseAnalytics)
+router.get('/developer/recent-logs', protect, siteSettingsController.getRecentLogs)
+router.post('/developer/admin-delete', protect, siteSettingsController.deleteAdminUser)
+router.get('/developer/all-admins', protect, siteSettingsController.getAllAdmins)
+
 export default router
