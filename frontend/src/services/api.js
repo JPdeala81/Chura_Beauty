@@ -21,7 +21,7 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('token')
-      window.location.href = '/admin/login'
+      // Ne jamais rediriger automatiquement ici !
     }
     return Promise.reject(error)
   }
