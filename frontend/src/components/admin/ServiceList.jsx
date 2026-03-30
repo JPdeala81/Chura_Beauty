@@ -16,14 +16,14 @@ export default function ServiceList({ services, onEdit, onDelete }) {
 
       <tbody>
         {services.map((service) => (
-          <tr key={service._id}>
+          <tr key={service.id || service._id}>
             <td>{service.title}</td>
             <td>{service.category}</td>
             <td>{service.price} FCFA</td>
             <td>{service.duration} min</td>
             <td>
-              <Badge bg={service.isActive ? 'success' : 'danger'}>
-                {service.isActive ? 'Actif' : 'Inactif'}
+              <Badge bg={service.is_active ? 'success' : 'danger'}>
+                {service.is_active ? 'Actif' : 'Inactif'}
               </Badge>
             </td>
             <td>
@@ -38,7 +38,7 @@ export default function ServiceList({ services, onEdit, onDelete }) {
               <Button
                 variant="danger"
                 size="sm"
-                onClick={() => onDelete(service._id)}
+                onClick={() => onDelete(service.id || service._id)}
               >
                 Supprimer
               </Button>

@@ -22,6 +22,12 @@ export default function ServiceDetail() {
       try {
         setLoading(true);
         const response = await serviceService.getServiceById(id);
+        console.log('📸 Service fetched:', {
+          title: response.data.service?.title,
+          imagesCount: response.data.service?.images?.length,
+          images: response.data.service?.images,
+          main_image_index: response.data.service?.main_image_index
+        });
         setService(response.data.service);
       } catch (error) {
         console.error('Error fetching service:', error);
