@@ -2,48 +2,80 @@ import { supabase } from '../config/supabase.js'
 
 export const getStats = async (req, res) => {
   try {
-    // Get current month
+    // Get current month - properly formatted for date range
     const now = new Date()
-    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+    const year = now.getFullYear()
+    const month = String(now.getMonth() + 1).padStart(2, '0')
+    
+    // Create the date range for the current month
+    const monthStart = `${year}-${month}-01`
+    const monthEnd = new Date(year, now.getMonth() + 1, 0) // Last day of month
+    const monthEndStr = `${year}-${month}-${String(monthEnd.getDate()).padStart(2, '0')}`
 
-    // Get all services
+    console.log(`📊 Getting stats for month: ${monthStart} to ${monthEndStr}`)
+
+    // Get all active services
     const { data: services, error: servicesError } = await supabase
       .from('services')
       .select('id')
       .eq('is_active', true)
 
     if (servicesError) {
-      console.error('Services error:', servicesError)
+      console.error('❌ Services error:', servicesError)
     }
+    console.log(`✅ Active services: ${services?.length || 0}`)
 
-    // Get appointments this month
-    const { data: appointmentsThisMonth, error: appointmentsError } = await supabase
+    // Get ALL appointments (no filter by month first, we'll check after)
+    const { data: allAppointments, error: appointmentsError } = await supabase
       .from('appointments')
-      .select('id, status, revenue')
-      .gte('desired_date', `${currentMonth}-01`)
-      .lte('desired_date', `${currentMonth}-31`)
+      .select('id, status, revenue, desired_date, created_at')
+      .order('created_at', { ascending: false })
 
     if (appointmentsError) {
-      console.error('Appointments error:', appointmentsError)
+      console.error('❌ Appointments error:', appointmentsError)
+      throw appointmentsError
+    }
+
+    console.log(`✅ Total appointments in DB: ${allAppointments?.length || 0}`)
+    
+    // Filter appointments by current month (client-side filtering for reliability)
+    const appointmentsThisMonth = (allAppointments || []).filter(appt => {
+      try {
+        const apptDate = new Date(appt.desired_date)
+        const apptYear = apptDate.getFullYear()
+        const apptMonth = String(apptDate.getMonth() + 1).padStart(2, '0')
+        const currentYearMonth = `${year}-${month}`
+        const apptYearMonth = `${apptYear}-${apptMonth}`
+        return apptYearMonth === currentYearMonth
+      } catch (e) {
+        console.warn(`⚠️ Invalid date for appointment ${appt.id}: ${appt.desired_date}`)
+        return false
+      }
+    })
+
+    console.log(`✅ Appointments this month: ${appointmentsThisMonth.length}`)
+    if (appointmentsThisMonth.length > 0) {
+      console.log(`   Sample appointments:`, appointmentsThisMonth.slice(0, 2))
     }
 
     // Count pending appointments
-    const pendingCount = (appointmentsThisMonth || [])
-      .filter(a => a.status === 'pending').length
+    const pendingCount = appointmentsThisMonth.filter(a => a.status === 'pending').length
+    console.log(`✅ Pending appointments: ${pendingCount}`)
 
-    // Calculate revenue
-    const totalRevenue = (appointmentsThisMonth || [])
+    // Calculate revenue from accepted appointments
+    const totalRevenue = appointmentsThisMonth
       .filter(a => a.status === 'accepted')
-      .reduce((sum, a) => sum + (a.revenue || 0), 0)
+      .reduce((sum, a) => sum + (parseFloat(a.revenue) || 0), 0)
+    console.log(`✅ Total revenue (accepted): ${totalRevenue}`)
 
     const stats = {
       services: services?.length || 0,
-      appointments: appointmentsThisMonth?.length || 0,
+      appointments: appointmentsThisMonth.length,
       pending: pendingCount,
       revenue: totalRevenue
     }
 
-    console.log('✅ Dashboard stats:', stats)
+    console.log('✅ Final dashboard stats:', stats)
     res.status(200).json(stats)
   } catch (error) {
     console.error('❌ Error getting stats:', error)

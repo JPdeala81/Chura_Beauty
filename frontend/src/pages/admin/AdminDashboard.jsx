@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate, Link } from 'react-router-dom'
 import { AuthContext } from '../../context/AuthContext'
 import api from '../../services/api'
+import { subscribeToAppointments, unsubscribeFromAppointments } from '../../services/realtimeService'
 
 // Import de tous les composants admin
 import ManageServices from './ManageServices'
@@ -43,6 +44,16 @@ const AdminDashboard = () => {
   useEffect(() => {
     fetchDashboardData()
     checkFirstLogin()
+    
+    // Subscribe to real-time appointment changes to refresh stats
+    const subscription = subscribeToAppointments(() => {
+      console.log('📊 Appointment changed, refreshing stats...')
+      fetchDashboardData()
+    })
+
+    return () => {
+      unsubscribeFromAppointments(subscription)
+    }
   }, [])
 
   const fetchDashboardData = async () => {
@@ -52,9 +63,21 @@ const AdminDashboard = () => {
         api.get('/auth/profile'),
         api.get('/notifications/unread-count')
       ])
-      if (statsRes.status === 'fulfilled') setStats(statsRes.value.data)
-      if (adminRes.status === 'fulfilled') setAdminInfo(adminRes.value.data)
-      if (notifRes.status === 'fulfilled') setUnreadCount(notifRes.value.data.count || 0)
+      
+      if (statsRes.status === 'fulfilled') {
+        console.log('📊 Dashboard stats received:', statsRes.value.data)
+        setStats(statsRes.value.data)
+      } else {
+        console.error('❌ Stats fetch failed:', statsRes.reason)
+      }
+      
+      if (adminRes.status === 'fulfilled') {
+        setAdminInfo(adminRes.value.data)
+      }
+      
+      if (notifRes.status === 'fulfilled') {
+        setUnreadCount(notifRes.value.data.count || 0)
+      }
     } catch (error) {
       console.error('Erreur chargement dashboard:', error)
     }
