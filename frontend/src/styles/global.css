@@ -147,6 +147,7 @@ html {
   scroll-behavior: smooth;
   font-size: 16px;
   -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
@@ -330,6 +331,7 @@ img { max-width: 100%; height: auto; }
   opacity: 0.12;
   animation: emoji-drift linear infinite;
   pointer-events: none;
+  -webkit-user-select: none;
   user-select: none;
   filter: blur(0.5px);
 }
