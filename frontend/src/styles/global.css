@@ -604,7 +604,7 @@ img { max-width: 100%; height: auto; }
 .nav-link-luxury:hover, .nav-link-luxury.active { color: var(--secondary-color) !important; }
 
 .btn-admin-login {
-  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  background: var(--success-color, #28a745);
   color: white !important;
   border-radius: var(--border-radius-pill);
   padding: 9px 22px !important;
@@ -635,6 +635,23 @@ img { max-width: 100%; height: auto; }
   transform: translateY(-3px) scale(1.03);
   box-shadow: 0 12px 35px rgba(40,167,69,0.5);
   color: white !important;
+}
+
+.btn-admin-logout {
+  background: none !important;
+  border: none !important;
+  color: var(--danger-color, #ff6b6b) !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  cursor: pointer !important;
+  box-shadow: none !important;
+  padding: 9px 18px !important;
+  text-decoration: none !important;
+}
+
+.btn-admin-logout:hover {
+  opacity: 0.8;
+  transform: scale(1.02);
 }
 
 /* ============================================================
@@ -1634,9 +1651,172 @@ img { max-width: 100%; height: auto; }
   font-family: 'Nunito', sans-serif;
 }
 
+/* Admin settings cards */
+.admin-settings-card {
+  border-radius: 16px;
+  border: 1px solid rgba(184,134,11,0.1);
+}
+
+.admin-settings-card .card-header {
+  background: linear-gradient(135deg, rgba(184,134,11,0.08), rgba(212,165,116,0.08));
+  border-bottom: 1px solid rgba(184,134,11,0.1);
+  border-radius: 16px 16px 0 0;
+}
+
+.admin-settings-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-dark);
+  font-family: 'Playfair Display', serif;
+}
+
+.admin-form-section {
+  background-color: rgba(212,165,116,0.03);
+  padding: 16px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  border: 1px solid rgba(212,165,116,0.1);
+}
+
+.admin-form-section-title {
+  margin-bottom: 16px;
+  font-weight: 700;
+  color: var(--text-dark);
+  font-size: 14px;
+}
+
+.admin-danger-zone-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--danger-color);
+  font-family: 'Playfair Display', serif;
+}
+
 /* ============================================================
    RESPONSIVE
    ============================================================ */
+
+/* NAVBAR RESPONSIVE */
+@media (max-width: 992px) {
+  .navbar-luxury {
+    padding: 12px 0;
+  }
+
+  .navbar-brand-luxury {
+    font-size: 18px;
+  }
+
+  .nav-link-luxury {
+    font-size: 13px;
+    padding: 8px 14px !important;
+  }
+
+  .navbar-collapse {
+    padding-top: 12px;
+    background: var(--navbar-bg);
+    border-radius: 0 0 var(--border-radius-md) var(--border-radius-md);
+    margin-top: 8px;
+  }
+
+  .navbar-nav {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .navbar-nav .nav-link {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  .d-flex.align-items-center.gap-2 {
+    flex-direction: column;
+    width: 100%;
+    gap: 8px !important;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(212,165,116,0.1);
+  }
+
+  .d-flex.align-items-center.gap-2 > * {
+    width: 100%;
+    text-align: center;
+  }
+
+  .btn-admin-login,
+  .btn-admin-logout,
+  .btn-luxury-outline {
+    display: inline-block !important;
+    width: auto !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .navbar-luxury {
+    padding: 10px 0;
+  }
+
+  .navbar-brand-luxury {
+    font-size: 16px;
+  }
+
+  .navbar-toggler {
+    padding: 6px 10px;
+  }
+
+  .nav-link-luxury {
+    font-size: 12px;
+    padding: 6px 12px !important;
+  }
+
+  .btn-admin-login {
+    padding: 8px 16px !important;
+    font-size: 12px;
+  }
+
+  .btn-admin-logout {
+    padding: 8px 16px !important;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 576px) {
+  .navbar-luxury {
+    padding: 8px 0;
+  }
+
+  .navbar-brand-luxury {
+    font-size: 14px;
+  }
+
+  .navbar-toggler {
+    padding: 4px 8px;
+  }
+
+  .navbar-toggler i {
+    font-size: 20px !important;
+  }
+
+  .nav-link-luxury {
+    font-size: 11px;
+    padding: 5px 10px !important;
+  }
+
+  .btn-admin-login {
+    padding: 7px 14px !important;
+    font-size: 11px;
+  }
+
+  .btn-admin-logout {
+    padding: 7px 14px !important;
+    font-size: 11px;
+  }
+
+  .navbar-collapse {
+    margin-top: 6px;
+  }
+}
+
+/* GENERAL RESPONSIVE */
 @media (max-width: 1200px) {
   .footer-grid { grid-template-columns: 1.5fr 1fr 1fr; gap: 32px; }
   .footer-grid > div:last-child { display: none; }

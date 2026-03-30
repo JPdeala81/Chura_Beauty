@@ -25,50 +25,46 @@ const Footer = () => {
   }, [])
 
   return (
-    <footer style={{ background: 'linear-gradient(135deg, #2c1810 0%, #4a2c1a 100%)', color: '#f8c8d4' }}>
+    <footer className="footer-luxury">
       <div className="container py-5">
         <div className="row g-4">
           <div className="col-lg-4 col-md-6">
-            <h5 style={{ fontFamily: 'Playfair Display, serif', color: '#d4a574', fontSize: '22px' }}>
+            <h5 className="footer-brand">
               💆‍♀️ {adminInfo.salonName}
             </h5>
-            <p className="mt-3 small" style={{ color: 'rgba(248,200,212,0.8)', lineHeight: '1.8' }}>
+            <p className="footer-tagline mt-3">
               Votre salon de beauté de confiance à Libreville. Nous prenons soin de vous avec passion et professionnalisme.
             </p>
             <div className="d-flex gap-3 mt-3">
               {adminInfo.instagram && (
                 <a href={adminInfo.instagram} target="_blank" rel="noreferrer"
-                  className="btn btn-sm rounded-circle"
-                  style={{ background: 'rgba(212,165,116,0.2)', color: '#d4a574', width: '38px', height: '38px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <i className="bi bi-instagram"></i>
+                  className="footer-social-btn">
+                  <span><i className="bi bi-instagram"></i></span>
                 </a>
               )}
               {adminInfo.facebook && (
                 <a href={adminInfo.facebook} target="_blank" rel="noreferrer"
-                  className="btn btn-sm rounded-circle"
-                  style={{ background: 'rgba(212,165,116,0.2)', color: '#d4a574', width: '38px', height: '38px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <i className="bi bi-facebook"></i>
+                  className="footer-social-btn">
+                  <span><i className="bi bi-facebook"></i></span>
                 </a>
               )}
               <a href={`https://wa.me/${adminInfo.whatsapp?.replace(/\s/g, '').replace('+', '')}`}
                 target="_blank" rel="noreferrer"
-                className="btn btn-sm rounded-circle"
-                style={{ background: 'rgba(37,211,102,0.2)', color: '#25d366', width: '38px', height: '38px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <i className="bi bi-whatsapp"></i>
+                className="footer-social-btn">
+                <span><i className="bi bi-whatsapp"></i></span>
               </a>
             </div>
           </div>
 
           <div className="col-lg-4 col-md-6">
-            <h6 style={{ color: '#d4a574', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', fontSize: '13px' }}>
+            <h6 className="footer-section-title">
               Nos Services
             </h6>
             <ul className="list-unstyled mt-3">
               {['Coiffure & Tresses', 'Soins du visage', 'Ongles mains & pieds', 'Soins des sourcils', 'Maquillage'].map((service, i) => (
                 <li key={i} className="mb-2">
-                  <Link to="/services" className="text-decoration-none small"
-                    style={{ color: 'rgba(248,200,212,0.7)' }}>
-                    <i className="bi bi-chevron-right me-1" style={{ color: '#d4a574', fontSize: '11px' }}></i>
+                  <Link to="/services" className="footer-link">
+                    <i className="bi bi-chevron-right" style={{ fontSize: '11px' }}></i>
                     {service}
                   </Link>
                 </li>
@@ -77,28 +73,25 @@ const Footer = () => {
           </div>
 
           <div className="col-lg-4 col-md-6">
-            <h6 style={{ color: '#d4a574', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', fontSize: '13px' }}>
+            <h6 className="footer-section-title">
               Contact
             </h6>
             <ul className="list-unstyled mt-3">
-              <li className="mb-3 d-flex align-items-start gap-2">
-                <i className="bi bi-geo-alt-fill mt-1" style={{ color: '#d4a574' }}></i>
-                <span className="small" style={{ color: 'rgba(248,200,212,0.8)' }}>{adminInfo.address}</span>
+              <li className="footer-contact-item">
+                <i className="bi bi-geo-alt-fill footer-contact-icon"></i>
+                <span>{adminInfo.address}</span>
               </li>
-              <li className="mb-3 d-flex align-items-center gap-2">
-                <i className="bi bi-telephone-fill" style={{ color: '#d4a574' }}></i>
-                <a href={`tel:${adminInfo.phone}`} className="text-decoration-none small"
-                  style={{ color: 'rgba(248,200,212,0.8)' }}>{adminInfo.phone}</a>
+              <li className="footer-contact-item">
+                <i className="bi bi-telephone-fill footer-contact-icon"></i>
+                <a href={`tel:${adminInfo.phone}`} className="text-decoration-none">{adminInfo.phone}</a>
               </li>
-              <li className="mb-3 d-flex align-items-center gap-2">
-                <i className="bi bi-whatsapp" style={{ color: '#25d366' }}></i>
+              <li className="footer-contact-item">
+                <i className="bi bi-whatsapp footer-contact-icon"></i>
                 <a href={`https://wa.me/${adminInfo.whatsapp?.replace(/\s/g, '').replace('+', '')}`}
-                  target="_blank" rel="noreferrer" className="text-decoration-none small"
-                  style={{ color: 'rgba(248,200,212,0.8)' }}>{adminInfo.whatsapp}</a>
+                  target="_blank" rel="noreferrer" className="text-decoration-none">{adminInfo.whatsapp}</a>
               </li>
             </ul>
-            <Link to="/admin/login"
-              style={{ color: 'rgba(255,255,255,0.2)', fontSize: '11px', textDecoration: 'none' }}>
+            <Link to="/admin/login" className="footer-admin-link d-block mt-3">
               Espace administrateur
             </Link>
           </div>
@@ -108,12 +101,12 @@ const Footer = () => {
 
         <div className="row align-items-center">
           <div className="col-md-6">
-            <p className="small mb-0" style={{ color: 'rgba(248,200,212,0.5)' }}>
+            <p className="footer-bottom-link mb-0">
               © {new Date().getFullYear()} {adminInfo.salonName}. Tous droits réservés.
             </p>
           </div>
           <div className="col-md-6 text-md-end">
-            <p className="small mb-0" style={{ color: 'rgba(248,200,212,0.5)' }}>
+            <p className="footer-made-with mb-0">
               Fait avec ❤️ à Libreville, Gabon
             </p>
           </div>

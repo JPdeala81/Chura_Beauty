@@ -36,7 +36,7 @@ const RevenueChart = () => {
   return (
     <div className="revenue-chart">
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h5 className="mb-0" style={{ fontFamily: 'Playfair Display, serif', color: '#b8860b' }}>
+        <h5 className="mb-0" style={{ fontFamily: 'Playfair Display, serif', color: 'var(--secondary-color)' }}>
           📊 Chiffre d'Affaires
         </h5>
         <div className="btn-group">
@@ -51,7 +51,7 @@ const RevenueChart = () => {
           <div className="card text-center border-0 shadow-sm">
             <div className="card-body">
               <h6 className="text-muted">CA Total</h6>
-              <h4 style={{ color: '#b8860b' }}>{stats.total?.toLocaleString()} FCFA</h4>
+              <h4 style={{ color: 'var(--secondary-color)' }}>{stats.total?.toLocaleString()} FCFA</h4>
             </div>
           </div>
         </div>
@@ -59,7 +59,7 @@ const RevenueChart = () => {
           <div className="card text-center border-0 shadow-sm">
             <div className="card-body">
               <h6 className="text-muted">Rendez-vous</h6>
-              <h4 style={{ color: '#b8860b' }}>{stats.totalAppointments}</h4>
+              <h4 style={{ color: 'var(--secondary-color)' }}>{stats.totalAppointments}</h4>
             </div>
           </div>
         </div>
@@ -67,7 +67,7 @@ const RevenueChart = () => {
           <div className="card text-center border-0 shadow-sm">
             <div className="card-body">
               <h6 className="text-muted">Heures travaillées</h6>
-              <h4 style={{ color: '#b8860b' }}>{stats.totalHours}h</h4>
+              <h4 style={{ color: 'var(--secondary-color)' }}>{stats.totalHours}h</h4>
             </div>
           </div>
         </div>
@@ -75,7 +75,7 @@ const RevenueChart = () => {
 
       {loading ? (
         <div className="text-center py-5">
-          <div className="spinner-border" style={{ color: '#b8860b' }}></div>
+          <div className="spinner-border" style={{ color: 'var(--secondary-color)' }}></div>
         </div>
       ) : (
         <div className="row">

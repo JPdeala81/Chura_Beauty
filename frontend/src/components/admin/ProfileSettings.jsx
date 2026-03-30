@@ -130,13 +130,9 @@ export default function ProfileSettings({ admin, onUpdate }) {
       {error && <Alert variant="danger" style={{ borderRadius: '12px' }}>{error}</Alert>}
       {success && <Alert variant="success" style={{ borderRadius: '12px' }}>{success}</Alert>}
 
-      <Card className="mb-4" style={{ borderRadius: '16px', border: '1px solid rgba(184,134,11,0.1)' }}>
-        <Card.Header style={{ 
-          background: 'linear-gradient(135deg, rgba(184,134,11,0.08), rgba(212,165,116,0.08))',
-          borderBottom: '1px solid rgba(184,134,11,0.1)',
-          borderRadius: '16px 16px 0 0'
-        }}>
-          <div style={{ fontSize: '16px', fontWeight: '700', color: '#1a0f08', fontFamily: 'Playfair Display, serif' }}>
+      <Card className="admin-settings-card mb-4">
+        <Card.Header>
+          <div className="admin-settings-title">
             👤 Profil du salon
           </div>
         </Card.Header>
@@ -149,7 +145,7 @@ export default function ProfileSettings({ admin, onUpdate }) {
           <Form onSubmit={handleSubmit}>
             {/* Email */}
             <Form.Group className="mb-4">
-              <Form.Label style={{ fontWeight: '700', color: '#1a0f08', fontSize: '14px' }}>
+              <Form.Label className="form-label-luxury">
                 📧 Email *
               </Form.Label>
               <Form.Control
@@ -169,7 +165,7 @@ export default function ProfileSettings({ admin, onUpdate }) {
 
             {/* Nom du salon */}
             <Form.Group className="mb-4">
-              <Form.Label style={{ fontWeight: '700', color: '#1a0f08', fontSize: '14px' }}>
+              <Form.Label className="form-label-luxury">
                 💆‍♀️ Nom du salon
               </Form.Label>
               <Form.Control

@@ -49,7 +49,7 @@ const Navbar = () => {
           className="navbar-toggler border-0"
           type="button"
           onClick={() => setMenuOpen(!menuOpen)}
-          style={{ color: '#d4a574' }}
+          style={{ color: 'var(--primary-color)' }}
         >
           <i className={`bi ${menuOpen ? 'bi-x-lg' : 'bi-list'}`} style={{ fontSize: '24px' }}></i>
         </button>
@@ -86,8 +86,7 @@ const Navbar = () => {
                   📊 Dashboard
                 </Link>
                 <button
-                  className="btn-admin-login nav-link-luxury"
-                  style={{ background: 'none', border: 'none', color: '#ff6b6b', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}
+                  className="btn-admin-logout nav-link-luxury"
                   onClick={handleLogout}
                 >
                   🚪 Déconnexion
