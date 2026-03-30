@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext, useRef } from 'react'
+import { useState, useEffect, useContext } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate, Link } from 'react-router-dom'
 import { AuthContext } from '../../context/AuthContext'
@@ -103,16 +103,20 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f8f5f0' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--light-medium)' }}>
+
+      {/* ===== NAVBAR ADMIN RESPONSIVE ===== */}
       <nav style={{
-        background: 'linear-gradient(135deg, #1a0f08 0%, #2c1810 100%)',
-        borderBottom: '1px solid rgba(212,165,116,0.2)',
+        background: 'var(--gradient-dark)',
+        borderBottom: '1px solid var(--glass-dark-border)',
         position: 'sticky',
         top: 0,
         zIndex: 1000,
         boxShadow: '0 4px 30px rgba(0,0,0,0.3)'
       }}>
         <div style={{ padding: '0 16px' }}>
+
+          {/* Ligne principale navbar */}
           <div style={{
             display: 'flex',
             alignItems: 'center',
@@ -120,13 +124,15 @@ const AdminDashboard = () => {
             height: isXS ? '52px' : '60px',
             gap: '8px'
           }}>
+
+            {/* Logo — toujours visible */}
             <div style={{ display: 'flex', alignItems: 'center', gap: isXS ? '6px' : '10px', flexShrink: 0 }}>
               <span style={{ fontSize: isXS ? '20px' : '24px' }}>💆‍♀️</span>
               {!isXS && (
                 <div>
                   <div style={{
                     fontFamily: 'Playfair Display, serif',
-                    background: 'linear-gradient(135deg, #b8860b, #d4a574)',
+                    background: 'var(--gradient-primary)',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
                     backgroundClip: 'text',
@@ -145,6 +151,8 @@ const AdminDashboard = () => {
                 </div>
               )}
             </div>
+
+            {/* Tabs desktop (>=992px) — icônes + textes */}
             {!isMD && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '2px', flex: 1, justifyContent: 'center', flexWrap: 'nowrap', overflow: 'hidden' }}>
                 {tabs.map(tab => (
@@ -180,6 +188,8 @@ const AdminDashboard = () => {
                 ))}
               </div>
             )}
+
+            {/* Tabs tablette (640-992px) — icônes seulement */}
             {isMD && !isSM && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flex: 1, justifyContent: 'center' }}>
                 {tabs.map(tab => (
@@ -213,14 +223,17 @@ const AdminDashboard = () => {
                 ))}
               </div>
             )}
+
+            {/* Actions droite */}
             <div style={{ display: 'flex', alignItems: 'center', gap: isXS ? '4px' : '8px', flexShrink: 0 }}>
+              {/* Burger menu mobile (<768px) */}
               {isSM && (
                 <button
                   onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                   style={{
                     background: 'rgba(212,165,116,0.1)',
                     border: '1px solid rgba(212,165,116,0.2)',
-                    color: '#d4a574',
+                    color: 'var(--secondary-color)',
                     borderRadius: '8px',
                     width: '36px',
                     height: '36px',
@@ -234,6 +247,8 @@ const AdminDashboard = () => {
                   {mobileMenuOpen ? '✕' : '☰'}
                 </button>
               )}
+
+              {/* Voir le site */}
               <Link to="/"
                 title="Voir le site"
                 style={{
@@ -251,6 +266,8 @@ const AdminDashboard = () => {
               >
                 🌐 {!isXS && !isSM && <span>Voir le site</span>}
               </Link>
+
+              {/* Déconnexion */}
               <button
                 onClick={handleLogout}
                 title="Déconnexion"
@@ -273,6 +290,8 @@ const AdminDashboard = () => {
               </button>
             </div>
           </div>
+
+          {/* Menu mobile déroulant (<768px) */}
           <AnimatePresence>
             {isSM && mobileMenuOpen && (
               <motion.div
@@ -319,6 +338,8 @@ const AdminDashboard = () => {
                     </button>
                   ))}
                 </div>
+
+                {/* Actions mobile */}
                 <div style={{ display: 'flex', gap: '8px', paddingTop: '8px', borderTop: '1px solid rgba(212,165,116,0.08)' }}>
                   <Link to="/" style={{ flex: 1, background: 'rgba(248,200,212,0.06)', border: '1px solid rgba(248,200,212,0.1)', color: 'rgba(248,200,212,0.7)', borderRadius: '10px', padding: '10px', textAlign: 'center', fontSize: '13px', textDecoration: 'none', fontFamily: 'Nunito, sans-serif' }}>
                     🌐 Voir le site
@@ -332,7 +353,11 @@ const AdminDashboard = () => {
           </AnimatePresence>
         </div>
       </nav>
+
+      {/* ===== CONTENU PRINCIPAL ===== */}
       <div style={{ padding: isXS ? '12px' : isSM ? '16px' : '24px', maxWidth: '1400px', margin: '0 auto' }}>
+
+        {/* Alerte premier login */}
         <AnimatePresence>
           {isFirstLogin && (
             <motion.div
@@ -369,8 +394,10 @@ const AdminDashboard = () => {
             </motion.div>
           )}
         </AnimatePresence>
+
         {activeTab === 'home' ? (
           <>
+            {/* Salutation */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: '20px' }}>
               <h2 style={{ fontFamily: 'Playfair Display, serif', color: '#2c1810', fontSize: isXS ? '1.4rem' : isSM ? '1.6rem' : '2rem', marginBottom: '4px' }}>
                 Bonjour {adminInfo?.owner_name?.split(' ')[0] || 'Admin'} 👋
@@ -379,6 +406,8 @@ const AdminDashboard = () => {
                 {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
               </p>
             </motion.div>
+
+            {/* KPI Cards */}
             <div style={{
               display: 'grid',
               gridTemplateColumns: isXS ? 'repeat(2, 1fr)' : isSM ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
@@ -397,7 +426,7 @@ const AdminDashboard = () => {
                     borderRadius: isXS ? '14px' : '18px',
                     padding: isXS ? '14px' : isSM ? '16px' : '22px',
                     boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
-                    border: \1px solid \\,
+                    border: `1px solid ${kpi.bg}`,
                     position: 'relative',
                     overflow: 'hidden'
                   }}
@@ -413,6 +442,8 @@ const AdminDashboard = () => {
                 </motion.div>
               ))}
             </div>
+
+            {/* Quick Actions */}
             <h5 style={{ fontFamily: 'Playfair Display, serif', color: '#2c1810', marginBottom: '14px', fontSize: isXS ? '1rem' : '1.2rem' }}>
               ✨ Actions rapides
             </h5>
@@ -435,7 +466,7 @@ const AdminDashboard = () => {
                     borderRadius: isXS ? '14px' : '18px',
                     padding: isXS ? '14px 10px' : isSM ? '16px 12px' : '22px 16px',
                     boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
-                    border: \1px solid \18\,
+                    border: `1px solid ${action.color}18`,
                     cursor: 'pointer',
                     textAlign: 'center',
                     position: 'relative'
@@ -455,12 +486,14 @@ const AdminDashboard = () => {
                       {action.desc}
                     </div>
                   )}
-                  <div style={{ marginTop: isXS ? '6px' : '10px', background: \\12\, color: action.color, borderRadius: '6px', padding: '4px', fontSize: '11px', fontWeight: '700' }}>
+                  <div style={{ marginTop: isXS ? '6px' : '10px', background: `${action.color}12`, color: action.color, borderRadius: '6px', padding: '4px', fontSize: '11px', fontWeight: '700' }}>
                     Ouvrir →
                   </div>
                 </motion.div>
               ))}
             </div>
+
+            {/* Graphique CA */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -504,11 +537,12 @@ const AdminDashboard = () => {
           </AnimatePresence>
         )}
       </div>
-      <style>{\
+
+      <style>{`
         @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.3); } }
         * { -webkit-tap-highlight-color: transparent; }
         button { touch-action: manipulation; }
-      \}</style>
+      `}</style>
     </div>
   )
 }
