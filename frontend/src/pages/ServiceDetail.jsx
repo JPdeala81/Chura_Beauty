@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { Modal, Button } from 'react-bootstrap';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import BookingModal from '../components/public/BookingModal';
@@ -16,6 +17,24 @@ export default function ServiceDetail() {
   const [availableSlots, setAvailableSlots] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [showImageModal, setShowImageModal] = useState(false);
+
+  const downloadImage = async (imageUrl) => {
+    try {
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${service.title}-${Date.now()}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Erreur lors du téléchargement:', error);
+    }
+  };
 
   useEffect(() => {
     const fetchService = async () => {
@@ -157,15 +176,40 @@ export default function ServiceDetail() {
                     alt={service.title}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
+                    onClick={() => setShowImageModal(true)}
                     style={{
                       width: '100%',
                       borderRadius: '12px',
                       objectFit: 'cover',
                       height: '400px',
                       marginBottom: '20px',
-                      boxShadow: 'var(--shadow-luxury)'
+                      boxShadow: 'var(--shadow-luxury)',
+                      cursor: 'pointer',
+                      transition: 'transform 0.3s, filter 0.3s',
                     }}
+                    whileHover={{ filter: 'brightness(0.9)' }}
                   />
+                  <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
+                    <button
+                      onClick={() => downloadImage(service.images[selectedImage])}
+                      style={{
+                        flex: 1,
+                        padding: '10px',
+                        background: 'var(--primary-color)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        transition: 'all 0.3s'
+                      }}
+                      onMouseEnter={(e) => e.target.style.background = 'rgba(184,134,11,0.8)'}
+                      onMouseLeave={(e) => e.target.style.background = 'var(--primary-color)'}
+                    >
+                      ⬇️ Télécharger l'image
+                    </button>
+                  </div>
                   {service.images.length > 1 && (
                     <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', marginTop: '15px' }}>
                       {service.images.map((img, idx) => (
@@ -352,6 +396,44 @@ export default function ServiceDetail() {
           availableSlots={availableSlots}
         />
       )}
+
+      {/* Image Modal */}
+      <Modal show={showImageModal} onHide={() => setShowImageModal(false)} size="lg" centered>
+        <Modal.Header closeButton style={{ borderBottom: 'none' }}>
+          <Modal.Title>{service?.title}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body style={{ padding: '20px' }}>
+          {service?.images && service.images[selectedImage] && (
+            <img
+              src={service.images[selectedImage]}
+              alt={service.title}
+              style={{
+                width: '100%',
+                borderRadius: '12px',
+                objectFit: 'cover',
+                maxHeight: '80vh'
+              }}
+            />
+          )}
+        </Modal.Body>
+        <Modal.Footer style={{ borderTop: '1px solid #ddd' }}>
+          <Button
+            variant="light"
+            onClick={() => setShowImageModal(false)}
+          >
+            Fermer
+          </Button>
+          <Button
+            style={{ background: 'var(--primary-color)', border: 'none' }}
+            onClick={() => {
+              downloadImage(service.images[selectedImage]);
+              setShowImageModal(false);
+            }}
+          >
+            ⬇️ Télécharger
+          </Button>
+        </Modal.Footer>
+      </Modal>
 
       <Footer />
     </>

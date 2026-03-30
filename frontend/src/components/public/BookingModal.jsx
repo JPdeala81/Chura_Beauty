@@ -4,6 +4,27 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import * as appointmentService from '../../services/appointmentService';
 
+// Generate time slots (every 30 minutes from 8h to 18h)
+const generateTimeSlots = () => {
+  const slots = [];
+  for (let hour = 8; hour < 18; hour++) {
+    for (let min = 0; min < 60; min += 30) {
+      const startHour = String(hour).padStart(2, '0');
+      const startMin = String(min).padStart(2, '0');
+      const endHour = String(min === 30 ? hour + 1 : hour).padStart(2, '0');
+      const endMin = String(min === 30 ? 0 : 30).padStart(2, '0');
+      
+      slots.push({
+        start: `${startHour}:${startMin}`,
+        end: `${endHour}:${endMin}`
+      });
+    }
+  }
+  return slots;
+};
+
+const TIME_SLOTS = generateTimeSlots();
+
 export default function BookingModal({ show, onHide, service, availableSlots = [] }) {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
@@ -25,11 +46,14 @@ export default function BookingModal({ show, onHide, service, availableSlots = [
 
     if (type === 'checkbox') {
       setFormData((prev) => {
-        const options = prev.selectedOptions;
+        const options = [...prev.selectedOptions];
         if (checked) {
           options.push(value);
         } else {
-          options.splice(options.indexOf(value), 1);
+          const index = options.indexOf(value);
+          if (index > -1) {
+            options.splice(index, 1);
+          }
         }
         return { ...prev, selectedOptions: options };
       });
@@ -45,6 +69,7 @@ export default function BookingModal({ show, onHide, service, availableSlots = [
     setFormData((prev) => ({
       ...prev,
       desiredDate: date,
+      desiredTimeSlot: null, // Reset time slot when date changes
     }));
   };
 
@@ -135,31 +160,51 @@ export default function BookingModal({ show, onHide, service, availableSlots = [
 
             {formData.desiredDate && (
               <Form.Group className="mb-3">
-                <Form.Label>Créneau horaire</Form.Label>
-                {availableSlots.length > 0 ? (
-                  <div>
-                    {availableSlots.map((slot) => (
-                      <Form.Check
-                        key={slot.start}
+                <Form.Label>Créneau horaire souhaité</Form.Label>
+                <p style={{ fontSize: '12px', color: '#666', marginBottom: '10px' }}>
+                  Sélectionnez votre créneau préféré. L'administrateur confirmera la disponibilité.
+                </p>
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+                  gap: '10px',
+                  maxHeight: '300px',
+                  overflowY: 'auto',
+                  padding: '10px',
+                  border: '1px solid #ddd',
+                  borderRadius: '8px',
+                  background: '#f9f9f9'
+                }}>
+                  {TIME_SLOTS.map((slot) => (
+                    <label key={slot.start} style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '10px',
+                      border: formData.desiredTimeSlot?.start === slot.start 
+                        ? '2px solid var(--primary-color)' 
+                        : '1px solid #ddd',
+                      borderRadius: '6px',
+                      background: formData.desiredTimeSlot?.start === slot.start 
+                        ? 'rgba(184,134,11,0.1)' 
+                        : 'white',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      fontSize: '13px',
+                      fontWeight: formData.desiredTimeSlot?.start === slot.start ? '600' : '400'
+                    }}>
+                      <input
                         type="radio"
-                        id={`slot-${slot.start}`}
-                        label={`${slot.start} - ${slot.end}`}
-                        name="timeSlot"
-                        value={JSON.stringify(slot)}
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            desiredTimeSlot: JSON.parse(e.target.value),
-                          }))
-                        }
+                        style={{ marginRight: '8px', cursor: 'pointer' }}
+                        checked={formData.desiredTimeSlot?.start === slot.start}
+                        onChange={() => setFormData((prev) => ({
+                          ...prev,
+                          desiredTimeSlot: slot,
+                        }))}
                       />
-                    ))}
-                  </div>
-                ) : (
-                  <Alert variant="warning">
-                    Aucun créneau disponible pour cette date
-                  </Alert>
-                )}
+                      <span>{slot.start} - {slot.end}</span>
+                    </label>
+                  ))}
+                </div>
               </Form.Group>
             )}
           </div>
