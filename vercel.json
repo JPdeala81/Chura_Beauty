@@ -2,13 +2,17 @@
   "version": 2,
   "builds": [
     {
-      "src": "frontend/package.json",
+      "src": "frontend/vite.config.js",
       "use": "@vercel/static-build",
-      "config": { "distDir": "frontend/dist", "buildCommand": "npm install && npm run build" }
+      "config": {
+        "distDir": "frontend/dist",
+        "buildCommand": "cd frontend && npm install && npm run build"
+      }
     },
     {
       "src": "backend/server.js",
-      "use": "@vercel/node"
+      "use": "@vercel/node",
+      "config": { "maxLambdaSize": "50mb" }
     }
   ],
   "routes": [
@@ -17,7 +21,14 @@
       "dest": "backend/server.js"
     },
     {
-      "src": "^(?!/api).*$",
+      "src": "^/((?!api)[^.]+|[^.]+\\.(?:js|css|json|svg|ico|png|jpg|jpeg|woff|woff2|ttf|eot|gif))(/.*)?$",
+      "dest": "frontend/dist/$0",
+      "headers": {
+        "cache-control": "public, max-age=3600"
+      }
+    },
+    {
+      "src": "^/(?!api)",
       "dest": "frontend/dist/index.html"
     }
   ]
