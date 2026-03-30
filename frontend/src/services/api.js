@@ -14,9 +14,10 @@ api.interceptors.request.use((config) => {
   
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
-  }
-  if (deviceId) {
-    config.headers['X-Device-Id'] = deviceId
+    // Only add device ID header for authenticated requests
+    if (deviceId) {
+      config.headers['X-Device-Id'] = deviceId
+    }
   }
   return config
 })
