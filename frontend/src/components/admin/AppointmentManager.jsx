@@ -48,28 +48,45 @@ export default function AppointmentManager({ appointments, onUpdate }) {
         </thead>
 
         <tbody>
-          {appointments.map((appt) => (
-            <tr key={appt._id}>
-              <td>{appt.clientName}</td>
-              <td>{appt.clientEmail}</td>
-              <td>{appt.serviceId?.title}</td>
-              <td>
-                {new Date(appt.desiredDate).toLocaleDateString('fr-FR')}
-              </td>
-              <td>
-                {appt.desiredTimeSlot?.start} - {appt.desiredTimeSlot?.end}
-              </td>
+          {appointments.map((appt) => {
+            // Handle both camelCase and snake_case from different sources
+            const clientName = appt.client_name || appt.clientName || 'N/A';
+            const clientEmail = appt.client_email || appt.clientEmail || 'N/A';
+            const serviceName = appt.services?.title || appt.service?.title || appt.serviceTitle || 'N/A';
+            const desiredDate = appt.desired_date || appt.desiredDate;
+            const slotStart = appt.slot_start || appt.desiredTimeSlot?.start || 'N/A';
+            const slotEnd = appt.slot_end || appt.desiredTimeSlot?.end || 'N/A';
+            const appointmentId = appt.id || appt._id;
+            const status = appt.status || 'pending';
+            const adminNotes = appt.admin_notes || appt.adminNotes || '';
+
+            let formattedDate = 'Invalid Date';
+            try {
+              if (desiredDate) {
+                formattedDate = new Date(desiredDate).toLocaleDateString('fr-FR');
+              }
+            } catch (e) {
+              console.error('Date parsing error:', e);
+            }
+
+            return (
+            <tr key={appointmentId}>
+              <td>{clientName}</td>
+              <td>{clientEmail}</td>
+              <td>{serviceName}</td>
+              <td>{formattedDate}</td>
+              <td>{slotStart} - {slotEnd}</td>
               <td>
                 <Badge
                   bg={
-                    appt.status === 'accepted'
+                    status === 'accepted'
                       ? 'success'
-                      : appt.status === 'pending'
+                      : status === 'pending'
                       ? 'warning'
                       : 'danger'
                   }
                 >
-                  {appt.status}
+                  {status === 'pending' ? 'En attente' : status === 'accepted' ? 'Accepté' : 'Refusé'}
                 </Badge>
               </td>
               <td>
@@ -77,22 +94,22 @@ export default function AppointmentManager({ appointments, onUpdate }) {
                   as="textarea"
                   size="sm"
                   rows={2}
-                  value={adminNotes[appt._id] || appt.adminNotes || ''}
+                  value={adminNotes[appointmentId] || adminNotes || ''}
                   onChange={(e) =>
-                    handleNotesChange(appt._id, e.target.value)
+                    handleNotesChange(appointmentId, e.target.value)
                   }
                   placeholder="Notes..."
                 />
               </td>
               <td>
                 <div className="d-flex gap-2">
-                  {appt.status === 'pending' && (
+                  {status === 'pending' && (
                     <>
                       <Button
                         variant="success"
                         size="sm"
                         onClick={() =>
-                          handleStatusChange(appt._id, 'accepted')
+                          handleStatusChange(appointmentId, 'accepted')
                         }
                         disabled={loading}
                       >
@@ -102,7 +119,7 @@ export default function AppointmentManager({ appointments, onUpdate }) {
                         variant="danger"
                         size="sm"
                         onClick={() =>
-                          handleStatusChange(appt._id, 'refused')
+                          handleStatusChange(appointmentId, 'refused')
                         }
                         disabled={loading}
                       >
@@ -113,7 +130,8 @@ export default function AppointmentManager({ appointments, onUpdate }) {
                 </div>
               </td>
             </tr>
-          ))}
+          );
+          })}
         </tbody>
       </Table>
     </div>
