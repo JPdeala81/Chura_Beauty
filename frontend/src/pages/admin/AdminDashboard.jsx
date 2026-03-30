@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react';
 import { useState, useEffect, useContext } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate, Link } from 'react-router-dom'
