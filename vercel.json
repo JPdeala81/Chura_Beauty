@@ -1,34 +1,36 @@
 {
   "version": 2,
+  "buildCommand": "npm install --prefix frontend && npm run build --prefix frontend",
+  "env": {
+    "VITE_SUPABASE_URL": "@VITE_SUPABASE_URL",
+    "VITE_SUPABASE_ANON_KEY": "@VITE_SUPABASE_ANON_KEY", 
+    "VITE_API_URL": "@VITE_API_URL"
+  },
   "builds": [
     {
-      "src": "frontend/vite.config.js",
+      "src": "frontend/package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "frontend/dist",
-        "buildCommand": "cd frontend && npm install && npm run build"
+        "distDir": "frontend/dist"
       }
     },
     {
       "src": "backend/server.js",
-      "use": "@vercel/node",
-      "config": { "maxLambdaSize": "50mb" }
+      "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "^/api(/|$)(.*)",
-      "dest": "backend/server.js"
+      "dest": "backend/server.js",
+      "methods": ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
     },
     {
-      "src": "^/((?!api)[^.]+|[^.]+\\.(?:js|css|json|svg|ico|png|jpg|jpeg|woff|woff2|ttf|eot|gif))(/.*)?$",
-      "dest": "frontend/dist/$0",
-      "headers": {
-        "cache-control": "public, max-age=3600"
-      }
+      "src": "^/((?!api)[\\w/-]*\\.(?:js|css|png|jpg|jpeg|svg|ico|gif|woff|woff2|ttf|eot|json|map))$",
+      "dest": "frontend/dist/$0"
     },
     {
-      "src": "^/(?!api)",
+      "src": "^/(?!api)(.*)$",
       "dest": "frontend/dist/index.html"
     }
   ]
