@@ -68,6 +68,32 @@ export const createAppointment = async (req, res) => {
         type: 'new_request',
       })
 
+    // Récupérer le numéro WhatsApp du super admin
+    const { data: admin, error: adminError } = await supabase
+      .from('admins')
+      .select('whatsapp')
+      .limit(1)
+      .single()
+
+    // Envoyer un message WhatsApp au super admin
+    if (admin && admin.whatsapp && !adminError) {
+      const adminMessage = generateNewAppointmentNotification({
+        client_name,
+        clientWhatsapp: client_whatsapp,
+        service: service,
+        desired_date: desired_date,
+        slot_start,
+        slot_end,
+        custom_description,
+      })
+      try {
+        await sendWhatsAppMessage(admin.whatsapp, adminMessage)
+        console.log('✅ WhatsApp notification sent to admin')
+      } catch (whatsappError) {
+        console.error('⚠️ Failed to send WhatsApp notification to admin:', whatsappError.message)
+      }
+    }
+
     res.status(201).json({
       success: true,
       appointment,
@@ -246,6 +272,25 @@ export const deleteAppointment = async (req, res) => {
       message: error.message,
     })
   }
+}
+
+const generateNewAppointmentNotification = (appointment) => {
+  return `
+🔔 NOUVELLE DEMANDE DE RENDEZ-VOUS 🔔
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+👤 *Client* : ${appointment.client_name}
+📱 *WhatsApp* : ${appointment.clientWhatsapp}
+💅 *Service* : ${appointment.service.title}
+💰 *Prix* : ${appointment.service.price} FCFA
+
+📅 *Date Demandée* : ${new Date(appointment.desired_date).toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+⏰ *Heure* : ${appointment.slot_start} - ${appointment.slot_end}
+
+${appointment.custom_description ? `📝 *Notes du client* :\n${appointment.custom_description}\n` : ''}━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ À accepter ou refuser dans votre dashboard
+`
 }
 
 const generateAppointmentMessage = (appointment, isAccepted) => {

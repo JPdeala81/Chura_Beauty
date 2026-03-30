@@ -141,6 +141,11 @@ export default function ProfileSettings({ admin, onUpdate }) {
           </div>
         </Card.Header>
         <Card.Body>
+          {!formData.whatsapp && (
+            <Alert variant="warning" style={{ borderRadius: '10px', marginBottom: '20px' }}>
+              <strong>⚠️ Important :</strong> Configurez votre numéro WhatsApp pour recevoir les demandes de réservation en temps réel !
+            </Alert>
+          )}
           <Form onSubmit={handleSubmit}>
             {/* Email */}
             <Form.Group className="mb-4">
