@@ -1,6 +1,6 @@
 import express from 'express'
 import siteSettingsController from '../controllers/siteSettingsController.js'
-import { authenticate, protect } from '../middleware/authMiddleware.js'
+import { protect } from '../middleware/authMiddleware.js'
 
 const router = express.Router()
 
