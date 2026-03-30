@@ -152,7 +152,7 @@ const SiteSettings = ({ onUpdate }) => {
         <div className="row g-3">
           <div className="col-md-6">
             <label style={labelStyle}>Nom du salon</label>
-            <input type="text" name="salonName" value={form.salonName} onChange={handleChange} style={inputStyle} required />
+            <input type="text" name="salonName" value={form.salonName} onChange={handleChange} style={inputStyle} />
           </div>
           <div className="col-md-6">
             <label style={labelStyle}>Téléphone</label>

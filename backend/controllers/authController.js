@@ -243,32 +243,33 @@ export const updateAdmin = async (req, res) => {
       facebook,
       profile_picture,
       cover_picture,
-      heroTitle,
-      heroSubtitle,
-      heroBgColor,
-      heroTextColor
+      hero_title,
+      hero_subtitle,
+      hero_bg_color,
+      hero_text_color
     } = req.body
 
     // Préparer l'objet de mise à jour
-    const updateData = {
-      salon_name,
-      owner_name,
-      phone,
-      whatsapp,
-      address,
-      bio,
-      instagram,
-      facebook,
-      profile_picture: profile_picture || undefined,
-      cover_picture: cover_picture || undefined,
-      hero_title: heroTitle,
-      hero_subtitle: heroSubtitle,
-      hero_bg_color: heroBgColor,
-      hero_text_color: heroTextColor
-    }
+    const updateData = {}
+    
+    // Ajouter les champs définis à l'objet de mise à jour
+    if (salon_name !== undefined && salon_name !== '') updateData.salon_name = salon_name
+    if (owner_name !== undefined && owner_name !== '') updateData.owner_name = owner_name
+    if (phone !== undefined && phone !== '') updateData.phone = phone
+    if (whatsapp !== undefined && whatsapp !== '') updateData.whatsapp = whatsapp
+    if (address !== undefined && address !== '') updateData.address = address
+    if (bio !== undefined && bio !== '') updateData.bio = bio
+    if (instagram !== undefined && instagram !== '') updateData.instagram = instagram
+    if (facebook !== undefined && facebook !== '') updateData.facebook = facebook
+    if (profile_picture !== undefined) updateData.profile_picture = profile_picture
+    if (cover_picture !== undefined) updateData.cover_picture = cover_picture
+    if (hero_title !== undefined && hero_title !== '') updateData.hero_title = hero_title
+    if (hero_subtitle !== undefined && hero_subtitle !== '') updateData.hero_subtitle = hero_subtitle
+    if (hero_bg_color !== undefined && hero_bg_color !== '') updateData.hero_bg_color = hero_bg_color
+    if (hero_text_color !== undefined && hero_text_color !== '') updateData.hero_text_color = hero_text_color
 
     // Si email est fourni, ajouter
-    if (email) {
+    if (email !== undefined && email !== '') {
       updateData.email = email
     }
 
