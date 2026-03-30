@@ -5,7 +5,6 @@ import Home from './pages/Home'
 import Services from './pages/Services'
 import ServiceDetail from './pages/ServiceDetail'
 import Login from './pages/Login'
-import Register from './pages/Register'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import ManageServices from './pages/admin/ManageServices'
 import ManageAppointments from './pages/admin/ManageAppointments'
@@ -24,7 +23,6 @@ function App() {
             <Route path="/services" element={<Services />} />
             <Route path="/service/:id" element={<ServiceDetail />} />
             <Route path="/admin/login" element={<Login />} />
-            <Route path="/admin/register" element={<Register />} />
 
             {/* ✅ ROUTES ADMIN PROTÉGÉES - redirige vers login si pas connecté */}
             <Route path="/admin" element={<PrivateRoute />}>
