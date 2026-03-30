@@ -30,8 +30,24 @@ ALTER TABLE admins ADD COLUMN IF NOT EXISTS created_by UUID;
 ALTER TABLE admins ADD COLUMN IF NOT EXISTS secret_question_backup VARCHAR(255);
 
 -- ============================================
--- SITE_SETTINGS TABLE - Add new columns
+-- SITE_SETTINGS TABLE - Create if not exists + Add new columns
 -- ============================================
+
+-- Create site_settings table if it doesn't exist
+CREATE TABLE IF NOT EXISTS site_settings (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  salon_name VARCHAR(255),
+  owner_name VARCHAR(255),
+  privacy_policy TEXT,
+  terms_of_service TEXT,
+  about_content TEXT,
+  footer_services JSONB,
+  footer_custom_links JSONB,
+  meta_title VARCHAR(255),
+  meta_description TEXT,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
 
 -- Add animation settings
 ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS hero_animation VARCHAR(50) DEFAULT 'particles';
