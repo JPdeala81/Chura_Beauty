@@ -1,5 +1,45 @@
 import { supabase } from '../config/supabase.js'
 
+export const debugStats = async (req, res) => {
+  try {
+    console.log('🔍 DEBUG: Fetching all appointments to debug stats...')
+    
+    // Get ALL appointments with all fields
+    const { data: allAppointments, error } = await supabase
+      .from('appointments')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(10)
+
+    if (error) {
+      console.error('❌ Error fetching debug data:', error)
+      return res.status(500).json({ error: error.message })
+    }
+
+    console.log('🔍 DEBUG: Sample appointments:')
+    allAppointments.forEach((apt, i) => {
+      console.log(`   [${i}] ID: ${apt.id}, Status: ${apt.status}, DesiredDate: ${apt.desired_date}, Created: ${apt.created_at}`)
+    })
+
+    // Also check services
+    const { data: services } = await supabase
+      .from('services')
+      .select('id, is_active')
+      .eq('is_active', true)
+
+    console.log(`🔍 DEBUG: Active services: ${services?.length || 0}`)
+
+    res.json({
+      totalAppointments: allAppointments.length,
+      sampleAppointments: allAppointments.slice(0, 5),
+      activeServices: services?.length || 0
+    })
+  } catch (error) {
+    console.error('❌ Debug error:', error)
+    res.status(500).json({ error: error.message })
+  }
+}
+
 export const getStats = async (req, res) => {
   try {
     // Get current month - properly formatted for date range

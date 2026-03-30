@@ -78,19 +78,28 @@ export default function BookingModal({ show, onHide, service, availableSlots = [
       setLoading(true);
       setError('');
 
+      // Format date as YYYY-MM-DD (local date, not UTC)
+      const formatDateToLocalString = (date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+
       const appointmentData = {
         service_id: service.id || service._id,
         client_name: formData.clientName,
         client_phone: formData.clientPhone,
         client_email: formData.clientEmail,
         client_whatsapp: formData.clientWhatsapp,
-        desired_date: formData.desiredDate,
+        desired_date: formatDateToLocalString(formData.desiredDate),
         slot_start: formData.desiredTimeSlot?.start,
         slot_end: formData.desiredTimeSlot?.end,
         selected_options: formData.selectedOptions,
         custom_description: formData.customDescription,
       };
 
+      console.log('📝 Submitting appointment:', appointmentData);
       await appointmentService.createAppointment(appointmentData);
       setSuccess('Rendez-vous demandé avec succès !');
 

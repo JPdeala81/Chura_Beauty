@@ -17,6 +17,14 @@ export const createAppointment = async (req, res) => {
       custom_description,
     } = req.body
 
+    console.log('📝 Creating appointment:', {
+      client_name,
+      desired_date,
+      slot_start,
+      slot_end,
+      status_will_be: 'pending'
+    })
+
     // Vérifier que le service existe
     const { data: service, error: serviceError } = await supabase
       .from('services')
@@ -53,11 +61,18 @@ export const createAppointment = async (req, res) => {
       .single()
 
     if (error) {
+      console.error('❌ Error creating appointment:', error)
       return res.status(500).json({
         success: false,
         message: error.message,
       })
     }
+
+    console.log('✅ Appointment created:', {
+      id: appointment.id,
+      desired_date: appointment.desired_date,
+      status: appointment.status
+    })
 
     // Créer une notification
     await supabase
