@@ -1,9 +1,8 @@
-import express from 'express'
+import { Router } from 'express'
 import { getOwnerProfile } from '../controllers/ownerProfileController.js'
 
-const router = express.Router()
+const router = Router()
 
-// GET public owner profile
 router.get('/:slug', getOwnerProfile)
 
 export default router

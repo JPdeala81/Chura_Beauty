@@ -5,28 +5,21 @@ export const useMaintenanceCheck = () => {
   const [isMaintenance, setIsMaintenance] = useState(false)
   const [maintenanceData, setMaintenanceData] = useState(null)
 
-  useEffect(() => {
-    checkMaintenance()
-    const interval = setInterval(checkMaintenance, 60000) // Check every minute
-    return () => clearInterval(interval)
-  }, [])
-
   const checkMaintenance = async () => {
     try {
       const res = await api.get('/site-settings/maintenance-status')
-      if (res.data?.is_maintenance) {
-        setIsMaintenance(true)
-        setMaintenanceData(res.data)
-      } else {
-        setIsMaintenance(false)
-        setMaintenanceData(null)
-      }
+      setIsMaintenance(res.data?.is_maintenance || false)
+      setMaintenanceData(res.data)
     } catch (e) {
-      // Silently fail
+      setIsMaintenance(false)
     }
   }
 
+  useEffect(() => {
+    checkMaintenance()
+    const interval = setInterval(checkMaintenance, 60000)
+    return () => clearInterval(interval)
+  }, [])
+
   return { isMaintenance, maintenanceData, checkMaintenance }
 }
-
-export default useMaintenanceCheck
