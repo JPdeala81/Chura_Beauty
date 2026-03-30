@@ -1828,9 +1828,17 @@ img { max-width: 100%; height: auto; }
   .quick-actions-grid {
     grid-template-columns: repeat(2, 1fr) !important;
   }
+
+  /* Bootstrap col override for better mobile experience */
+  .col-lg-3 { max-width: 50%; flex: 0 0 50%; }
 }
 
 @media (max-width: 768px) {
+  /* Force 1 column on tablets */
+  .col-md-4 { max-width: 100% !important; flex: 0 0 100% !important; }
+  .col-lg-3 { max-width: 100% !important; flex: 0 0 100% !important; }
+  .col-6 { max-width: 100% !important; flex: 0 0 100% !important; }
+
   /* Admin dashboard tabs - stack better */
   .admin-navbar-tabs {
     flex-wrap: wrap;
@@ -1898,6 +1906,12 @@ img { max-width: 100%; height: auto; }
 
   .table td {
     padding: 6px 4px !important;
+  }
+
+  /* Bootstrap row gutter */
+  .row.g-3 {
+    --bs-gutter-x: 0.75rem !important;
+    --bs-gutter-y: 0.75rem !important;
   }
 }
 
@@ -1989,6 +2003,20 @@ img { max-width: 100%; height: auto; }
   .btn-sm {
     min-height: 36px !important;
     font-size: 11px !important;
+  }
+
+  /* Bootstrap column override super aggressive for mobile */
+  .col-md-4,
+  .col-lg-3,
+  .col-6 {
+    max-width: 100% !important;
+    flex: 0 0 100% !important;
+  }
+
+  /* Row gutter reduction */
+  .row.g-3 {
+    --bs-gutter-x: 0.5rem !important;
+    --bs-gutter-y: 0.5rem !important;
   }
 }
 
