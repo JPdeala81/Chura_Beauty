@@ -1,5 +1,4 @@
 import { createContext, useState, useEffect } from 'react'
-import { v4 as uuidv4 } from 'uuid'
 
 export const AuthContext = createContext()
 
@@ -7,7 +6,13 @@ export const AuthContext = createContext()
 const getDeviceId = () => {
   let deviceId = sessionStorage.getItem('device_id')
   if (!deviceId) {
-    deviceId = uuidv4()
+    // Use crypto.randomUUID() for modern browsers, fallback to manual generation
+    if (crypto.randomUUID) {
+      deviceId = crypto.randomUUID()
+    } else {
+      // Fallback for older browsers
+      deviceId = 'device-' + Math.random().toString(36).substr(2, 9)
+    }
     sessionStorage.setItem('device_id', deviceId)
   }
   return deviceId
