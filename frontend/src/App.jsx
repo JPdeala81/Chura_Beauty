@@ -8,6 +8,7 @@ import Home from './pages/Home'
 import Services from './pages/Services'
 import ServiceDetail from './pages/ServiceDetail'
 import Login from './pages/Login'
+import DebugLogin from './pages/admin/DebugLogin'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import ManageServices from './pages/admin/ManageServices'
 import ManageAppointments from './pages/admin/ManageAppointments'
@@ -44,6 +45,7 @@ function AppRoutes() {
         <Route path="/services" element={<Services />} />
         <Route path="/service/:id" element={<ServiceDetail />} />
         <Route path="/admin/login" element={<Login />} />
+        <Route path="/debug/login" element={<DebugLogin />} />
         <Route path="/owner-profile/:slug" element={<OwnerProfile />} />
 
         {/* ✅ AUTO-REDIRECT /admin vers le bon dashboard basé sur rôle */}
