@@ -654,6 +654,61 @@ img { max-width: 100%; height: auto; }
   transform: scale(1.02);
 }
 
+/* Button: Prendre RDV (Book Appointment) */
+.btn-luxury-appointment {
+  background: var(--primary-color);
+  color: white !important;
+  border-radius: var(--border-radius-md);
+  padding: 11px 24px;
+  font-weight: 700;
+  font-size: 14px;
+  border: none;
+  box-shadow: 0 4px 15px rgba(184, 134, 11, 0.4);
+  transition: var(--transition-smooth);
+  text-decoration: none !important;
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.btn-luxury-appointment::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent);
+  opacity: 0;
+  transition: var(--transition-fast);
+}
+
+.btn-luxury-appointment:hover::before { opacity: 1; }
+.btn-luxury-appointment:hover {
+  background: var(--secondary-color);
+  box-shadow: 0 6px 25px rgba(184, 134, 11, 0.6);
+  transform: translateY(-3px);
+  color: white !important;
+}
+
+/* Time Badge - Animated */
+.navbar-time-badge {
+  padding: 8px 16px;
+  background: var(--primary-color);
+  color: white;
+  border-radius: var(--border-radius-pill);
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+  min-width: 110px;
+  box-shadow: 0 4px 15px rgba(184, 134, 11, 0.4);
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
 /* ============================================================
    HERO SECTION
    ============================================================ */
@@ -1744,9 +1799,18 @@ img { max-width: 100%; height: auto; }
 
   .btn-admin-login,
   .btn-admin-logout,
-  .btn-luxury-outline {
+  .btn-luxury-outline,
+  .btn-luxury-appointment {
     display: inline-block !important;
     width: auto !important;
+    padding: 10px 20px !important;
+    font-size: 13px !important;
+  }
+
+  .navbar-time-badge {
+    padding: 6px 12px;
+    font-size: 12px;
+    min-width: 90px;
   }
 }
 
@@ -1768,14 +1832,17 @@ img { max-width: 100%; height: auto; }
     padding: 6px 12px !important;
   }
 
-  .btn-admin-login {
+  .btn-admin-login,
+  .btn-admin-logout,
+  .btn-luxury-appointment {
     padding: 8px 16px !important;
     font-size: 12px;
   }
 
-  .btn-admin-logout {
-    padding: 8px 16px !important;
-    font-size: 12px;
+  .navbar-time-badge {
+    padding: 6px 12px;
+    font-size: 11px;
+    min-width: 85px;
   }
 }
 
@@ -1801,14 +1868,23 @@ img { max-width: 100%; height: auto; }
     padding: 5px 10px !important;
   }
 
-  .btn-admin-login {
+  .btn-admin-login,
+  .btn-admin-logout,
+  .btn-luxury-appointment {
     padding: 7px 14px !important;
     font-size: 11px;
   }
 
-  .btn-admin-logout {
-    padding: 7px 14px !important;
-    font-size: 11px;
+  .navbar-time-badge {
+    padding: 5px 10px;
+    font-size: 10px;
+    min-width: 75px;
+  }
+
+  /* Stack elements vertically on very small screens */
+  .d-flex.align-items-center.gap-3 {
+    flex-direction: column !important;
+    gap: 6px !important;
   }
 
   .navbar-collapse {
