@@ -3,19 +3,20 @@ import { useContext } from 'react'
 import { AuthContext } from './context/AuthContext'
 import { AuthProvider } from './context/AuthContext'
 import { NotificationProvider } from './context/NotificationContext'
-import ThemeSwitcher from './components/ThemeSwitcher'
+import ThemeSwitcherFloating from './components/ThemeSwitcherFloating'
 import Home from './pages/Home'
 import Services from './pages/Services'
 import ServiceDetail from './pages/ServiceDetail'
 import Login from './pages/Login'
 import DebugLogin from './pages/admin/DebugLogin'
-import AdminDashboard from './pages/admin/AdminDashboard'
+import SuperAdminDashboard from './pages/admin/SuperAdminDashboard'
 import ManageServices from './pages/admin/ManageServices'
 import ManageAppointments from './pages/admin/ManageAppointments'
 import Revenue from './pages/admin/Revenue'
 import Settings from './pages/admin/Settings'
 import PrivateRoute from './components/PrivateRoute'
 import RoleRoute from './components/RoleRoute'
+import ProtectedLoginRoute from './components/ProtectedLoginRoute'
 import Maintenance from './pages/Maintenance'
 import OwnerProfile from './pages/OwnerProfile'
 import DeveloperDashboard from './pages/admin/DeveloperDashboard'
@@ -44,7 +45,7 @@ function AppRoutes() {
         <Route path="/" element={<Home />} />
         <Route path="/services" element={<Services />} />
         <Route path="/service/:id" element={<ServiceDetail />} />
-        <Route path="/admin/login" element={<Login />} />
+        <Route path="/admin/login" element={<ProtectedLoginRoute><Login /></ProtectedLoginRoute>} />
         <Route path="/debug/login" element={<DebugLogin />} />
         <Route path="/owner-profile/:slug" element={<OwnerProfile />} />
 
@@ -54,7 +55,7 @@ function AppRoutes() {
         </Route>
 
         {/* ✅ SUPER ADMIN ROUTES */}
-        <Route path="/admin/dashboard" element={<RoleRoute allowedRole="admin"><AdminDashboard /></RoleRoute>} />
+        <Route path="/admin/dashboard" element={<RoleRoute allowedRole="admin"><SuperAdminDashboard /></RoleRoute>} />
         <Route path="/admin/services" element={<RoleRoute allowedRole="admin"><ManageServices /></RoleRoute>} />
         <Route path="/admin/appointments" element={<RoleRoute allowedRole="admin"><ManageAppointments /></RoleRoute>} />
         <Route path="/admin/revenue" element={<RoleRoute allowedRole="admin"><Revenue /></RoleRoute>} />
@@ -66,7 +67,7 @@ function AppRoutes() {
         {/* ✅ ROUTE PAR DÉFAUT */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-      <ThemeSwitcher />
+      <ThemeSwitcherFloating />
     </>
   )
 }

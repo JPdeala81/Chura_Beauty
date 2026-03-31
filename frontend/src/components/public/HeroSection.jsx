@@ -11,9 +11,7 @@ const HeroSection = ({ onScrollToServices }) => {
     bio: 'Votre destination beauté à Libreville',
     coverPicture: null,
     heroTitle: 'Révélez Votre Beauté Naturelle',
-    heroSubtitle: 'Des soins d\'exception pour sublimer votre beauté',
-    heroBgColor: '#2c1810',
-    heroTextColor: '#f8c8d4'
+    heroSubtitle: 'Des soins d\'exception pour sublimer votre beauté'
   })
 
   useEffect(() => {
@@ -34,7 +32,7 @@ const HeroSection = ({ onScrollToServices }) => {
       style={{
         background: adminInfo.coverPicture
           ? `linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.4)), url(${adminInfo.coverPicture}) center/cover no-repeat`
-          : `linear-gradient(135deg, ${adminInfo.heroBgColor || '#2c1810'} 0%, #4a2c1a 40%, #b8860b 100%)`,
+          : 'var(--gradient-primary)',
         minHeight: '100vh',
         paddingTop: '80px'
       }}
@@ -81,7 +79,7 @@ const HeroSection = ({ onScrollToServices }) => {
             >
               <motion.span
                 className="d-inline-block mb-3 px-4 py-2 rounded-pill"
-                style={{ background: 'rgba(212,165,116,0.2)', border: '1px solid rgba(212,165,116,0.4)', color: '#d4a574', fontSize: '14px', fontWeight: '600', letterSpacing: '2px', textTransform: 'uppercase' }}
+                style={{ background: 'rgba(var(--primary-color), 0.1)', border: '1px solid var(--primary-color)', color: 'var(--primary-color)', fontSize: '14px', fontWeight: '600', letterSpacing: '2px', textTransform: 'uppercase' }}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
@@ -91,14 +89,14 @@ const HeroSection = ({ onScrollToServices }) => {
 
               <motion.h1
                 className="hero-title mb-4"
-                style={{ color: adminInfo.heroTextColor || '#f8c8d4', textShadow: '0 4px 20px rgba(0,0,0,0.3)' }}
+                style={{ color: 'var(--text-color)', textShadow: '0 4px 20px rgba(0,0,0,0.3)' }}
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4, duration: 0.8 }}
               >
                 {adminInfo.heroTitle || 'Révélez Votre'}{' '}
                 <span style={{
-                  background: 'linear-gradient(135deg, #b8860b, #d4a574, #f8c8d4)',
+                  background: 'var(--gradient-primary)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text'
@@ -109,7 +107,7 @@ const HeroSection = ({ onScrollToServices }) => {
 
               <motion.p
                 className="hero-subtitle mb-5"
-                style={{ color: 'rgba(248,200,212,0.85)', fontSize: '1.2rem', lineHeight: '1.8', maxWidth: '500px' }}
+                style={{ color: 'var(--text-secondary)', fontSize: '1.2rem', lineHeight: '1.8', maxWidth: '500px' }}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6 }}

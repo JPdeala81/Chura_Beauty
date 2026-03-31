@@ -90,12 +90,12 @@ const Login = () => {
 
   return (
     <div className="min-vh-100 d-flex align-items-center justify-content-center"
-      style={{ background: 'linear-gradient(135deg, #f8c8d4 0%, #fff9f0 50%, #d4a574 100%)' }}>
+      style={{ background: 'var(--gradient-primary)' }}>
       <div className="card shadow-lg border-0" style={{ width: '100%', maxWidth: '420px', borderRadius: '20px' }}>
         <div className="card-body p-5">
           <div className="text-center mb-4">
-            <div className="mb-3" style={{ fontSize: '48px' }}>💆‍♀️</div>
-            <h3 style={{ fontFamily: 'Playfair Display, serif', color: '#b8860b' }}>
+            <div className="mb-3" style={{ fontSize: '48px' }}>�</div>
+            <h3 style={{ fontFamily: 'Playfair Display, serif', color: 'var(--primary-color)' }}>
               Espace Admin
             </h3>
             <p className="text-muted small">Chura Beauty Salon</p>
@@ -107,7 +107,7 @@ const Login = () => {
 
           <form onSubmit={handleSubmit}>
             <div className="mb-3">
-              <label className="form-label fw-semibold small text-muted">Email</label>
+              <label className="form-label fw-semibold small" style={{ color: 'var(--text-color)' }}>Email</label>
               <input
                 type="email"
                 className="form-control rounded-3"
@@ -115,11 +115,11 @@ const Login = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                style={{ padding: '12px 16px' }}
+                style={{ padding: '12px 16px', backgroundColor: 'var(--bg-input)', color: 'var(--text-color)', border: '2px solid var(--border-color)' }}
               />
             </div>
             <div className="mb-4">
-              <label className="form-label fw-semibold small text-muted">Mot de passe</label>
+              <label className="form-label fw-semibold small" style={{ color: 'var(--text-color)' }}>Mot de passe</label>
               <input
                 type="password"
                 className="form-control rounded-3"
@@ -127,11 +127,11 @@ const Login = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                style={{ padding: '12px 16px' }}
+                style={{ padding: '12px 16px', backgroundColor: 'var(--bg-input)', color: 'var(--text-color)', border: '2px solid var(--border-color)' }}
               />
             </div>
-            <div className="mb-2 text-end">
-              <button type="button" className="btn btn-link p-0 small" style={{ color: '#b8860b', textDecoration: 'underline' }} onClick={() => setShowModal(true)}>
+            <div>
+              <button type="button" className="btn btn-link p-0 small" style={{ color: 'var(--primary-color)', textDecoration: 'underline' }} onClick={() => setShowModal(true)}>
                 Mot de passe oublié ?
               </button>
             </div>
@@ -140,11 +140,11 @@ const Login = () => {
               className="btn w-100 fw-bold py-3 rounded-3"
               disabled={loading}
               style={{
-                background: 'linear-gradient(135deg, #28a745, #20c997)',
-                color: 'white',
+                background: 'var(--gradient-primary)',
+                color: 'var(--text-button)',
                 fontSize: '16px',
                 border: 'none',
-                boxShadow: '0 4px 15px rgba(40, 167, 69, 0.4)'
+                boxShadow: '0 4px 15px rgba(var(--primary-rgb), 0.4)'
               }}
             >
               {loading ? (
@@ -153,7 +153,7 @@ const Login = () => {
                   Connexion...
                 </>
               ) : (
-                '🔐 Se connecter'
+                'Se connecter'
               )}
             </button>
           </form>
@@ -178,7 +178,7 @@ const Login = () => {
                 <label className="form-label">Recevoir un email de réinitialisation</label>
                 <form onSubmit={handleForgotPassword}>
                   <input type="email" className="form-control mb-2" placeholder="Votre email" value={recoveryEmail} onChange={e => setRecoveryEmail(e.target.value)} required />
-                  <button type="submit" className="btn btn-primary w-100" disabled={recoveryLoading} style={{ background: '#b8860b', border: 'none' }}>
+                  <button type="submit" className="btn btn-primary w-100" disabled={recoveryLoading} style={{ background: 'var(--primary-color)', border: 'none', color: 'var(--text-button)' }}>
                     {recoveryLoading ? 'Envoi...' : 'Envoyer le lien'}
                   </button>
                 </form>
@@ -188,7 +188,7 @@ const Login = () => {
                 <span className="small text-muted">ou</span>
               </div>
               <div className="mb-2">
-                <button className="btn btn-link w-100" style={{ color: '#b8860b', textDecoration: 'underline' }} onClick={() => setShowQuestion(true)}>
+                <button className="btn btn-link w-100" style={{ color: 'var(--primary-color)', textDecoration: 'underline' }} onClick={() => setShowQuestion(true)}>
                   Répondre à la question secrète
                 </button>
               </div>
@@ -199,7 +199,7 @@ const Login = () => {
                 <form onSubmit={handleGetQuestion}>
                   <label className="form-label">Votre email</label>
                   <input type="email" className="form-control mb-2" value={questionEmail} onChange={e => setQuestionEmail(e.target.value)} required />
-                  <button type="submit" className="btn btn-primary w-100" style={{ background: '#b8860b', border: 'none' }}>Afficher la question</button>
+                  <button type="submit" className="btn btn-primary w-100" style={{ background: 'var(--primary-color)', border: 'none', color: 'var(--text-button)' }}>Afficher la question</button>
                   {questionMsg && <div className={`alert mt-2 alert-${questionMsg.type === 'success' ? 'success' : 'danger'} small`}>{questionMsg.text}</div>}
                 </form>
               )}
@@ -213,7 +213,7 @@ const Login = () => {
                     <label className="form-label">Votre réponse</label>
                     <input type="text" className="form-control mb-2" value={secretAnswer} onChange={e => setSecretAnswer(e.target.value)} required />
                   </div>
-                  <button type="submit" className="btn btn-primary w-100" disabled={recoveryLoading} style={{ background: '#b8860b', border: 'none' }}>
+                  <button type="submit" className="btn btn-primary w-100" disabled={recoveryLoading} style={{ background: 'var(--primary-color)', border: 'none', color: 'var(--text-button)' }}>
                     {recoveryLoading ? 'Vérification...' : 'Valider'}
                   </button>
                   {questionMsg && <div className={`alert mt-2 alert-${questionMsg.type === 'success' ? 'success' : 'danger'} small`}>{questionMsg.text}</div>}
