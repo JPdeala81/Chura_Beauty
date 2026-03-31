@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 dotenv.config()
 
 const supabaseUrl = process.env.SUPABASE_URL
-const supabaseKey = process.env.SUPABASE_SERVICE_KEY
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
 // In development mode, allow mock credentials for testing
 const isDevelopment = process.env.NODE_ENV === 'development'
@@ -14,7 +14,7 @@ if (!supabaseUrl && !isDevelopment) {
 }
 
 if (!supabaseKey && !isDevelopment) {
-  throw new Error('Les variables SUPABASE_SERVICE_KEY doivent être définis en production')
+  throw new Error('Les variables SUPABASE_SERVICE_ROLE_KEY doivent être définis en production')
 }
 
 // Use mock values if not provided in development

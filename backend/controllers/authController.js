@@ -1,5 +1,7 @@
 import nodemailer from 'nodemailer'
 import crypto from 'crypto'
+import bcrypt from 'bcryptjs'
+import { supabase } from '../config/supabase.js'
 import { sendEmail } from '../utils/emailUtil.js'
 
 // CHANGE PASSWORD
