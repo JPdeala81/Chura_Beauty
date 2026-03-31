@@ -86,7 +86,7 @@ const Home = () => {
         top: '20px',
         right: '20px',
         zIndex: 9999,
-        background: '#ff4444',
+        background: '#22c55e',
         color: 'white',
         padding: '12px 20px',
         borderRadius: '8px',
@@ -94,7 +94,7 @@ const Home = () => {
         fontWeight: '700',
         border: 'none',
         cursor: 'pointer',
-        boxShadow: '0 4px 12px rgba(255,68,68,0.4)',
+        boxShadow: '0 4px 12px rgba(34,197,94,0.4)',
         animation: 'pulse 2s infinite'
       }}>
         ✅ BUILD TEST - {new Date().toLocaleTimeString('fr-FR')}
