@@ -21,10 +21,12 @@ PORT = 5000
 
 ### 3️⃣ Configurer le build (Settings → Build & Development Settings)
 ```
-Build Command: cd backend && npm install
+Build Command: npm install
 Output Directory: (vide)
-Install Command: npm install --prefix backend
+Install Command: npm install
 ```
+
+**Note:** Root Directory doit être défini à `backend` (voir étape 1)
 
 ---
 
