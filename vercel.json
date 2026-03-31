@@ -2,12 +2,6 @@
   "version": 2,
   "buildCommand": "cd frontend && npm install && npm run build && cd ../backend && npm install",
   "installCommand": "npm install --prefix frontend && npm install --prefix backend",
-  "env": {
-    "SUPABASE_URL": "@SUPABASE_URL",
-    "SUPABASE_SERVICE_ROLE_KEY": "@SUPABASE_SERVICE_ROLE_KEY",
-    "JWT_SECRET": "@JWT_SECRET",
-    "NODE_ENV": "production"
-  },
   "builds": [
     {
       "src": "backend/server.js",
