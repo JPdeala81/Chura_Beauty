@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { useContext } from 'react'
+import { useContext, useEffect } from 'react'
 import { AuthContext } from './context/AuthContext'
 import { AuthProvider } from './context/AuthContext'
 import { NotificationProvider } from './context/NotificationContext'
@@ -74,6 +74,12 @@ function AppRoutes() {
 
 function App() {
   const { isMaintenance } = useMaintenanceCheck()
+
+  // Load theme on app startup
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme') || 'gold'
+    document.documentElement.setAttribute('data-theme', savedTheme)
+  }, [])
 
   return (
     <BrowserRouter>

@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import '../styles/theme-switcher.css'
 
 const ThemeSwitcherFloating = () => {
   const [isOpen, setIsOpen] = useState(false)
