@@ -79,6 +79,33 @@ const Home = () => {
     <>
       <Navbar />
       <ErrorToast message={errorMessage} onClose={() => setErrorMessage('')} />
+      
+      {/* TEST DEPLOYMENT BUTTON - Remove after testing */}
+      <div style={{
+        position: 'fixed',
+        top: '20px',
+        right: '20px',
+        zIndex: 9999,
+        background: '#ff4444',
+        color: 'white',
+        padding: '12px 20px',
+        borderRadius: '8px',
+        fontSize: '14px',
+        fontWeight: '700',
+        border: 'none',
+        cursor: 'pointer',
+        boxShadow: '0 4px 12px rgba(255,68,68,0.4)',
+        animation: 'pulse 2s infinite'
+      }}>
+        ✅ BUILD TEST - {new Date().toLocaleTimeString('fr-FR')}
+      </div>
+      <style>{`
+        @keyframes pulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.05); }
+        }
+      `}</style>
+
       <HeroSection onScrollToServices={scrollToServices} />
 
       {/* Services Section */}
