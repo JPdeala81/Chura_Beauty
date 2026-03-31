@@ -39,33 +39,29 @@ function AppRoutes() {
   return (
     <>
       <Routes>
-        {/* ✅ ROUTES PUBLIQUES - jamais de redirection */}
+        {/* ✅ ROUTES PUBLIQUES */}
         <Route path="/" element={<Home />} />
         <Route path="/services" element={<Services />} />
         <Route path="/service/:id" element={<ServiceDetail />} />
         <Route path="/admin/login" element={<Login />} />
         <Route path="/owner-profile/:slug" element={<OwnerProfile />} />
 
-        {/* ✅ REDIRECT /admin vers le bon dashboard */}
+        {/* ✅ AUTO-REDIRECT /admin vers le bon dashboard basé sur rôle */}
         <Route path="/admin" element={<PrivateRoute />}>
           <Route index element={<AdminRedirect />} />
         </Route>
 
-        {/* ✅ SUPER ADMIN ROUTES - ADMIN SEULEMENT */}
-        <Route path="/admin" element={<RoleRoute allowedRole="admin" fallbackRoute="/admin/login" />}>
-          <Route path="dashboard" element={<AdminDashboard />} />
-          <Route path="services" element={<ManageServices />} />
-          <Route path="appointments" element={<ManageAppointments />} />
-          <Route path="revenue" element={<Revenue />} />
-          <Route path="settings" element={<Settings />} />
-        </Route>
+        {/* ✅ SUPER ADMIN ROUTES */}
+        <Route path="/admin/dashboard" element={<RoleRoute allowedRole="admin"><AdminDashboard /></RoleRoute>} />
+        <Route path="/admin/services" element={<RoleRoute allowedRole="admin"><ManageServices /></RoleRoute>} />
+        <Route path="/admin/appointments" element={<RoleRoute allowedRole="admin"><ManageAppointments /></RoleRoute>} />
+        <Route path="/admin/revenue" element={<RoleRoute allowedRole="admin"><Revenue /></RoleRoute>} />
+        <Route path="/admin/settings" element={<RoleRoute allowedRole="admin"><Settings /></RoleRoute>} />
 
-        {/* ✅ DEVELOPER ROUTES - DEVELOPER SEULEMENT */}
-        <Route path="/admin" element={<RoleRoute allowedRole="developer" fallbackRoute="/admin/login" />}>
-          <Route path="developer" element={<DeveloperDashboard />} />
-        </Route>
+        {/* ✅ DEVELOPER ROUTES */}
+        <Route path="/admin/developer" element={<RoleRoute allowedRole="developer"><DeveloperDashboard /></RoleRoute>} />
 
-        {/* ✅ TOUTE AUTRE URL - retourne à l'accueil */}
+        {/* ✅ ROUTE PAR DÉFAUT */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <ThemeSwitcher />

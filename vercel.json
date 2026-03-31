@@ -1,7 +1,5 @@
 {
   "version": 2,
-  "installCommand": "npm install --prefix frontend && npm install --prefix backend",
-  "buildCommand": "npm run build --prefix frontend && npm install --prefix backend",
   "env": {
     "VITE_SUPABASE_URL": "@VITE_SUPABASE_URL",
     "VITE_SUPABASE_ANON_KEY": "@VITE_SUPABASE_ANON_KEY", 
