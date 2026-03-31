@@ -8,6 +8,7 @@ const Navbar = () => {
   const [scrolled, setScrolled] = useState(false)
   const [salonName, setSalonName] = useState('Chura Beauty Salon')
   const [menuOpen, setMenuOpen] = useState(false)
+  const [currentTime, setCurrentTime] = useState(new Date())
   const location = useLocation()
   const { token, logout } = useContext(AuthContext)
 
@@ -15,6 +16,11 @@ const Navbar = () => {
     const handleScroll = () => setScrolled(window.scrollY > 50)
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000)
+    return () => clearInterval(timer)
   }, [])
 
   useEffect(() => {
@@ -73,28 +79,61 @@ const Navbar = () => {
           </ul>
 
           <div className="d-flex align-items-center gap-3">
-            <Link 
-              to="/services" 
-              className="btn-luxury-outline d-none d-lg-inline-block" 
-              style={{ 
-                padding: '10px 24px', 
-                fontSize: '14px',
-                fontWeight: '600',
-                borderRadius: '8px',
-                backgroundColor: 'rgba(184, 134, 11, 0.1)',
-                border: '2px solid #b8860b',
-                transition: 'all 0.3s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.backgroundColor = '#b8860b'
-                e.target.style.color = 'white'
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.backgroundColor = 'rgba(184, 134, 11, 0.1)'
-                e.target.style.color = 'inherit'
+            {/* Time Badge - Animated */}
+            <motion.div
+              animate={{ scale: [1, 1.05, 1] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: '#b8860b',
+                color: 'white',
+                borderRadius: '20px',
+                fontSize: '13px',
+                fontWeight: '700',
+                textAlign: 'center',
+                minWidth: '100px',
+                boxShadow: '0 4px 15px rgba(184, 134, 11, 0.4)',
+                letterSpacing: '0.5px'
               }}
             >
-              📅 Prendre RDV
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '16px' }}>🕐</span>
+                <span>{currentTime.toLocaleTimeString('fr-FR')}</span>
+              </div>
+            </motion.div>
+
+            {/* Book Appointment Button - More Visible */}
+            <Link 
+              to="/services" 
+              className="btn-luxury-appointment d-none d-lg-inline-block" 
+              style={{ 
+                padding: '12px 28px', 
+                fontSize: '15px',
+                fontWeight: '700',
+                borderRadius: '10px',
+                backgroundColor: '#b8860b',
+                color: 'white',
+                border: 'none',
+                transition: 'all 0.3s ease',
+                boxShadow: '0 4px 15px rgba(184, 134, 11, 0.4)',
+                textDecoration: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.backgroundColor = '#d4a574'
+                e.target.style.boxShadow = '0 6px 25px rgba(184, 134, 11, 0.6)'
+                e.target.style.transform = 'translateY(-3px)'
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.backgroundColor = '#b8860b'
+                e.target.style.boxShadow = '0 4px 15px rgba(184, 134, 11, 0.4)'
+                e.target.style.transform = 'translateY(0)'
+              }}
+            >
+              <span style={{ fontSize: '18px' }}>📅</span>
+              <span>Prendre RDV</span>
             </Link>
             {token ? (
               <>
