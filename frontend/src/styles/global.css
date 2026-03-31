@@ -186,94 +186,116 @@ img { max-width: 100%; height: auto; }
   z-index: 9000;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
   align-items: center;
 }
 
 .theme-btn-main {
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  background: var(--gradient-primary);
-  border: 2px solid rgba(255,255,255,0.3);
-  color: white;
-  font-size: 20px;
+  width: auto;
+  padding: 10px 18px;
+  border: 2px solid var(--primary-color);
+  background: var(--bg-secondary);
+  color: var(--text-color);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
   cursor: pointer;
-  box-shadow: var(--shadow-luxury);
-  transition: var(--transition-bounce);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+  transition: var(--transition-smooth);
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
-  overflow: hidden;
+  border-radius: 6px;
+  font-family: 'Nunito', sans-serif;
+  text-transform: uppercase;
 }
 
-.theme-btn-main::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: rgba(255,255,255,0.2);
-  opacity: 0;
-  transition: var(--transition-fast);
+.theme-btn-main:hover {
+  background: var(--primary-color);
+  color: var(--bg-secondary);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
 }
 
-.theme-btn-main:hover::before { opacity: 1; }
-.theme-btn-main:hover { transform: scale(1.1) rotate(15deg); box-shadow: var(--shadow-glow-gold); }
+.theme-btn-main:active {
+  transform: translateY(0);
+}
 
 .theme-options {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   align-items: center;
   opacity: 0;
-  transform: translateY(10px);
+  transform: translateY(10px) scale(0.8);
   pointer-events: none;
   transition: var(--transition-smooth);
 }
 
 .theme-options.open {
   opacity: 1;
-  transform: translateY(0);
+  transform: translateY(0) scale(1);
   pointer-events: all;
 }
 
 .theme-option-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: 2px solid rgba(255,255,255,0.4);
+  width: 100%;
+  min-width: 140px;
+  padding: 8px 12px;
+  border: 2px solid currentColor;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 12px;
+  font-weight: 600;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: var(--transition-bounce);
-  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-  position: relative;
-}
-
-.theme-option-btn:hover { transform: scale(1.15); }
-.theme-option-btn[data-target="gold"] { background: linear-gradient(135deg, #b8860b, #ffd700); }
-.theme-option-btn[data-target="dark"] { background: linear-gradient(135deg, #1a1a2e, #4a4a8a); }
-.theme-option-btn[data-target="rose"] { background: linear-gradient(135deg, #c4607a, #fde8f0); }
-
-.theme-label {
-  position: absolute;
-  right: 52px;
-  background: var(--dark-medium);
-  color: white;
-  padding: 4px 10px;
-  border-radius: 8px;
-  font-size: 11px;
-  font-weight: 600;
-  white-space: nowrap;
-  opacity: 0;
-  transition: var(--transition-fast);
-  pointer-events: none;
+  transition: var(--transition-smooth);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  border-radius: 6px;
   font-family: 'Nunito', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.theme-option-btn:hover .theme-label { opacity: 1; }
+.theme-option-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+}
+
+.theme-option-btn.active {
+  font-weight: 700;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+}
+
+.theme-option-btn[data-target="gold"] {
+  background: linear-gradient(135deg, #b8860b 0%, #ffd700 100%);
+  color: #1a1a1a;
+  border-color: #996608;
+}
+
+.theme-option-btn[data-target="dark"] {
+  background: linear-gradient(135deg, #1a1a1a 0%, #4a4a4a 100%);
+  color: #e0e0e0;
+  border-color: #333333;
+}
+
+.theme-option-btn[data-target="green"] {
+  background: linear-gradient(135deg, #00ff41 0%, #00cc33 100%);
+  color: #1a1a1a;
+  border-color: #00cc33;
+}
+
+.theme-option-btn[data-target="blue"] {
+  background: linear-gradient(135deg, #00d9ff 0%, #0080ff 100%);
+  color: #ffffff;
+  border-color: #0080ff;
+}
+
+.theme-option-btn[data-target="rose"] {
+  background: linear-gradient(135deg, #d4607a 0%, #f8c8d4 100%);
+  color: #2a1a2a;
+  border-color: #b8356b;
+}
 
 /* ============================================================
    ÉLÉMENTS FLOTTANTS DÉCORATIFS

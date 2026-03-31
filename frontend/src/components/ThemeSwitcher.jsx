@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
 
 const themes = [
-  { id: 'gold', label: 'Luxe Doré', emoji: '✨' },
-  { id: 'dark', label: 'Nuit Élégante', emoji: '🌙' },
-  { id: 'rose', label: 'Rose Poudré', emoji: '🌸' }
+  { id: 'gold', label: 'Gold Luxury' },
+  { id: 'dark', label: 'Dark Elegant' },
+  { id: 'green', label: 'Neon Green' },
+  { id: 'blue', label: 'Neon Blue' },
+  { id: 'rose', label: 'Rose Beauty' }
 ]
 
 const ThemeSwitcher = () => {
@@ -20,7 +22,6 @@ const ThemeSwitcher = () => {
     document.documentElement.setAttribute('data-theme', themeId)
     localStorage.setItem('chura-theme', themeId)
     setCurrent(themeId)
-    setOpen(false)
   }
 
   return (
@@ -29,13 +30,12 @@ const ThemeSwitcher = () => {
         {themes.map(theme => (
           <button
             key={theme.id}
-            className="theme-option-btn"
+            className={`theme-option-btn ${current === theme.id ? 'active' : ''}`}
             data-target={theme.id}
             onClick={() => applyTheme(theme.id)}
-            title={theme.label}
-            style={{ outline: current === theme.id ? '2px solid white' : 'none' }}
+            title={`Switch to ${theme.label}`}
+            aria-pressed={current === theme.id}
           >
-            <span>{theme.emoji}</span>
             <span className="theme-label">{theme.label}</span>
           </button>
         ))}
@@ -43,9 +43,10 @@ const ThemeSwitcher = () => {
       <button
         className="theme-btn-main"
         onClick={() => setOpen(!open)}
-        title="Changer de thème"
+        title="Switch Theme"
+        aria-expanded={open}
       >
-        🎨
+        <span>THEMES</span>
       </button>
     </div>
   )

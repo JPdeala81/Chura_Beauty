@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,900;1,400&family=Nunito:wght@300;400;500;600;700;800&family=Cormorant+Garamond:wght@300;400;600&display=swap');
 
+/* ===== THÈME PAR DÉFAUT: GOLD LUXURY ===== */
 :root {
   /* ===== COULEURS PRINCIPALES ===== */
   --primary-color: #b8860b;
@@ -8,6 +9,13 @@
   --secondary-color: #d4a574;
   --accent-color: #f8c8d4;
   --accent-rose: #e8a0b0;
+  --bg-color: #fff9f0;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #fef3e8;
+  --text-color: #1a1a1a;
+  --text-secondary: #4a4a4a;
+  --text-muted: #6c757d;
+  --border-color: #e8d4c0;
   --dark-color: #1a0f08;
   --dark-medium: #2c1810;
   --dark-light: #4a2c1a;
@@ -18,9 +26,6 @@
   --danger-color: #dc3545;
   --warning-color: #ffc107;
   --info-color: #17a2b8;
-  --text-dark: #1a1a1a;
-  --text-medium: #4a4a4a;
-  --text-muted: #6c757d;
   --white: #ffffff;
 
   /* ===== DÉGRADÉS ===== */
@@ -107,4 +112,116 @@
   --breakpoint-lg: 992px;
   --breakpoint-xl: 1200px;
   --breakpoint-xxl: 1400px;
+}
+
+/* ===== THÈME DARK ELEGANT ===== */
+[data-theme="dark"] {
+  --primary-color: #e8d4c0;
+  --primary-light: #f5e6d3;
+  --primary-dark: #c2a588;
+  --secondary-color: #d4a574;
+  --accent-color: #e8a0b0;
+  --accent-rose: #f8c8d4;
+  --bg-color: #0d0805;
+  --bg-secondary: #1a0f08;
+  --bg-tertiary: #2c1810;
+  --text-color: #f5e6d3;
+  --text-secondary: #d4a574;
+  --text-muted: #9a8b7a;
+  --border-color: #4a2c1a;
+  --dark-color: #0d0805;
+  --dark-medium: #1a0f08;
+  --dark-light: #2c1810;
+  --light-color: #f5e6d3;
+  --light-medium: #fef3e8;
+  --light-dark: #e8d4c0;
+  --success-color: #66bb6a;
+  --danger-color: #ef5350;
+  --warning-color: #ffb74d;
+  --info-color: #29b6f6;
+  --white: #1a0f08;
+}
+
+/* ===== THÈME VERT FLUO ===== */
+[data-theme="green"] {
+  --primary-color: #00ff41;
+  --primary-light: #00ff6f;
+  --primary-dark: #00cc33;
+  --secondary-color: #00cc33;
+  --accent-color: #00ff41;
+  --accent-rose: #00ff6f;
+  --bg-color: #ffffff;
+  --bg-secondary: #f5f5f5;
+  --bg-tertiary: #eeeeee;
+  --text-color: #1a1a1a;
+  --text-secondary: #333333;
+  --text-muted: #666666;
+  --border-color: #00ff41;
+  --dark-color: #1a1a1a;
+  --dark-medium: #333333;
+  --dark-light: #555555;
+  --light-color: #ffffff;
+  --light-medium: #f5f5f5;
+  --light-dark: #eeeeee;
+  --success-color: #00ff41;
+  --danger-color: #ff1744;
+  --warning-color: #ffaa00;
+  --info-color: #00bfff;
+  --white: #ffffff;
+}
+
+/* ===== THÈME BLEU FLUO FUTURISTE ===== */
+[data-theme="blue"] {
+  --primary-color: #00d9ff;
+  --primary-light: #00f0ff;
+  --primary-dark: #00a8cc;
+  --secondary-color: #0080ff;
+  --accent-color: #ff00ff;
+  --accent-rose: #00f0ff;
+  --bg-color: #0a0e27;
+  --bg-secondary: #0f1535;
+  --bg-tertiary: #1a1f42;
+  --text-color: #e0f7ff;
+  --text-secondary: #00d9ff;
+  --text-muted: #0080ff;
+  --border-color: #00d9ff;
+  --dark-color: #0a0e27;
+  --dark-medium: #0f1535;
+  --dark-light: #1a1f42;
+  --light-color: #e0f7ff;
+  --light-medium: #d0e8ff;
+  --light-dark: #b8d9ff;
+  --success-color: #00ff41;
+  --danger-color: #ff0055;
+  --warning-color: #ffaa00;
+  --info-color: #00d9ff;
+  --white: #0f1535;
+}
+
+/* ===== THÈME ROSE MAGNIFIQUE ===== */
+[data-theme="rose"] {
+  --primary-color: #d4607a;
+  --primary-light: #e8a0b0;
+  --primary-dark: #b8356b;
+  --secondary-color: #f8c8d4;
+  --accent-color: #d4607a;
+  --accent-rose: #c84a65;
+  --bg-color: #fff5f8;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #fffbfd;
+  --text-color: #2a1a2a;
+  --text-secondary: #5a3a5a;
+  --text-muted: #8a6a8a;
+  --border-color: #e8a0b0;
+  --dark-color: #2a1a2a;
+  --dark-medium: #4a3a4a;
+  --dark-light: #6a5a6a;
+  --light-color: #fff5f8;
+  --light-medium: #fffbfd;
+  --light-dark: #f5e6f0;
+  --success-color: #28a745;
+  --danger-color: #dc3545;
+  --warning-color: #ffc107;
+  --info-color: #17a2b8;
+  --white: #ffffff;
 }
