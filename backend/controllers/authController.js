@@ -205,6 +205,7 @@ export const login = async (req, res) => {
         email: admin.email,
         salon_name: admin.salon_name,
         owner_name: admin.owner_name,
+        role: admin.role || 'admin', // Include role for routing to correct dashboard
       },
     })
   } catch (error) {

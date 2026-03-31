@@ -1,4 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { useContext } from 'react'
+import { AuthContext } from './context/AuthContext'
 import { AuthProvider } from './context/AuthContext'
 import { NotificationProvider } from './context/NotificationContext'
 import ThemeSwitcher from './components/ThemeSwitcher'
@@ -12,10 +14,64 @@ import ManageAppointments from './pages/admin/ManageAppointments'
 import Revenue from './pages/admin/Revenue'
 import Settings from './pages/admin/Settings'
 import PrivateRoute from './components/PrivateRoute'
+import RoleRoute from './components/RoleRoute'
 import Maintenance from './pages/Maintenance'
 import OwnerProfile from './pages/OwnerProfile'
 import DeveloperDashboard from './pages/admin/DeveloperDashboard'
 import { useMaintenanceCheck } from './hooks/useMaintenanceCheck'
+
+// Component to redirect /admin to the correct dashboard based on role
+function AdminRedirect() {
+  const { admin } = useContext(AuthContext)
+  
+  if (!admin) return <Navigate to="/admin/login" replace />
+  
+  // Redirect to appropriate dashboard based on role
+  if (admin.role === 'developer') {
+    return <Navigate to="/admin/developer" replace />
+  }
+  return <Navigate to="/admin/dashboard" replace />
+}
+
+function AppRoutes() {
+  const { isMaintenance } = useMaintenanceCheck()
+
+  return (
+    <>
+      <Routes>
+        {/* ✅ ROUTES PUBLIQUES - jamais de redirection */}
+        <Route path="/" element={<Home />} />
+        <Route path="/services" element={<Services />} />
+        <Route path="/service/:id" element={<ServiceDetail />} />
+        <Route path="/admin/login" element={<Login />} />
+        <Route path="/owner-profile/:slug" element={<OwnerProfile />} />
+
+        {/* ✅ REDIRECT /admin vers le bon dashboard */}
+        <Route path="/admin" element={<PrivateRoute />}>
+          <Route index element={<AdminRedirect />} />
+        </Route>
+
+        {/* ✅ SUPER ADMIN ROUTES - ADMIN SEULEMENT */}
+        <Route path="/admin" element={<RoleRoute allowedRole="admin" fallbackRoute="/admin/login" />}>
+          <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="services" element={<ManageServices />} />
+          <Route path="appointments" element={<ManageAppointments />} />
+          <Route path="revenue" element={<Revenue />} />
+          <Route path="settings" element={<Settings />} />
+        </Route>
+
+        {/* ✅ DEVELOPER ROUTES - DEVELOPER SEULEMENT */}
+        <Route path="/admin" element={<RoleRoute allowedRole="developer" fallbackRoute="/admin/login" />}>
+          <Route path="developer" element={<DeveloperDashboard />} />
+        </Route>
+
+        {/* ✅ TOUTE AUTRE URL - retourne à l'accueil */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+      <ThemeSwitcher />
+    </>
+  )
+}
 
 function App() {
   const { isMaintenance } = useMaintenanceCheck()
@@ -27,30 +83,7 @@ function App() {
           {isMaintenance ? (
             <Maintenance />
           ) : (
-            <>
-              <Routes>
-                {/* ✅ ROUTES PUBLIQUES - jamais de redirection */}
-                <Route path="/" element={<Home />} />
-                <Route path="/services" element={<Services />} />
-                <Route path="/service/:id" element={<ServiceDetail />} />
-                <Route path="/admin/login" element={<Login />} />
-                <Route path="/owner-profile/:slug" element={<OwnerProfile />} />
-
-                {/* ✅ ROUTES ADMIN PROTÉGÉES - redirige vers login si pas connecté */}
-                <Route path="/admin" element={<PrivateRoute />}>
-                  <Route path="dashboard" element={<AdminDashboard />} />
-                  <Route path="services" element={<ManageServices />} />
-                  <Route path="appointments" element={<ManageAppointments />} />
-                  <Route path="revenue" element={<Revenue />} />
-                  <Route path="settings" element={<Settings />} />
-                  <Route path="developer" element={<DeveloperDashboard />} />
-                </Route>
-
-                {/* ✅ TOUTE AUTRE URL - retourne à l'accueil */}
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-              <ThemeSwitcher />
-            </>
+            <AppRoutes />
           )}
         </NotificationProvider>
       </AuthProvider>
