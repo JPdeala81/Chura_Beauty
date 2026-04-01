@@ -20,6 +20,41 @@ const SuperAdminDashboard = () => {
   const [adminInfo, setAdminInfo] = useState({})
   const [editingSettings, setEditingSettings] = useState(false)
   const [formData, setFormData] = useState({})
+  
+  // Service Management
+  const [editingService, setEditingService] = useState(null)
+  const [newServiceForm, setNewServiceForm] = useState(false)
+  const [serviceForm, setServiceForm] = useState({
+    title: '', category: '', price: 0, duration_minutes: 30, description: '', active: true
+  })
+
+  // Site Settings & Homepage
+  const [editingSiteSettings, setEditingSiteSettings] = useState(false)
+  const [siteSettingsForm, setSiteSettingsForm] = useState({
+    app_name: 'Chura Beauty',
+    app_logo: '',
+    homepage_hero_title: 'Bienvenue',
+    homepage_hero_subtitle: 'Services de beauté premium',
+    tagline: 'Excellence et élégance',
+    footer_company_name: 'Chura Beauty Salon',
+    footer_address: '',
+    footer_phone: '',
+    footer_email: '',
+    footer_whatsapp: '',
+    footer_instagram: '',
+    footer_facebook: '',
+    footer_twitter: ''
+  })
+
+  // App Closure / Maintenance
+  const [appClosureMode, setAppClosureMode] = useState(false)
+  const [closureForm, setClosureForm] = useState({
+    enabled: false,
+    reason: 'Maintenance en cours',
+    reopenDate: '',
+    reopenTime: '09:00'
+  })
+
   const { logout } = useContext(AuthContext)
   const navigate = useNavigate()
 
@@ -158,6 +193,122 @@ const SuperAdminDashboard = () => {
       }, 0)
   }
 
+  // ============ SERVICE MANAGEMENT ============
+  const handleServiceFormChange = (e) => {
+    const { name, value, type, checked } = e.target
+    setServiceForm(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : (name.includes('price') || name.includes('duration') ? parseFloat(value) : value)
+    }))
+  }
+
+  const createService = async () => {
+    if (!serviceForm.title || !serviceForm.category || !serviceForm.price) {
+      alert('Veuillez remplir tous les champs requis')
+      return
+    }
+    try {
+      const response = await api.post('/services', serviceForm)
+      setServices([...services, response.data])
+      setServiceForm({ title: '', category: '', price: 0, duration_minutes: 30, description: '', active: true })
+      setNewServiceForm(false)
+      alert('Service créé avec succès')
+    } catch (err) {
+      console.error('Erreur création service:', err)
+      alert('Erreur lors de la création')
+    }
+  }
+
+  const updateService = async () => {
+    if (!serviceForm.title || !serviceForm.category || !serviceForm.price) {
+      alert('Veuillez remplir tous les champs requis')
+      return
+    }
+    try {
+      await api.put(`/services/${editingService}`, serviceForm)
+      setServices(services.map(s => s.id === editingService ? { ...s, ...serviceForm } : s))
+      setEditingService(null)
+      setServiceForm({ title: '', category: '', price: 0, duration_minutes: 30, description: '', active: true })
+      alert('Service mis à jour')
+    } catch (err) {
+      console.error('Erreur update service:', err)
+      alert('Erreur lors de la mise à jour')
+    }
+  }
+
+  const deleteService = async (id) => {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer ce service?')) return
+    try {
+      await api.delete(`/services/${id}`)
+      setServices(services.filter(s => s.id !== id))
+      alert('Service supprimé')
+    } catch (err) {
+      console.error('Erreur suppression:', err)
+      alert('Erreur lors de la suppression')
+    }
+  }
+
+  const acceptService = async (id) => {
+    try {
+      await api.patch(`/services/${id}`, { active: true })
+      setServices(services.map(s => s.id === id ? { ...s, active: true } : s))
+    } catch (err) {
+      console.error('Erreur:', err)
+    }
+  }
+
+  const rejectService = async (id) => {
+    try {
+      await api.patch(`/services/${id}`, { active: false })
+      setServices(services.map(s => s.id === id ? { ...s, active: false } : s))
+    } catch (err) {
+      console.error('Erreur:', err)
+    }
+  }
+
+  // ============ SITE SETTINGS ============
+  const handleSiteSettingsChange = (e) => {
+    const { name, value } = e.target
+    setSiteSettingsForm(prev => ({ ...prev, [name]: value }))
+  }
+
+  const saveSiteSettings = async () => {
+    try {
+      await api.put('/site-settings/homepage', siteSettingsForm)
+      alert('Paramètres du site sauvegardés')
+      setEditingSiteSettings(false)
+    } catch (err) {
+      console.error('Erreur:', err)
+      alert('Erreur lors de la sauvegarde')
+    }
+  }
+
+  // ============ APP CLOSURE ============
+  const handleClosureChange = (e) => {
+    const { name, value, type, checked } = e.target
+    setClosureForm(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }))
+  }
+
+  const toggleAppClosure = async () => {
+    try {
+      const newState = !appClosureMode
+      await api.post('/site-settings/app-closure', {
+        enabled: newState,
+        reason: closureForm.reason,
+        reopenDate: closureForm.reopenDate,
+        reopenTime: closureForm.reopenTime
+      })
+      setAppClosureMode(newState)
+      alert(newState ? 'Application fermée' : 'Application réouverte')
+    } catch (err) {
+      console.error('Erreur:', err)
+      alert('Erreur lors du changement')
+    }
+  }
+
   return (
     <div style={{ 
       background: 'var(--bg-color)', 
@@ -176,6 +327,13 @@ const SuperAdminDashboard = () => {
           <div className="d-flex justify-content-between align-items-center mb-3">
             <h1 className="mb-0" style={{ fontSize: '2rem', fontWeight: 'bold' }}>💎 Tableau de Bord Admin</h1>
             <div className="d-flex gap-2">
+              <button 
+                className="btn btn-outline-light"
+                onClick={() => navigate('/')}
+                style={{ borderColor: 'var(--surface)', color: 'white' }}
+              >
+                🏠 Accueil
+              </button>
               <button 
                 className="btn btn-outline-light"
                 onClick={fetchAllData}
@@ -226,8 +384,11 @@ const SuperAdminDashboard = () => {
               { id: 'appointments', label: '📅 Rendez-vous' },
               { id: 'services', label: '💅 Services' },
               { id: 'statistics', label: '📊 Statistiques' },
+              { id: 'service-management', label: '⚙️ Gestion Services' },
+              { id: 'site-management', label: '🌐 Paramètres Site' },
               { id: 'users', label: '👥 Utilisateurs' },
               { id: 'maintenance', label: '🔧 Maintenance' },
+              { id: 'app-closure', label: '🚪 Fermeture App' },
               { id: 'security', label: '🔐 Sécurité' },
               { id: 'settings', label: '⚙️ Paramètres' }
             ].map(tab => (
@@ -241,8 +402,9 @@ const SuperAdminDashboard = () => {
                   padding: '0.75rem 1.5rem',
                   borderBottom: activeTab === tab.id ? '3px solid var(--primary-color)' : 'none',
                   transition: 'var(--transition-smooth)',
-                  fontSize: '1rem',
-                  fontWeight: activeTab === tab.id ? 'bold' : 'normal'
+                  fontSize: '0.95rem',
+                  fontWeight: activeTab === tab.id ? 'bold' : 'normal',
+                  whiteSpace: 'nowrap'
                 }}
                 onClick={() => setActiveTab(tab.id)}
               >
@@ -948,6 +1110,515 @@ const SuperAdminDashboard = () => {
                   <p className="mb-2">✓ Certificat SSL/TLS: <strong>Valide jusqu'au 31/12/2025</strong></p>
                   <p className="mb-0">✓ Version API: <strong>v1.0.5</strong></p>
                 </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* SERVICE MANAGEMENT TAB */}
+          {activeTab === 'service-management' && (
+            <motion.div
+              key="service-management"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+            >
+              {/* Create/Edit Service Form */}
+              {(newServiceForm || editingService) && (
+                <motion.div
+                  className="card mb-4"
+                  style={{
+                    background: 'var(--surface)',
+                    border: '2px solid var(--primary-color)',
+                    borderRadius: 'var(--border-radius-lg)',
+                    padding: '2rem'
+                  }}
+                >
+                  <h5 style={{ marginBottom: '1.5rem', color: 'var(--primary-color)' }}>
+                    {editingService ? '✏️ Modifier Service' : '➕ Nouveau Service'}
+                  </h5>
+                  <div className="row g-3 mb-3">
+                    <div className="col-12 col-md-6">
+                      <label className="form-label">Titre *</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        name="title"
+                        value={serviceForm.title}
+                        onChange={handleServiceFormChange}
+                        placeholder="Manucure, Pédicure..."
+                        style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                      />
+                    </div>
+                    <div className="col-12 col-md-6">
+                      <label className="form-label">Catégorie *</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        name="category"
+                        value={serviceForm.category}
+                        onChange={handleServiceFormChange}
+                        placeholder="Ongles, Beauté..."
+                        style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                      />
+                    </div>
+                    <div className="col-12 col-md-6">
+                      <label className="form-label">Prix (FCFA) *</label>
+                      <input
+                        type="number"
+                        className="form-control"
+                        name="price"
+                        value={serviceForm.price}
+                        onChange={handleServiceFormChange}
+                        min="0"
+                        style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                      />
+                    </div>
+                    <div className="col-12 col-md-6">
+                      <label className="form-label">Durée (minutes)</label>
+                      <input
+                        type="number"
+                        className="form-control"
+                        name="duration_minutes"
+                        value={serviceForm.duration_minutes}
+                        onChange={handleServiceFormChange}
+                        min="5"
+                        style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                      />
+                    </div>
+                    <div className="col-12">
+                      <label className="form-label">Description</label>
+                      <textarea
+                        className="form-control"
+                        name="description"
+                        value={serviceForm.description}
+                        onChange={handleServiceFormChange}
+                        rows="3"
+                        placeholder="Description du service..."
+                        style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                      />
+                    </div>
+                    <div className="col-12">
+                      <div className="form-check form-switch">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          name="active"
+                          checked={serviceForm.active}
+                          onChange={handleServiceFormChange}
+                          id="serviceActive"
+                          style={{ width: '3em', height: '1.5em' }}
+                        />
+                        <label className="form-check-label" htmlFor="serviceActive">
+                          Service actif
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="d-flex gap-2">
+                    <button
+                      className="btn btn-success"
+                      onClick={editingService ? updateService : createService}
+                    >
+                      💾 {editingService ? 'Mettre à jour' : 'Créer'}
+                    </button>
+                    <button
+                      className="btn btn-secondary"
+                      onClick={() => {
+                        setEditingService(null)
+                        setNewServiceForm(false)
+                        setServiceForm({ title: '', category: '', price: 0, duration_minutes: 30, description: '', active: true })
+                      }}
+                    >
+                      ❌ Annuler
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Services List */}
+              <div className="card" style={{
+                background: 'var(--surface)',
+                border: '1px solid var(--primary-color)',
+                borderRadius: 'var(--border-radius-lg)',
+                padding: '2rem'
+              }}>
+                <div className="d-flex justify-content-between align-items-center mb-3">
+                  <h5 style={{ margin: 0, color: 'var(--primary-color)' }}>💅 Services</h5>
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => {
+                      setNewServiceForm(true)
+                      setServiceForm({ title: '', category: '', price: 0, duration_minutes: 30, description: '', active: true })
+                    }}
+                  >
+                    ➕ Nouveau Service
+                  </button>
+                </div>
+                <div className="table-responsive">
+                  <table className="table table-hover" style={{ marginBottom: 0 }}>
+                    <thead style={{ background: 'var(--bg-color)' }}>
+                      <tr>
+                        <th style={{ color: 'var(--primary-color)' }}>Titre</th>
+                        <th style={{ color: 'var(--primary-color)' }}>Catégorie</th>
+                        <th style={{ color: 'var(--primary-color)' }}>Prix</th>
+                        <th style={{ color: 'var(--primary-color)' }}>Durée</th>
+                        <th style={{ color: 'var(--primary-color)' }}>Statut</th>
+                        <th style={{ color: 'var(--primary-color)' }}>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {services.map(service => (
+                        <tr key={service.id}>
+                          <td>{service.title}</td>
+                          <td>{service.category}</td>
+                          <td>{service.price?.toLocaleString()} FCFA</td>
+                          <td>{service.duration_minutes} min</td>
+                          <td>
+                            <span className="badge" style={{ background: service.active ? '#00d9ff' : '#ff6b6b' }}>
+                              {service.active ? '✓ Actif' : '✗ Inactif'}
+                            </span>
+                          </td>
+                          <td>
+                            <div className="d-flex gap-1">
+                              <button
+                                className="btn btn-sm btn-primary"
+                                onClick={() => {
+                                  setEditingService(service.id)
+                                  setServiceForm(service)
+                                }}
+                                title="Modifier"
+                              >
+                                ✏️
+                              </button>
+                              {service.active ? (
+                                <button
+                                  className="btn btn-sm btn-warning"
+                                  onClick={() => rejectService(service.id)}
+                                  title="Désactiver"
+                                >
+                                  ⛔
+                                </button>
+                              ) : (
+                                <button
+                                  className="btn btn-sm btn-success"
+                                  onClick={() => acceptService(service.id)}
+                                  title="Activer"
+                                >
+                                  ✅
+                                </button>
+                              )}
+                              <button
+                                className="btn btn-sm btn-danger"
+                                onClick={() => deleteService(service.id)}
+                                title="Supprimer"
+                              >
+                                🗑️
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* SITE MANAGEMENT TAB */}
+          {activeTab === 'site-management' && (
+            <motion.div
+              key="site-management"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+            >
+              <div className="card" style={{
+                background: 'var(--surface)',
+                border: '1px solid var(--primary-color)',
+                borderRadius: 'var(--border-radius-lg)',
+                padding: '2rem'
+              }}>
+                <div className="d-flex justify-content-between align-items-center mb-3">
+                  <h5 style={{ margin: 0, color: 'var(--primary-color)' }}>🌐 Paramètres du Site</h5>
+                  <button
+                    className={`btn ${editingSiteSettings ? 'btn-secondary' : 'btn-primary'}`}
+                    onClick={() => editingSiteSettings ? setEditingSiteSettings(false) : setEditingSiteSettings(true)}
+                  >
+                    {editingSiteSettings ? '❌ Annuler' : '✏️ Modifier'}
+                  </button>
+                </div>
+
+                {editingSiteSettings ? (
+                  <div className="row g-3">
+                    <div className="col-12 col-md-6">
+                      <label className="form-label">Nom de l'Application</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        name="app_name"
+                        value={siteSettingsForm.app_name}
+                        onChange={handleSiteSettingsChange}
+                        style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                      />
+                    </div>
+                    <div className="col-12 col-md-6">
+                      <label className="form-label">URL Logo</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        name="app_logo"
+                        value={siteSettingsForm.app_logo}
+                        onChange={handleSiteSettingsChange}
+                        placeholder="https://..."
+                        style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                      />
+                    </div>
+                    <div className="col-12">
+                      <label className="form-label">Titre Héros (Page d'accueil)</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        name="homepage_hero_title"
+                        value={siteSettingsForm.homepage_hero_title}
+                        onChange={handleSiteSettingsChange}
+                        style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                      />
+                    </div>
+                    <div className="col-12">
+                      <label className="form-label">Sous-titre Héros</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        name="homepage_hero_subtitle"
+                        value={siteSettingsForm.homepage_hero_subtitle}
+                        onChange={handleSiteSettingsChange}
+                        style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                      />
+                    </div>
+                    <div className="col-12">
+                      <label className="form-label">Slogan</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        name="tagline"
+                        value={siteSettingsForm.tagline}
+                        onChange={handleSiteSettingsChange}
+                        style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                      />
+                    </div>
+                    <hr className="my-3" />
+                    <h6 style={{ color: 'var(--primary-color)', marginTop: '1rem' }}>📍 Pied de Page</h6>
+                    <div className="col-12 col-md-6">
+                      <label className="form-label">Nom Entreprise</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        name="footer_company_name"
+                        value={siteSettingsForm.footer_company_name}
+                        onChange={handleSiteSettingsChange}
+                        style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                      />
+                    </div>
+                    <div className="col-12 col-md-6">
+                      <label className="form-label">Adresse</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        name="footer_address"
+                        value={siteSettingsForm.footer_address}
+                        onChange={handleSiteSettingsChange}
+                        style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                      />
+                    </div>
+                    <div className="col-12 col-md-6">
+                      <label className="form-label">Téléphone</label>
+                      <input
+                        type="tel"
+                        className="form-control"
+                        name="footer_phone"
+                        value={siteSettingsForm.footer_phone}
+                        onChange={handleSiteSettingsChange}
+                        style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                      />
+                    </div>
+                    <div className="col-12 col-md-6">
+                      <label className="form-label">Email</label>
+                      <input
+                        type="email"
+                        className="form-control"
+                        name="footer_email"
+                        value={siteSettingsForm.footer_email}
+                        onChange={handleSiteSettingsChange}
+                        style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                      />
+                    </div>
+                    <div className="col-12 col-md-6">
+                      <label className="form-label">WhatsApp</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        name="footer_whatsapp"
+                        value={siteSettingsForm.footer_whatsapp}
+                        onChange={handleSiteSettingsChange}
+                        placeholder="+33..."
+                        style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                      />
+                    </div>
+                    <div className="col-12 col-md-6">
+                      <label className="form-label">Instagram</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        name="footer_instagram"
+                        value={siteSettingsForm.footer_instagram}
+                        onChange={handleSiteSettingsChange}
+                        placeholder="@handle"
+                        style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                      />
+                    </div>
+                    <div className="col-12 col-md-6">
+                      <label className="form-label">Facebook</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        name="footer_facebook"
+                        value={siteSettingsForm.footer_facebook}
+                        onChange={handleSiteSettingsChange}
+                        placeholder="Page Facebook"
+                        style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                      />
+                    </div>
+                    <div className="col-12 col-md-6">
+                      <label className="form-label">Twitter/X</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        name="footer_twitter"
+                        value={siteSettingsForm.footer_twitter}
+                        onChange={handleSiteSettingsChange}
+                        placeholder="@handle"
+                        style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                      />
+                    </div>
+                    <div className="col-12">
+                      <button
+                        className="btn btn-success"
+                        onClick={saveSiteSettings}
+                      >
+                        💾 Sauvegarder
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="row g-3">
+                    <div className="col-12 col-md-6">
+                      <p><strong>Nom App:</strong> {siteSettingsForm.app_name}</p>
+                      <p><strong>Slogan:</strong> {siteSettingsForm.tagline}</p>
+                    </div>
+                    <div className="col-12 col-md-6">
+                      <p><strong>Titre Héros:</strong> {siteSettingsForm.homepage_hero_title}</p>
+                      <p><strong>Société:</strong> {siteSettingsForm.footer_company_name}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+
+          {/* APP CLOSURE TAB */}
+          {activeTab === 'app-closure' && (
+            <motion.div
+              key="app-closure"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+            >
+              <div className="card" style={{
+                background: 'var(--surface)',
+                border: '2px solid #ff6b6b',
+                borderRadius: 'var(--border-radius-lg)',
+                padding: '2rem'
+              }}>
+                <h5 style={{ marginBottom: '1.5rem', color: '#ff6b6b' }}>🚪 Fermeture/Maintenance de l'Application</h5>
+                
+                <div className="row g-3 mb-4">
+                  <div className="col-12">
+                    <div className="form-check form-switch">
+                      <input
+                        className="form-check-input"
+                        type="checkbox"
+                        id="appClosureSwitch"
+                        checked={appClosureMode}
+                        onChange={(e) => setClosureForm(prev => ({ ...prev, enabled: e.target.checked }))}
+                        style={{ width: '3em', height: '1.5em' }}
+                      />
+                      <label className="form-check-label" htmlFor="appClosureSwitch">
+                        <strong style={{ color: appClosureMode ? '#ff6b6b' : 'var(--text-color)' }}>
+                          {appClosureMode ? '🔴 Application FERMÉE' : '✓ Application OUVERTE'}
+                        </strong>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="col-12">
+                    <label className="form-label">Raison de Fermeture</label>
+                    <textarea
+                      className="form-control"
+                      name="reason"
+                      value={closureForm.reason}
+                      onChange={handleClosureChange}
+                      rows="3"
+                      placeholder="Raison affichée aux utilisateurs..."
+                      style={{ borderColor: '#ff6b6b', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                    />
+                  </div>
+
+                  {appClosureMode && (
+                    <>
+                      <div className="col-12 col-md-6">
+                        <label className="form-label">Date de Réouverture</label>
+                        <input
+                          type="date"
+                          className="form-control"
+                          name="reopenDate"
+                          value={closureForm.reopenDate}
+                          onChange={handleClosureChange}
+                          style={{ borderColor: '#ff6b6b', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                        />
+                      </div>
+                      <div className="col-12 col-md-6">
+                        <label className="form-label">Heure de Réouverture</label>
+                        <input
+                          type="time"
+                          className="form-control"
+                          name="reopenTime"
+                          value={closureForm.reopenTime}
+                          onChange={handleClosureChange}
+                          style={{ borderColor: '#ff6b6b', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                        />
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                <div className="alert" style={{
+                  background: 'rgba(255, 107, 107, 0.1)',
+                  border: '2px solid #ff6b6b',
+                  borderRadius: 'var(--border-radius-lg)',
+                  color: 'var(--text-color)',
+                  marginBottom: '1.5rem'
+                }}>
+                  <strong style={{ color: '#ff6b6b' }}>⚠️ Attention:</strong> Quand la fermeture est activée, les utilisateurs voient une page de maintenance avec le décompte jusqu'à la réouverture.
+                </div>
+
+                <button
+                  className={`btn w-100 ${appClosureMode ? 'btn-success' : 'btn-danger'}`}
+                  onClick={toggleAppClosure}
+                  style={{ fontWeight: 'bold', padding: '1rem' }}
+                >
+                  {appClosureMode ? '🟢 Rouvrir Application' : '🔴 Fermer Application'}
+                </button>
               </div>
             </motion.div>
           )}

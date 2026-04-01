@@ -1,27 +1,23 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useNavigate } from 'react-router-dom'
 import api from '../../services/api'
 
 const DeveloperDashboard = () => {
+  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('overview')
-  const [stats, setStats] = useState(null)
-  const [dbAnalytics, setDbAnalytics] = useState(null)
+  const [appointments, setAppointments] = useState([])
+  const [services, setServices] = useState([])
+  const [stats, setStats] = useState({})
   const [logs, setLogs] = useState([])
   const [admins, setAdmins] = useState([])
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [maintenanceMode, setMaintenanceMode] = useState(false)
-  const [maintenanceReason, setMaintenanceReason] = useState('')
+  const [maintenanceReason, setMaintenanceReason] = useState('Maintenance système')
   const [maintenanceDuration, setMaintenanceDuration] = useState(60)
   const [countdownTime, setCountdownTime] = useState(null)
-
-  const tabs = [
-    { id: 'overview', label: 'Vue d\'ensemble', icon: '📊', color: '#00ff96' },
-    { id: 'database', label: 'Base de données', icon: '🗄️', color: '#00d4ff' },
-    { id: 'users', label: 'Utilisateurs', icon: '👥', color: '#ff006e' },
-    { id: 'logs', label: 'Journaux', icon: '📝', color: '#ffd60a' },
-    { id: 'security', label: 'Sécurité', icon: '🔐', color: '#ff6b6b' },
-    { id: 'maintenance', label: 'Maintenance', icon: '🔧', color: '#a0a0ff' }
-  ]
+  const [editingAdmin, setEditingAdmin] = useState(null)
+  const [newAdminEmail, setNewAdminEmail] = useState('')
 
   useEffect(() => {
     fetchAllData()
@@ -46,54 +42,23 @@ const DeveloperDashboard = () => {
   const fetchAllData = async () => {
     try {
       setLoading(true)
-      const [statsRes, dbRes, logsRes, adminsRes] = await Promise.all([
-        api.get('/site-settings/developer/stats').catch(() => ({ data: {} })),
-        api.get('/site-settings/developer/database-analytics').catch(() => ({ data: {} })),
-        api.get('/site-settings/developer/recent-logs?limit=20').catch(() => ({ data: [] })),
-        api.get('/site-settings/developer/all-admins').catch(() => ({ data: [] }))
+      const [appoRes, servRes, statsRes, logsRes, adminsRes] = await Promise.all([
+        api.get('/appointments').catch(() => ({ data: { appointments: [] } })),
+        api.get('/services').catch(() => ({ data: { services: [] } })),
+        api.get('/revenue/stats').catch(() => ({ data: {} })),
+        api.get('/site-settings/developer/logs?limit=50').catch(() => ({ data: [] })),
+        api.get('/site-settings/developer/admins').catch(() => ({ data: [] }))
       ])
 
-      setStats(statsRes.data)
-      setDbAnalytics(statsRes.data)
+      setAppointments(appoRes.data.appointments || [])
+      setServices(servRes.data.services || [])
+      setStats(statsRes.data || {})
       setLogs(logsRes.data || [])
       setAdmins(adminsRes.data || [])
-      setMaintenanceMode(statsRes.data?.maintenanceMode || false)
-
-      if (statsRes.data?.maintenanceEnd) {
-        const endTime = new Date(statsRes.data.maintenanceEnd)
-        const now = new Date()
-        const diff = Math.floor((endTime - now) / 1000)
-        if (diff > 0) setCountdownTime(diff)
-      }
     } catch (error) {
-      console.warn('Failed to fetch developer data')
+      console.error('Erreur fetch:', error)
     } finally {
       setLoading(false)
-    }
-  }
-
-  const toggleMaintenance = async () => {
-    try {
-      const endTime = new Date(Date.now() + maintenanceDuration * 60000).toISOString()
-      await api.post('/site-settings/developer/maintenance-toggle', {
-        enabled: !maintenanceMode,
-        reason: maintenanceReason,
-        endTime: !maintenanceMode ? endTime : null
-      })
-      setMaintenanceMode(!maintenanceMode)
-      if (!maintenanceMode) setCountdownTime(maintenanceDuration * 60)
-    } catch {
-      alert('Erreur lors du changement du mode maintenance')
-    }
-  }
-
-  const deleteAdmin = async (adminId) => {
-    if (!confirm('Êtes-vous sûr?')) return
-    try {
-      await api.post('/site-settings/developer/admin-delete', { adminId })
-      setAdmins(admins.filter(a => a.id !== adminId))
-    } catch {
-      alert('Erreur lors de la suppression')
     }
   }
 
@@ -104,194 +69,388 @@ const DeveloperDashboard = () => {
     return `${h}h ${m}m ${s}s`
   }
 
-  const StatCard = ({ label, value, icon, color }) => (
-    <motion.div whileHover={{ scale: 1.05 }} style={{
-      background: `linear-gradient(135deg, ${color}15 0%, ${color}08 100%)`,
-      border: `2px solid ${color}40`,
-      borderRadius: '12px',
-      padding: '20px',
-      textAlign: 'center'
-    }}>
-      <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>{icon}</div>
-      <div style={{ fontSize: '1.8rem', fontWeight: '700', color, fontFamily: 'monospace' }}>{value}</div>
-      <div style={{ fontSize: '0.85rem', color: '#a0a0a0' }}>{label}</div>
-    </motion.div>
-  )
+  const toggleMaintenance = async () => {
+    try {
+      const endTime = new Date(Date.now() + maintenanceDuration * 60000).toISOString()
+      await api.post('/site-settings/maintenance-toggle', {
+        enabled: !maintenanceMode,
+        reason: maintenanceReason,
+        endTime: !maintenanceMode ? endTime : null
+      })
+      setMaintenanceMode(!maintenanceMode)
+      if (!maintenanceMode) setCountdownTime(maintenanceDuration * 60)
+      alert(maintenanceMode ? 'Maintenance désactivée' : 'Maintenance activée')
+    } catch {
+      alert('Erreur lors du changement')
+    }
+  }
 
-  const CodeBlock = ({ title, code }) => (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{
-      background: '#0f0f0f',
-      border: '1px solid rgba(0,255,150,0.2)',
-      borderRadius: '8px',
-      padding: '16px',
-      marginBottom: '12px',
-      overflow: 'auto'
-    }}>
-      <div style={{ color: '#00ff96', fontSize: '0.75rem', fontWeight: '700', marginBottom: '8px', fontFamily: 'monospace' }}>
-        {title}
-      </div>
-      <pre style={{
-        color: '#a0a0a0',
-        fontSize: '0.75rem',
-        margin: 0,
-        fontFamily: 'monospace',
-        lineHeight: '1.4'
-      }}>
-        {code}
-      </pre>
-    </motion.div>
-  )
+  const deleteAdmin = async (adminId) => {
+    if (!confirm('Supprimer cet administrateur? (Irréversible)')) return
+    try {
+      await api.delete(`/site-settings/admin/${adminId}`)
+      setAdmins(admins.filter(a => a.id !== adminId))
+      alert('Admin supprimé')
+    } catch {
+      alert('Erreur lors de la suppression')
+    }
+  }
+
+  const createAdmin = async () => {
+    if (!newAdminEmail) {
+      alert('Veuillez entrer un email')
+      return
+    }
+    try {
+      const response = await api.post('/site-settings/admin-create', { email: newAdminEmail })
+      setAdmins([...admins, response.data])
+      setNewAdminEmail('')
+      alert('Admin créé - Password temporaire envoyé par email')
+    } catch {
+      alert('Erreur lors de la création')
+    }
+  }
+
+  const clearAllLogs = async () => {
+    if (!confirm('Effacer TOUS les logs? (Irréversible)')) return
+    try {
+      await api.post('/site-settings/logs-clear')
+      setLogs([])
+      alert('Logs effacés')
+    } catch {
+      alert('Erreur')
+    }
+  }
+
+  const deleteAppointment = async (id) => {
+    if (!confirm('Supprimer cet RDV? (Irréversible)')) return
+    try {
+      await api.delete(`/appointments/${id}`)
+      setAppointments(appointments.filter(a => a.id !== id))
+      alert('RDV supprimé')
+    } catch {
+      alert('Erreur')
+    }
+  }
+
+  const deleteService = async (id) => {
+    if (!confirm('Supprimer ce service? (Irréversible)')) return
+    try {
+      await api.delete(`/services/${id}`)
+      setServices(services.filter(s => s.id !== id))
+      alert('Service supprimé')
+    } catch {
+      alert('Erreur')
+    }
+  }
+    const h = Math.floor(seconds / 3600)
+    const m = Math.floor((seconds % 3600) / 60)
+    const s = seconds % 60
+    return `${h}h ${m}m ${s}s`
+  }
 
   return (
-    <div style={{
+    <div style={{ 
+      background: 'var(--bg-color)', 
+      color: 'var(--text-color)', 
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #0a0e27 0%, #1a1a3f 100%)',
-      color: '#e0e0e0',
-      padding: '20px'
+      fontFamily: 'var(--font-primary, sans-serif)'
     }}>
-      {/* Navbar */}
-      <motion.nav initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} style={{
-        background: 'linear-gradient(135deg, rgba(0,255,150,0.1) 0%, rgba(0,200,255,0.05) 100%)',
-        border: '2px solid rgba(0,255,150,0.3)',
-        borderRadius: '12px',
-        padding: '16px 24px',
-        marginBottom: '24px',
-        backdropFilter: 'blur(10px)'
+      {/* Header */}
+      <header style={{
+        background: 'var(--gradient-primary)',
+        padding: '2rem',
+        boxShadow: 'var(--shadow-luxury)',
+        marginBottom: '2rem'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ fontSize: '1.5rem', fontWeight: '700', display: 'flex', gap: '12px', alignItems: 'center' }}>
-            <span>⚙️</span> Developer Dashboard
-            <span style={{ fontSize: '0.75rem', background: '#00ff96', color: '#000', padding: '4px 8px', borderRadius: '4px', fontFamily: 'monospace' }}>
-              v1.0 {stats?.uptime}
-            </span>
+        <div className="container-fluid">
+          <div className="d-flex justify-content-between align-items-center">
+            <h1 className="mb-0" style={{ fontSize: '2rem', fontWeight: 'bold' }}>⚙️ Developer Dashboard</h1>
+            <div className="d-flex gap-2">
+              <button 
+                className="btn btn-outline-light"
+                onClick={() => navigate('/')}
+                style={{ borderColor: 'var(--surface)', color: 'white' }}
+              >
+                🏠 Accueil
+              </button>
+              <button 
+                className="btn btn-outline-light"
+                onClick={fetchAllData}
+                style={{ borderColor: 'var(--surface)', color: 'white' }}
+              >
+                🔄 Actualiser
+              </button>
+            </div>
           </div>
-          {maintenanceMode && <div style={{ animation: 'pulse 1s infinite', color: '#ff6b6b', fontWeight: '700' }}>
-            🔴 MAINTENANCE
-          </div>}
         </div>
-      </motion.nav>
+      </header>
 
-      {/* Tabs */}
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
-        gap: '12px',
-        marginBottom: '24px'
-      }}>
-        {tabs.map(tab => (
-          <motion.button key={tab.id} onClick={() => setActiveTab(tab.id)} whileHover={{ scale: 1.05 }} style={{
-            background: activeTab === tab.id ? `linear-gradient(135deg, ${tab.color}40, ${tab.color}20)` : 'rgba(255,255,255,0.05)',
-            border: `2px solid ${activeTab === tab.id ? tab.color : 'rgba(255,255,255,0.1)'}`,
-            color: activeTab === tab.id ? tab.color : '#a0a0a0',
-            padding: '12px 16px',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            fontSize: '0.9rem',
-            fontWeight: '600'
-          }}>
-            {tab.icon} {tab.label}
-          </motion.button>
-        ))}
-      </motion.div>
+      <div className="container-fluid px-3 px-md-4">
+        {/* Navigation Tabs */}
+        <div className="mb-4" style={{ borderBottom: '2px solid var(--surface)' }}>
+          <div className="d-flex gap-2 flex-wrap">
+            {[
+              { id: 'overview', label: '📊 Aperçu' },
+              { id: 'appointments', label: '📅 RDV' },
+              { id: 'database', label: '🗄️ Base Données' },
+              { id: 'admins', label: '👥 Admins' },
+              { id: 'services', label: '💅 Services' },
+              { id: 'logs', label: '📝 Logs' },
+              { id: 'security', label: '🔐 Sécurité' },
+              { id: 'maintenance', label: '🔧 Maintenance' }
+            ].map(tab => (
+              <button
+                key={tab.id}
+                className="btn"
+                style={{
+                  background: activeTab === tab.id ? 'var(--primary-color)' : 'transparent',
+                  color: activeTab === tab.id ? 'white' : 'var(--text-color)',
+                  border: 'none',
+                  padding: '0.75rem 1.5rem',
+                  borderBottom: activeTab === tab.id ? '3px solid var(--primary-color)' : 'none',
+                  transition: 'var(--transition-smooth)',
+                  fontSize: '0.95rem',
+                  fontWeight: activeTab === tab.id ? 'bold' : 'normal',
+                  whiteSpace: 'nowrap'
+                }}
+                onClick={() => setActiveTab(tab.id)}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
 
-      {/* Content */}
-      <AnimatePresence mode="wait">
-        <motion.div key={activeTab} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }}>
+        {/* Content */}
+        <AnimatePresence mode="wait">
+          {/* OVERVIEW TAB */}
           {activeTab === 'overview' && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
-              <StatCard label="Administrateurs" value={stats?.totalAdmins || 0} icon="👥" color="#00ff96" />
-              <StatCard label="Services" value={stats?.totalServices || 0} icon="🛎️" color="#00d4ff" />
-              <StatCard label="Rendez-vous" value={stats?.totalAppointments || 0} icon="📅" color="#ff006e" />
-              <StatCard label="Erreurs" value={stats?.errorCount || 0} icon="⚠️" color="#ff6b6b" />
-              <StatCard label="Logs" value={stats?.totalLogs || 0} icon="📝" color="#ffd60a" />
-              <StatCard label="Requêtes API" value={stats?.apiRequests || 0} icon="⚡" color="#a0a0ff" />
-            </div>
-          )}
-
-          {activeTab === 'database' && (
-            <div style={{ display: 'grid', gap: '20px' }}>
-              <motion.div style={{
-                background: 'rgba(0,255,150,0.05)',
-                border: '2px solid rgba(0,255,150,0.2)',
-                borderRadius: '12px',
-                padding: '20px'
-              }}>
-                <h3 style={{ color: '#00ff96', marginBottom: '16px' }}>📊 Analytics</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '12px' }}>
-                  {dbAnalytics && Object.entries(dbAnalytics).map(([table, count]) => (
-                    typeof count === 'number' && (
-                      <div key={table} style={{
-                        background: 'rgba(0,255,150,0.1)',
-                        border: '1px solid rgba(0,255,150,0.3)',
-                        borderRadius: '8px',
-                        padding: '12px',
-                        textAlign: 'center'
-                      }}>
-                        <div style={{ fontSize: '0.8rem', color: '#a0a0a0', textTransform: 'uppercase' }}>{table}</div>
-                        <div style={{ fontSize: '1.5rem', fontWeight: '700', color: '#00ff96', fontFamily: 'monospace' }}>
-                          {count}
-                        </div>
-                      </div>
-                    )
-                  ))}
+            <motion.div
+              key="overview"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+            >
+              <div className="row g-3">
+                <div className="col-12 col-md-4">
+                  <motion.div className="card" whileHover={{ scale: 1.05 }} style={{
+                    background: 'var(--surface)',
+                    border: '2px solid #00d9ff',
+                    borderRadius: 'var(--border-radius-lg)',
+                    padding: '1.5rem',
+                    textAlign: 'center'
+                  }}>
+                    <h6 style={{ color: '#00d9ff', marginBottom: '0.5rem' }}>👥 Administrateurs</h6>
+                    <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#00d9ff', margin: 0 }}>{admins.length}</p>
+                  </motion.div>
                 </div>
-              </motion.div>
-              <CodeBlock
-                title="Database Status"
-                code={`✓ Connected to Supabase\n✓ PostgreSQL 14.x\n✓ Real-time Enabled\n✓ Database Size: ${stats?.databaseSize || '45.2 MB'}`}
-              />
-            </div>
+                <div className="col-12 col-md-4">
+                  <motion.div className="card" whileHover={{ scale: 1.05 }} style={{
+                    background: 'var(--surface)',
+                    border: '2px solid #00ff96',
+                    borderRadius: 'var(--border-radius-lg)',
+                    padding: '1.5rem',
+                    textAlign: 'center'
+                  }}>
+                    <h6 style={{ color: '#00ff96', marginBottom: '0.5rem' }}>💅 Services</h6>
+                    <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#00ff96', margin: 0 }}>{services.length}</p>
+                  </motion.div>
+                </div>
+                <div className="col-12 col-md-4">
+                  <motion.div className="card" whileHover={{ scale: 1.05 }} style={{
+                    background: 'var(--surface)',
+                    border: '2px solid #ffd700',
+                    borderRadius: 'var(--border-radius-lg)',
+                    padding: '1.5rem',
+                    textAlign: 'center'
+                  }}>
+                    <h6 style={{ color: '#ffd700', marginBottom: '0.5rem' }}>📅 Rendez-vous</h6>
+                    <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#ffd700', margin: 0 }}>{appointments.length}</p>
+                  </motion.div>
+                </div>
+              </div>
+            </motion.div>
           )}
 
-          {activeTab === 'users' && (
-            <motion.div style={{
-              background: 'rgba(255,0,110,0.05)',
-              border: '2px solid rgba(255,0,110,0.2)',
-              borderRadius: '12px',
-              padding: '20px'
-            }}>
-              <h3 style={{ color: '#ff006e', marginBottom: '16px' }}>👥 Administrateurs</h3>
-              {admins.length > 0 ? (
-                <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
-                    <thead>
-                      <tr style={{ borderBottom: '2px solid rgba(255,0,110,0.3)' }}>
-                        {['Email', 'Salon', 'Rôle', 'Créé', 'Actions'].map(h => (
-                          <th key={h} style={{ textAlign: 'left', padding: '12px', color: '#ff006e' }}>{h}</th>
-                        ))}
+          {/* APPOINTMENTS TAB */}
+          {activeTab === 'appointments' && (
+            <motion.div
+              key="appointments"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+            >
+              <div className="card" style={{
+                background: 'var(--surface)',
+                border: '1px solid var(--primary-color)',
+                borderRadius: 'var(--border-radius-lg)',
+                padding: '2rem'
+              }}>
+                <h5 style={{ marginBottom: '1.5rem', color: 'var(--primary-color)' }}>📅 Tous les Rendez-vous (Gestion Avancée)</h5>
+                <div className="table-responsive">
+                  <table className="table table-hover" style={{ marginBottom: 0 }}>
+                    <thead style={{ background: 'var(--bg-color)' }}>
+                      <tr>
+                        <th style={{ color: 'var(--primary-color)' }}>Client</th>
+                        <th style={{ color: 'var(--primary-color)' }}>Service</th>
+                        <th style={{ color: 'var(--primary-color)' }}>Date</th>
+                        <th style={{ color: 'var(--primary-color)' }}>Statut</th>
+                        <th style={{ color: 'var(--primary-color)' }}>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {appointments.map(apt => (
+                        <tr key={apt.id}>
+                          <td>{apt.client_name}</td>
+                          <td>{apt.service_id}</td>
+                          <td>{new Date(apt.appointment_date).toLocaleDateString()}</td>
+                          <td>
+                            <span className="badge" style={{
+                              background: apt.status === 'pending' ? '#ffd700' : apt.status === 'accepted' ? '#00d9ff' : '#ff6b6b'
+                            }}>
+                              {apt.status.toUpperCase()}
+                            </span>
+                          </td>
+                          <td>
+                            <button
+                              className="btn btn-sm btn-danger"
+                              onClick={() => deleteAppointment(apt.id)}
+                              title="Supprimer définitivement"
+                            >
+                              🗑️
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* DATABASE TAB */}
+          {activeTab === 'database' && (
+            <motion.div
+              key="database"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+            >
+              <div className="card" style={{
+                background: 'var(--surface)',
+                border: '1px solid var(--primary-color)',
+                borderRadius: 'var(--border-radius-lg)',
+                padding: '2rem'
+              }}>
+                <h5 style={{ marginBottom: '1.5rem', color: 'var(--primary-color)' }}>🗄️ Gestion Base de Données</h5>
+                <div className="row g-3">
+                  <div className="col-12 col-md-6">
+                    <div style={{
+                      background: 'var(--bg-color)',
+                      border: '1px solid var(--primary-color)',
+                      borderRadius: 'var(--border-radius-lg)',
+                      padding: '1.5rem'
+                    }}>
+                      <p><strong>Supabase PostgreSQL</strong></p>
+                      <p>✓ Connecté</p>
+                      <p>✓ Real-time: ACTIF</p>
+                      <p>✓ RLS Policies: ACTIF</p>
+                    </div>
+                  </div>
+                  <div className="col-12 col-md-6">
+                    <div style={{
+                      background: 'var(--bg-color)',
+                      border: '1px solid var(--primary-color)',
+                      borderRadius: 'var(--border-radius-lg)',
+                      padding: '1.5rem'
+                    }}>
+                      <p><strong>Statistiques</strong></p>
+                      <p>📅 RDV: {appointments.length}</p>
+                      <p>💅 Services: {services.length}</p>
+                      <p>👥 Admins: {admins.length}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* ADMINS TAB */}
+          {activeTab === 'admins' && (
+            <motion.div
+              key="admins"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+            >
+              <div className="card mb-4" style={{
+                background: 'var(--surface)',
+                border: '2px solid var(--primary-color)',
+                borderRadius: 'var(--border-radius-lg)',
+                padding: '2rem'
+              }}>
+                <h5 style={{ marginBottom: '1.5rem' }}>➕ Créer Administrateur</h5>
+                <div className="row g-2">
+                  <div className="col-12 col-md-10">
+                    <input
+                      type="email"
+                      className="form-control"
+                      value={newAdminEmail}
+                      onChange={(e) => setNewAdminEmail(e.target.value)}
+                      placeholder="email@example.com"
+                      style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                    />
+                  </div>
+                  <div className="col-12 col-md-2">
+                    <button
+                      className="btn btn-success w-100"
+                      onClick={createAdmin}
+                    >
+                      Créer
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="card" style={{
+                background: 'var(--surface)',
+                border: '1px solid var(--primary-color)',
+                borderRadius: 'var(--border-radius-lg)',
+                padding: '2rem'
+              }}>
+                <h5 style={{ marginBottom: '1.5rem' }}>👥 Administrateurs</h5>
+                <div className="table-responsive">
+                  <table className="table table-hover" style={{ marginBottom: 0 }}>
+                    <thead style={{ background: 'var(--bg-color)' }}>
+                      <tr>
+                        <th style={{ color: 'var(--primary-color)' }}>Email</th>
+                        <th style={{ color: 'var(--primary-color)' }}>Rôle</th>
+                        <th style={{ color: 'var(--primary-color)' }}>Créé</th>
+                        <th style={{ color: 'var(--primary-color)' }}>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
                       {admins.map(admin => (
-                        <tr key={admin.id} style={{ borderBottom: '1px solid rgba(255,0,110,0.2)' }}>
-                          <td style={{ padding: '12px' }}>{admin.email}</td>
-                          <td style={{ padding: '12px', color: '#a0a0a0' }}>{admin.salon_name}</td>
-                          <td style={{ padding: '12px' }}>
-                            <span style={{
-                              background: admin.role === 'developer' ? '#a0a0ff80' : '#00ff9680',
-                              color: admin.role === 'developer' ? '#a0a0ff' : '#00ff96',
-                              padding: '4px 8px',
-                              borderRadius: '4px',
-                              fontSize: '0.8rem',
-                              fontWeight: '600'
-                            }}>{admin.role}</span>
+                        <tr key={admin.id}>
+                          <td>{admin.email}</td>
+                          <td>
+                            <span className="badge" style={{
+                              background: admin.role === 'developer' ? '#a0a0ff' : '#00ff96'
+                            }}>
+                              {admin.role === 'developer' ? 'Développeur' : 'Admin'}
+                            </span>
                           </td>
-                          <td style={{ padding: '12px', color: '#a0a0a0', fontSize: '0.85rem', fontFamily: 'monospace' }}>
-                            {new Date(admin.created_at).toLocaleDateString('fr-FR')}
-                          </td>
-                          <td style={{ padding: '12px', textAlign: 'center' }}>
+                          <td style={{ fontSize: '0.9rem' }}>{new Date(admin.created_at).toLocaleDateString('fr-FR')}</td>
+                          <td>
                             {admin.role !== 'developer' && (
-                              <button onClick={() => deleteAdmin(admin.id)} style={{
-                                background: '#ff6b6b',
-                                color: '#fff',
-                                border: 'none',
-                                padding: '6px 12px',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                                fontSize: '0.8rem',
-                                fontWeight: '600'
-                              }}>
-                                Supprimer
+                              <button
+                                className="btn btn-sm btn-danger"
+                                onClick={() => deleteAdmin(admin.id)}
+                                title="Supprimer"
+                              >
+                                🗑️
                               </button>
                             )}
                           </td>
@@ -300,133 +459,236 @@ const DeveloperDashboard = () => {
                     </tbody>
                   </table>
                 </div>
-              ) : (
-                <div style={{ textAlign: 'center', color: '#a0a0a0' }}>Aucun administrateur</div>
-              )}
+              </div>
             </motion.div>
           )}
 
+          {/* SERVICES TAB */}
+          {activeTab === 'services' && (
+            <motion.div
+              key="services"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+            >
+              <div className="card" style={{
+                background: 'var(--surface)',
+                border: '1px solid var(--primary-color)',
+                borderRadius: 'var(--border-radius-lg)',
+                padding: '2rem'
+              }}>
+                <h5 style={{ marginBottom: '1.5rem' }}>💅 Services (Gestion Complète)</h5>
+                <div className="table-responsive">
+                  <table className="table table-hover" style={{ marginBottom: 0 }}>
+                    <thead style={{ background: 'var(--bg-color)' }}>
+                      <tr>
+                        <th style={{ color: 'var(--primary-color)' }}>Titre</th>
+                        <th style={{ color: 'var(--primary-color)' }}>Catégorie</th>
+                        <th style={{ color: 'var(--primary-color)' }}>Prix</th>
+                        <th style={{ color: 'var(--primary-color)' }}>Durée</th>
+                        <th style={{ color: 'var(--primary-color)' }}>Statut</th>
+                        <th style={{ color: 'var(--primary-color)' }}>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {services.map(service => (
+                        <tr key={service.id}>
+                          <td>{service.title}</td>
+                          <td>{service.category}</td>
+                          <td>{service.price?.toLocaleString()} FCFA</td>
+                          <td>{service.duration_minutes} min</td>
+                          <td>
+                            <span className="badge" style={{ background: service.active ? '#00d9ff' : '#ff6b6b' }}>
+                              {service.active ? 'ACTIF' : 'INACTIF'}
+                            </span>
+                          </td>
+                          <td>
+                            <button
+                              className="btn btn-sm btn-danger"
+                              onClick={() => deleteService(service.id)}
+                              title="Supprimer"
+                            >
+                              🗑️
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* LOGS TAB */}
           {activeTab === 'logs' && (
-            <motion.div style={{
-              background: 'rgba(255,214,10,0.05)',
-              border: '2px solid rgba(255,214,10,0.2)',
-              borderRadius: '12px',
-              padding: '20px',
-              maxHeight: '600px',
-              overflowY: 'auto'
-            }}>
-              <h3 style={{ color: '#ffd60a', marginBottom: '16px' }}>📝 Logs</h3>
-              <div style={{ display: 'grid', gap: '8px' }}>
-                {logs.length > 0 ? logs.map((log, idx) => (
-                  <div key={idx} style={{
-                    background: log.level === 'error' ? 'rgba(255,107,107,0.1)' : 'rgba(0,255,150,0.1)',
-                    border: `1px solid ${log.level === 'error' ? 'rgba(255,107,107,0.3)' : 'rgba(0,255,150,0.3)'}`,
-                    borderLeft: `4px solid ${log.level === 'error' ? '#ff6b6b' : '#00ff96'}`,
-                    borderRadius: '6px',
-                    padding: '10px 12px',
-                    fontSize: '0.85rem'
-                  }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: '#e0e0e0', fontFamily: 'monospace' }}>
-                        [{log.level.toUpperCase()}] {log.message}
-                      </span>
-                      <span style={{ color: '#666', fontSize: '0.75rem' }}>
-                        {new Date(log.created_at).toLocaleTimeString('fr-FR')}
-                      </span>
+            <motion.div
+              key="logs"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+            >
+              <div className="card" style={{
+                background: 'var(--surface)',
+                border: '1px solid var(--primary-color)',
+                borderRadius: 'var(--border-radius-lg)',
+                padding: '2rem'
+              }}>
+                <div className="d-flex justify-content-between align-items-center mb-3">
+                  <h5 style={{ margin: 0 }}>📝 Logs Détaillés</h5>
+                  <button
+                    className="btn btn-danger"
+                    onClick={clearAllLogs}
+                  >
+                    🗑️ Effacer Tous les Logs
+                  </button>
+                </div>
+                <div style={{
+                  maxHeight: '500px',
+                  overflowY: 'auto',
+                  display: 'grid',
+                  gap: '0.5rem'
+                }}>
+                  {logs.length > 0 ? (
+                    logs.map((log, idx) => (
+                      <div
+                        key={idx}
+                        style={{
+                          background: log.level === 'error' ? 'rgba(255, 107, 107, 0.1)' : 'rgba(0, 217, 255, 0.1)',
+                          border: `1px solid ${log.level === 'error' ? 'rgba(255, 107, 107, 0.3)' : 'rgba(0, 217, 255, 0.3)'}`,
+                          borderLeft: `4px solid ${log.level === 'error' ? '#ff6b6b' : '#00d9ff'}`,
+                          borderRadius: 'var(--border-radius-lg)',
+                          padding: '0.75rem',
+                          fontSize: '0.85rem'
+                        }}
+                      >
+                        <div className="d-flex justify-content-between">
+                          <span style={{ fontFamily: 'monospace', color: 'var(--text-color)' }}>
+                            [{log.level.toUpperCase()}] {log.message}
+                          </span>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-color)', opacity: 0.6 }}>
+                            {new Date(log.created_at).toLocaleTimeString('fr-FR')}
+                          </span>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div style={{ textAlign: 'center', color: 'var(--text-color)', opacity: 0.6, padding: '2rem' }}>
+                      Aucun log
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* SECURITY TAB */}
+          {activeTab === 'security' && (
+            <motion.div
+              key="security"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+            >
+              <div className="row g-3">
+                {[
+                  { icon: '🔒', title: 'HTTPS', desc: 'Connexion sécurisée' },
+                  { icon: '🔐', title: 'JWT Auth', desc: 'Authentification tokens' },
+                  { icon: '🛡️', title: 'bcryptJS', desc: 'Hachage mots de passe' },
+                  { icon: '⚔️', title: 'RLS', desc: 'Row Level Security' },
+                  { icon: '🚦', title: 'Rate Limit', desc: '1000 req/min' },
+                  { icon: '📝', title: 'Audit Logs', desc: 'Tous les accès enregistrés' }
+                ].map((item, idx) => (
+                  <div key={idx} className="col-12 col-md-6">
+                    <div className="card" style={{
+                      background: 'var(--surface)',
+                      border: '2px solid #00ff96',
+                      borderRadius: 'var(--border-radius-lg)',
+                      padding: '1.5rem'
+                    }}>
+                      <h6 style={{ color: '#00ff96', marginBottom: '0.5rem' }}>{item.icon} {item.title}</h6>
+                      <p style={{ margin: 0, fontSize: '0.9rem' }}>{item.desc}</p>
                     </div>
                   </div>
-                )) : (
-                  <div style={{ textAlign: 'center', color: '#a0a0a0' }}>Aucun log</div>
-                )}
+                ))}
               </div>
             </motion.div>
           )}
 
-          {activeTab === 'security' && (
-            <div style={{ display: 'grid', gap: '16px' }}>
-              <CodeBlock
-                title="Security Status"
-                code={`✓ HTTPS Enabled\n✓ JWT Authentication\n✓ RLS Policies: ACTIVE\n✓ CORS: Configured\n✓ Rate Limiting: 1000 req/min\n✓ Last Audit: ${new Date().toLocaleDateString('fr-FR')}`}
-              />
-            </div>
-          )}
-
+          {/* MAINTENANCE TAB */}
           {activeTab === 'maintenance' && (
-            <motion.div style={{
-              background: 'rgba(160,160,255,0.05)',
-              border: '2px solid rgba(160,160,255,0.2)',
-              borderRadius: '12px',
-              padding: '24px',
-              display: 'grid', gap: '20px'
-            }}>
-              <h3 style={{ color: '#a0a0ff' }}>🔧 Maintenance</h3>
-              {maintenanceMode && countdownTime && (
-                <motion.div animate={{ scale: [1, 1.05, 1] }} transition={{ duration: 1, repeat: Infinity }} style={{
-                  background: 'rgba(255,107,107,0.2)',
-                  border: '2px solid rgba(255,107,107,0.5)',
-                  borderRadius: '8px',
-                  padding: '20px',
-                  textAlign: 'center'
-                }}>
-                  <div style={{ color: '#ff6b6b', fontSize: '1.2rem', fontWeight: '700', marginBottom: '12px' }}>
-                    ⏱️ Décompte
+            <motion.div
+              key="maintenance"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+            >
+              <div className="card" style={{
+                background: 'var(--surface)',
+                border: '2px solid #ff6b6b',
+                borderRadius: 'var(--border-radius-lg)',
+                padding: '2rem'
+              }}>
+                <h5 style={{ marginBottom: '1.5rem', color: '#ff6b6b' }}>🔧 Maintenance Système</h5>
+                
+                {maintenanceMode && countdownTime && (
+                  <motion.div
+                    animate={{ scale: [1, 1.02, 1] }}
+                    transition={{ duration: 1, repeat: Infinity }}
+                    className="alert"
+                    style={{
+                      background: 'rgba(255, 107, 107, 0.15)',
+                      border: '2px solid #ff6b6b',
+                      marginBottom: '1.5rem'
+                    }}
+                  >
+                    <p style={{ marginBottom: '0.5rem', fontWeight: 'bold', color: '#ff6b6b' }}>🔴 MAINTENANCE ACTIVE</p>
+                    <p style={{ margin: 0, fontSize: '2rem', fontFamily: 'monospace', color: '#ffd700' }}>
+                      {formatCountdown(countdownTime)}
+                    </p>
+                  </motion.div>
+                )}
+
+                <div className="row g-3 mb-3">
+                  <div className="col-12">
+                    <label className="form-label">Raison de Maintenance</label>
+                    <textarea
+                      className="form-control"
+                      value={maintenanceReason}
+                      onChange={(e) => setMaintenanceReason(e.target.value)}
+                      rows="3"
+                      placeholder="Raison affichée aux utilisateurs..."
+                      style={{ borderColor: '#ff6b6b', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                    />
                   </div>
-                  <div style={{
-                    fontSize: '2.5rem',
-                    fontFamily: 'monospace',
-                    fontWeight: '700',
-                    color: '#ffd60a'
-                  }}>
-                    {formatCountdown(countdownTime)}
+                  <div className="col-12 col-md-6">
+                    <label className="form-label">Durée Minutes</label>
+                    <input
+                      type="number"
+                      className="form-control"
+                      value={maintenanceDuration}
+                      onChange={(e) => setMaintenanceDuration(Math.max(5, parseInt(e.target.value) || 60))}
+                      min="5"
+                      max="1440"
+                      style={{ borderColor: '#ff6b6b', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                    />
                   </div>
-                </motion.div>
-              )}
-              <div style={{ display: 'grid', gap: '12px' }}>
-                <input
-                  type="text"
-                  value={maintenanceReason}
-                  onChange={(e) => setMaintenanceReason(e.target.value)}
-                  placeholder="Raison..."
-                  style={{
-                    width: '100%',
-                    background: 'rgba(255,255,255,0.05)',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    borderRadius: '6px',
-                    padding: '10px 12px',
-                    color: '#e0e0e0'
-                  }}
-                />
-                <input
-                  type="number"
-                  value={maintenanceDuration}
-                  onChange={(e) => setMaintenanceDuration(Math.max(5, parseInt(e.target.value) || 60))}
-                  min="5" max="1440"
-                  style={{
-                    width: '100%',
-                    background: 'rgba(255,255,255,0.05)',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    borderRadius: '6px',
-                    padding: '10px 12px',
-                    color: '#e0e0e0'
-                  }}
-                />
-                <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={toggleMaintenance} style={{
-                  background: maintenanceMode ? '#ff6b6b' : '#00ff96',
-                  color: maintenanceMode ? '#fff' : '#000',
-                  border: 'none',
-                  padding: '12px 24px',
-                  borderRadius: '8px',
-                  fontSize: '1rem',
-                  fontWeight: '700',
-                  cursor: 'pointer'
-                }}>
-                  {maintenanceMode ? '⏹️ Arrêter' : '▶️ Démarrer'}
-                </motion.button>
+                </div>
+
+                <button
+                  className={`btn w-100 ${maintenanceMode ? 'btn-success' : 'btn-danger'}`}
+                  onClick={toggleMaintenance}
+                  style={{ fontWeight: 'bold', padding: '1rem' }}
+                >
+                  {maintenanceMode ? '🟢 Arrêter Maintenance' : '🔴 Démarrer Maintenance'}
+                </button>
               </div>
             </motion.div>
           )}
-        </motion.div>
-      </AnimatePresence>
+        </AnimatePresence>
+      </div>
+
+      <div style={{ height: '2rem' }} />
     </div>
   )
 }
