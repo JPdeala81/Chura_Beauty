@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react'
+import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react'
 
 /**
  * Contexte React pour gérer les thèmes globalement
@@ -6,42 +6,46 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
  */
 const ThemeContext = createContext()
 
+// Définir les thèmes EN DEHORS du composant pour éviter les re-créations
+const THEME_DEFINITIONS = [
+  { 
+    id: 'gold', 
+    label: 'Gold Luxury',
+    emoji: '✨',
+    gradient: 'linear-gradient(135deg, #b8860b, #d4af37)'
+  },
+  { 
+    id: 'dark',
+    label: 'Dark Elegant',
+    emoji: '🌙',
+    gradient: 'linear-gradient(135deg, #1a1a1a, #2d2d2d)'
+  },
+  { 
+    id: 'green',
+    label: 'Neon Green',
+    emoji: '💚',
+    gradient: 'linear-gradient(135deg, #00ff41, #00cc33)'
+  },
+  { 
+    id: 'blue',
+    label: 'Neon Blue',
+    emoji: '🔵',
+    gradient: 'linear-gradient(135deg, #00d9ff, #0099cc)'
+  },
+  { 
+    id: 'rose',
+    label: 'Rose Beauty',
+    emoji: '🌹',
+    gradient: 'linear-gradient(135deg, #d4607a, #f0a0b0)'
+  }
+]
+
 export const ThemeProvider = ({ children }) => {
   const [currentTheme, setCurrentTheme] = useState('gold')
   const [mounted, setMounted] = useState(false)
 
-  const themes = [
-    { 
-      id: 'gold', 
-      label: 'Gold Luxury',
-      emoji: '✨',
-      gradient: 'linear-gradient(135deg, #b8860b, #d4af37)'
-    },
-    { 
-      id: 'dark',
-      label: 'Dark Elegant',
-      emoji: '🌙',
-      gradient: 'linear-gradient(135deg, #1a1a1a, #2d2d2d)'
-    },
-    { 
-      id: 'green',
-      label: 'Neon Green',
-      emoji: '💚',
-      gradient: 'linear-gradient(135deg, #00ff41, #00cc33)'
-    },
-    { 
-      id: 'blue',
-      label: 'Neon Blue',
-      emoji: '🔵',
-      gradient: 'linear-gradient(135deg, #00d9ff, #0099cc)'
-    },
-    { 
-      id: 'rose',
-      label: 'Rose Beauty',
-      emoji: '🌹',
-      gradient: 'linear-gradient(135deg, #d4607a, #f0a0b0)'
-    }
-  ]
+  // useMemo pour eviter de redéfinir themes à chaque rendu
+  const themes = useMemo(() => THEME_DEFINITIONS, [])
 
   // Charger le thème au montage
   useEffect(() => {
@@ -52,7 +56,7 @@ export const ThemeProvider = ({ children }) => {
 
   const applyTheme = useCallback((themeId) => {
     // Validation
-    if (!themes.find(t => t.id === themeId)) {
+    if (!THEME_DEFINITIONS.find(t => t.id === themeId)) {
       console.error(`❌ Thème invalide: ${themeId}`)
       return
     }

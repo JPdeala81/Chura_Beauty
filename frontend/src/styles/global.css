@@ -2809,6 +2809,7 @@ img { max-width: 100%; height: auto; }
   flex-direction: column;
   gap: 12px;
   align-items: flex-end;
+  z-index: 9999; /* MUST be higher than overlay to allow clicks */
 }
 
 .theme-bubble {
@@ -2858,8 +2859,9 @@ img { max-width: 100%; height: auto; }
 .theme-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  z-index: 9998;
+  z-index: 9997; /* Lower than bubbles to allow clicks */
   background: transparent;
+  pointer-events: auto; /* Ensure overlay can receive clicks */
 }
 
 /* ============================================================
