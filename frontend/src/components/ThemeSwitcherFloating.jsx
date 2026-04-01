@@ -6,10 +6,28 @@ const ThemeSwitcherFloating = () => {
   const [isOpen, setIsOpen] = useState(false)
   const { currentTheme, themes, applyTheme } = useThemeContext()
 
+  // Debug: log quand le composant est monté
+  useEffect(() => {
+    console.log('✅ ThemeSwitcherFloating monté')
+    console.log('Theme context:', { currentTheme, themes })
+    
+    // Vérifier que l'élément DOM existe
+    const container = document.querySelector('.theme-switcher-floating-container')
+    const mainBtn = document.querySelector('.theme-switcher-main-btn')
+    console.log('DOM elements:', {
+      containerFound: !!container,
+      mainBtnFound: !!mainBtn,
+      containerZIndex: container ? getComputedStyle(container).zIndex : 'N/A',
+      mainBtnZIndex: mainBtn ? getComputedStyle(mainBtn).zIndex : 'N/A'
+    })
+  }, [])
+
   const handleThemeChange = (themeId) => {
     console.log('🎨 ThemeSwitcherFloating: Changement de thème:', themeId)
+    console.log('Avant applyTheme, currentTheme:', currentTheme)
     applyTheme(themeId)
     setIsOpen(false)
+    console.log('Après applyTheme, thème basculé vers:', themeId)
   }
 
   const currentThemeObj = themes.find(t => t.id === currentTheme) || themes[0]
@@ -19,7 +37,10 @@ const ThemeSwitcherFloating = () => {
       {/* Main floating button with animation */}
       <motion.button
         className="theme-switcher-main-btn"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => {
+          console.log('🎨 Bouton principal cliqué, isOpen:', !isOpen)
+          setIsOpen(!isOpen)
+        }}
         animate={{
           y: isOpen ? 0 : [0, -8, 0],
         }}
@@ -50,7 +71,10 @@ const ThemeSwitcherFloating = () => {
                   type: 'spring',
                   stiffness: 200,
                 }}
-                onClick={() => handleThemeChange(theme.id)}
+                onClick={() => {
+                  console.log('🎨 Bulle cliquée:', theme.id)
+                  handleThemeChange(theme.id)
+                }}
                 style={{
                   background: theme.gradient,
                 }}
@@ -71,7 +95,10 @@ const ThemeSwitcherFloating = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={() => setIsOpen(false)}
+            onClick={() => {
+              console.log('🎨 Overlay cliqué, fermeture du menu')
+              setIsOpen(false)
+            }}
           />
         )}
       </AnimatePresence>
