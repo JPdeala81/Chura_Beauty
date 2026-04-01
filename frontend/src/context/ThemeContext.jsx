@@ -41,16 +41,20 @@ const THEME_DEFINITIONS = [
 ]
 
 export const ThemeProvider = ({ children }) => {
-  const [currentTheme, setCurrentTheme] = useState('gold')
+  // Initialiser le thème IMMÉDIATEMENT depuis localStorage (pas de useState)
+  const savedTheme = typeof window !== 'undefined' ? 
+    localStorage.getItem('theme') || 'gold' : 'gold'
+  
+  const [currentTheme, setCurrentTheme] = useState(savedTheme)
   const [mounted, setMounted] = useState(false)
 
   // useMemo pour eviter de redéfinir themes à chaque rendu
   const themes = useMemo(() => THEME_DEFINITIONS, [])
 
-  // Charger le thème au montage
+  // Appliquer le thème IMMÉDIATEMENT au premier rendu
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme') || 'gold'
-    applyTheme(savedTheme)
+    const theme = localStorage.getItem('theme') || 'gold'
+    applyThemeImmediate(theme)
     setMounted(true)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -63,7 +67,7 @@ export const ThemeProvider = ({ children }) => {
 
     console.log(`🎨 Changement de thème: ${themeId}`)
 
-    // 1. Appliquer le thème sur documentElement
+    // 1. Appliquer le thème immédiatement
     document.documentElement.setAttribute('data-theme', themeId)
     document.body.setAttribute('data-theme', themeId)
     
@@ -73,24 +77,35 @@ export const ThemeProvider = ({ children }) => {
     // 3. Sauvegarder dans localStorage
     localStorage.setItem('theme', themeId)
     
-    // 4. Mettre à jour l'état local
+    // 4. Mettre à jour l'état
     setCurrentTheme(themeId)
 
     // 5. Force une reflow/repaint complète
-    // Ceci force le navigateur à recalculer tous les styles
     const html = document.documentElement
-    const computed = window.getComputedStyle(html)
-    
-    // Trigger une reflow
     html.offsetHeight
     
-    // Dispatcher un événement pour d'autres composants
+    // 6. Dispatcher un événement pour d'autres composants
     window.dispatchEvent(new CustomEvent('themechange', { 
       detail: { theme: themeId } 
     }))
 
     console.log(`✅ Thème appliqué: ${themeId}`)
   }, [])
+
+  // Fonction pour appliquer le thème SANS setter state (utilité au premier rendu)
+  const applyThemeImmediate = (themeId) => {
+    if (!THEME_DEFINITIONS.find(t => t.id === themeId)) {
+      console.error(`❌ Thème invalide: ${themeId}`)
+      return
+    }
+
+    console.log(`🎨 Thème initial: ${themeId}`)
+    document.documentElement.setAttribute('data-theme', themeId)
+    document.body.setAttribute('data-theme', themeId)
+    document.documentElement.style.colorScheme = themeId === 'dark' ? 'dark' : 'light'
+    
+    console.log(`✅ Thème initial appliqué à DOM: ${themeId}`)
+  }
 
   const value = {
     currentTheme,
