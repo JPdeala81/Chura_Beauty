@@ -34,11 +34,14 @@ const SuperAdminDashboard = () => {
         api.get('/revenue/stats')
       ])
       
+      // Extract correct data from responses
       if (appoRes.status === 'fulfilled') {
-        setAppointments(appoRes.value.data || [])
+        const apptData = appoRes.value.data
+        setAppointments(apptData.appointments || [])
       }
       if (servRes.status === 'fulfilled') {
-        setServices(servRes.value.data || [])
+        const servData = servRes.value.data
+        setServices(servData.services || [])
       }
       if (statsRes.status === 'fulfilled') {
         setStats(statsRes.value.data || {})
