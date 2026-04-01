@@ -3,6 +3,7 @@ import { useContext, useEffect } from 'react'
 import { AuthContext } from './context/AuthContext'
 import { AuthProvider } from './context/AuthContext'
 import { NotificationProvider } from './context/NotificationContext'
+import { ThemeProvider } from './context/ThemeContext'
 import ThemeSwitcherFloating from './components/ThemeSwitcherFloating'
 import Home from './pages/Home'
 import Services from './pages/Services'
@@ -93,21 +94,24 @@ function AppRoutes() {
 function App() {
   const { isMaintenance } = useMaintenanceCheck()
 
-  // Load theme on app startup
+  // Charger le thème au démarrage de l'app
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') || 'gold'
     document.documentElement.setAttribute('data-theme', savedTheme)
+    console.log('🎨 App.jsx - Thème chargé au démarrage:', savedTheme)
   }, [])
 
   return (
     <BrowserRouter>
       <AuthProvider>
         <NotificationProvider>
-          {isMaintenance ? (
-            <Maintenance />
-          ) : (
-            <AppRoutes />
-          )}
+          <ThemeProvider>
+            {isMaintenance ? (
+              <Maintenance />
+            ) : (
+              <AppRoutes />
+            )}
+          </ThemeProvider>
         </NotificationProvider>
       </AuthProvider>
     </BrowserRouter>

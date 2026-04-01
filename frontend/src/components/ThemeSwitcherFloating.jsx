@@ -1,29 +1,18 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useThemeContext } from '../context/ThemeContext'
 
 const ThemeSwitcherFloating = () => {
   const [isOpen, setIsOpen] = useState(false)
-
-  const themes = [
-    { id: 'gold', label: 'Gold', emoji: '✨', gradient: 'linear-gradient(135deg, #b8860b, #d4af37)' },
-    { id: 'dark', label: 'Dark', emoji: '🌙', gradient: 'linear-gradient(135deg, #1a1a1a, #2d2d2d)' },
-    { id: 'green', label: 'Green', emoji: '💚', gradient: 'linear-gradient(135deg, #00ff41, #00cc33)' },
-    { id: 'blue', label: 'Blue', emoji: '🔵', gradient: 'linear-gradient(135deg, #00d9ff, #0099cc)' },
-    { id: 'rose', label: 'Rose', emoji: '🌹', gradient: 'linear-gradient(135deg, #d4607a, #f0a0b0)' },
-  ]
+  const { currentTheme, themes, applyTheme } = useThemeContext()
 
   const handleThemeChange = (themeId) => {
-    document.documentElement.setAttribute('data-theme', themeId)
-    localStorage.setItem('theme', themeId)
+    console.log('🎨 ThemeSwitcherFloating: Changement de thème:', themeId)
+    applyTheme(themeId)
     setIsOpen(false)
   }
 
-  const getCurrentTheme = () => {
-    const theme = document.documentElement.getAttribute('data-theme') || 'gold'
-    return themes.find(t => t.id === theme)
-  }
-
-  const currentTheme = getCurrentTheme()
+  const currentThemeObj = themes.find(t => t.id === currentTheme) || themes[0]
 
   return (
     <div className="theme-switcher-floating-container">
@@ -39,7 +28,7 @@ const ThemeSwitcherFloating = () => {
           repeat: isOpen ? 0 : Infinity,
         }}
         style={{
-          background: currentTheme?.gradient,
+          background: currentThemeObj?.gradient,
         }}
       >
         <span className="theme-icon">🎨</span>
