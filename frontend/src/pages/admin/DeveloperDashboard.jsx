@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import api from '../../services/api'
-import './DeveloperDashboard.css'
 
 const DeveloperDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview')
