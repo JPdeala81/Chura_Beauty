@@ -1,11 +1,13 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useContext } from 'react'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
+import { AuthContext } from '../../context/AuthContext'
 import api from '../../services/api'
 
 const floatingEmojis = ['💆‍♀️', '✨', '💅', '🌸', '💄', '👑', '🌺', '💎', '🪷', '🌟']
 
 const HeroSection = ({ onScrollToServices }) => {
+  const { token, admin } = useContext(AuthContext)
   const [adminInfo, setAdminInfo] = useState({
     salonName: 'Chura Beauty Salon',
     bio: 'Votre destination beauté à Libreville',
@@ -13,6 +15,9 @@ const HeroSection = ({ onScrollToServices }) => {
     heroTitle: 'Révélez Votre Beauté Naturelle',
     heroSubtitle: 'Des soins d\'exception pour sublimer votre beauté'
   })
+  
+  // Check if user is admin or developer
+  const isAdminOrDeveloper = token && admin && (admin.role === 'admin' || admin.role === 'developer')
 
   useEffect(() => {
     const fetchAdmin = async () => {
@@ -124,9 +129,23 @@ const HeroSection = ({ onScrollToServices }) => {
                 <button className="btn-luxury-primary" onClick={onScrollToServices}>
                   Découvrir nos services
                 </button>
-                <Link to="/services" className="btn-luxury-outline">
-                  Prendre rendez-vous
-                </Link>
+                {isAdminOrDeveloper ? (
+                  <motion.button 
+                    className="btn-luxury-outline"
+                    disabled
+                    style={{
+                      opacity: 0.5,
+                      cursor: 'not-allowed'
+                    }}
+                    title="Vous êtes administrateur - action non autorisée"
+                  >
+                    🚫 Prendre rendez-vous
+                  </motion.button>
+                ) : (
+                  <Link to="/services" className="btn-luxury-outline">
+                    Prendre rendez-vous
+                  </Link>
+                )}
               </motion.div>
             </motion.div>
           </div>

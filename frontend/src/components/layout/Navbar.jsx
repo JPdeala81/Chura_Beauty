@@ -10,7 +10,10 @@ const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false)
   const [currentTime, setCurrentTime] = useState(new Date())
   const location = useLocation()
-  const { token, logout } = useContext(AuthContext)
+  const { token, logout, admin } = useContext(AuthContext)
+  
+  // Check if user is admin or developer (restrict booking)
+  const isAdminOrDeveloper = token && admin && (admin.role === 'admin' || admin.role === 'developer')
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50)
@@ -89,15 +92,30 @@ const Navbar = () => {
               <span>{currentTime.toLocaleTimeString('fr-FR')}</span>
             </motion.div>
 
-            {/* Book Appointment Button */}
-            <Link 
-              to="/services" 
-              className="btn-luxury-appointment" 
-              onClick={() => setMenuOpen(false)}
-            >
-              <span style={{ fontSize: '18px' }}>📅</span>
-              <span>Prendre RDV</span>
-            </Link>
+            {/* Book Appointment Button - DISABLED FOR ADMIN/DEVELOPER */}
+            {isAdminOrDeveloper ? (
+              <motion.div
+                title="Vous êtes administrateur - action non autorisée"
+                className="btn-luxury-appointment"
+                style={{
+                  opacity: 0.5,
+                  cursor: 'not-allowed',
+                  pointerEvents: 'none'
+                }}
+              >
+                <span style={{ fontSize: '18px' }}>🚫</span>
+                <span style={{ textDecoration: 'line-through' }}>Prendre RDV</span>
+              </motion.div>
+            ) : (
+              <Link 
+                to="/services" 
+                className="btn-luxury-appointment" 
+                onClick={() => setMenuOpen(false)}
+              >
+                <span style={{ fontSize: '18px' }}>📅</span>
+                <span>Prendre RDV</span>
+              </Link>
+            )}
             {token ? (
               <>
                 <Link 
