@@ -275,12 +275,32 @@ const SuperAdminDashboard = () => {
 
   const saveSiteSettings = async () => {
     try {
-      await api.put('/site-settings/homepage', siteSettingsForm)
-      alert('Paramètres du site sauvegardés')
+      const payload = {
+        privacy_policy: siteSettingsForm.privacy_policy || '',
+        terms_of_service: siteSettingsForm.terms_of_service || '',
+        about_content: siteSettingsForm.about_content || '',
+        footer_services: siteSettingsForm.footer_services || [],
+        footer_custom_links: siteSettingsForm.footer_custom_links || [],
+        meta_title: siteSettingsForm.app_name || 'Chura Beauty',
+        meta_description: siteSettingsForm.tagline || '',
+        faviconEmoji: siteSettingsForm.faviconEmoji || '💆‍♀️',
+        faviconImage: siteSettingsForm.app_logo || '',
+        heroAnimation: siteSettingsForm.heroAnimation || 'particles',
+        heroCta: 'Prendre RDV',
+        heroCtaSecondary: 'Découvrir',
+        navbarCta: 'Réserver',
+        adminBtnText: 'Admin'
+      }
+      
+      console.log('📤 Envoi des paramètres:', payload)
+      const response = await api.put('/site-settings', payload)
+      
+      console.log('✅ Réponse:', response.data)
+      alert('✅ Paramètres du site sauvegardés avec succès!')
       setEditingSiteSettings(false)
     } catch (err) {
-      console.error('Erreur:', err)
-      alert('Erreur lors de la sauvegarde')
+      console.error('❌ Erreur sauvegarde:', err.response?.data || err.message)
+      alert(`❌ Erreur lors de la sauvegarde: ${err.response?.data?.error || err.message}`)
     }
   }
 
@@ -426,21 +446,23 @@ const SuperAdminDashboard = () => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
             >
-              {/* KPI Cards */}
+              {/* Enhanced KPI Cards */}
               <div className="row g-3 mb-4">
                 {[
-                  { icon: '📅', title: 'RDV Total', value: appointments.length, color: '#00d9ff' },
-                  { icon: '✅', title: 'Acceptés', value: appointments.filter(a => a.status === 'accepted').length, color: '#00d9ff' },
-                  { icon: '⏳', title: 'En Attente', value: appointments.filter(a => a.status === 'pending').length, color: '#ffd700' },
-                  { icon: '❌', title: 'Refusés', value: appointments.filter(a => a.status === 'rejected').length, color: '#ff6b6b' }
+                  { icon: '📅', title: 'RDV Total', value: appointments.length || 0, color: '#00d9ff', bg: 'rgba(0, 217, 255, 0.1)' },
+                  { icon: '✅', title: 'Acceptés', value: (appointments.filter(a => a.status === 'accepted') || []).length, color: '#00d9ff', bg: 'rgba(0, 217, 255, 0.1)' },
+                  { icon: '⏳', title: 'En Attente', value: (appointments.filter(a => a.status === 'pending') || []).length, color: '#ffd700', bg: 'rgba(255, 215, 0, 0.1)' },
+                  { icon: '❌', title: 'Refusés', value: (appointments.filter(a => a.status === 'rejected') || []).length, color: '#ff6b6b', bg: 'rgba(255, 107, 107, 0.1)' },
+                  { icon: '💅', title: 'Services', value: services.length || 0, color: '#ff1493', bg: 'rgba(255, 20, 147, 0.1)' },
+                  { icon: '💰', title: 'Revenus', value: `${(appointments.filter(a => a.status === 'accepted').reduce((sum, a) => sum + (a.revenue || 0), 0) / 1000).toFixed(0)}K FCFA`, color: '#32cd32', bg: 'rgba(50, 205, 50, 0.1)' }
                 ].map((kpi, idx) => (
                   <motion.div
                     key={idx}
-                    className="col-12 col-sm-6 col-lg-3"
-                    whileHover={{ scale: 1.05, transition: { duration: 0.2 } }}
+                    className="col-12 col-sm-6 col-lg-2"
+                    whileHover={{ scale: 1.05, transition: { duration: 0.2 }, y: -5 }}
                   >
                     <div className="card h-100" style={{
-                      background: 'var(--surface)',
+                      background: kpi.bg,
                       border: `2px solid ${kpi.color}`,
                       borderRadius: 'var(--border-radius-lg)',
                       boxShadow: 'var(--shadow-card)',
@@ -448,8 +470,8 @@ const SuperAdminDashboard = () => {
                       textAlign: 'center'
                     }}>
                       <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>{kpi.icon}</div>
-                      <h6 style={{ color: 'var(--text-color)', marginBottom: '0.5rem' }}>{kpi.title}</h6>
-                      <p style={{ fontSize: '2rem', fontWeight: 'bold', color: kpi.color, margin: 0 }}>
+                      <h6 style={{ color: 'var(--text-color)', marginBottom: '0.5rem', fontSize: '0.9rem' }}>{kpi.title}</h6>
+                      <p style={{ fontSize: '1.8rem', fontWeight: 'bold', color: kpi.color, margin: 0 }}>
                         {kpi.value}
                       </p>
                     </div>
@@ -498,7 +520,7 @@ const SuperAdminDashboard = () => {
                     boxShadow: 'var(--shadow-card)',
                     padding: '1.5rem'
                   }}>
-                    <h6 style={{ color: 'var(--primary-color)', marginBottom: '1rem' }}>📈 Tendance RDV</h6>
+                    <h6 style={{ color: 'var(--primary-color)', marginBottom: '1rem' }}>📈 Tendance RDV (7 jours)</h6>
                     <ResponsiveContainer width="100%" height={250}>
                       <LineChart data={generateRealStats().weeklyStats}>
                         <CartesianGrid strokeDasharray="3 3" stroke="var(--primary-color)" opacity="0.2" />
@@ -509,6 +531,77 @@ const SuperAdminDashboard = () => {
                         <Line type="monotone" dataKey="pending" stroke="#ffd700" strokeWidth={3} name="En attente" />
                       </LineChart>
                     </ResponsiveContainer>
+                  </div>
+                </motion.div>
+              </div>
+
+              {/* Recent Appointments & Statistics Row */}
+              <div className="row g-3 mb-4">
+                <motion.div className="col-12 col-lg-8">
+                  <div className="card" style={{
+                    background: 'var(--surface)',
+                    border: '1px solid var(--primary-color)',
+                    borderRadius: 'var(--border-radius-lg)',
+                    boxShadow: 'var(--shadow-card)',
+                    padding: '1.5rem'
+                  }}>
+                    <h6 style={{ color: 'var(--primary-color)', marginBottom: '1rem' }}>📅 Rendez-vous Récents</h6>
+                    <div className="table-responsive" style={{maxHeight: '300px', overflow: 'auto'}}>
+                      <table className="table table-sm table-hover">
+                        <thead style={{background: 'var(--bg-color)', position: 'sticky', top: 0}}>
+                          <tr>
+                            <th style={{color: 'var(--primary-color)'}}>Client</th>
+                            <th style={{color: 'var(--primary-color)'}}>Service</th>
+                            <th style={{color: 'var(--primary-color)'}}>Date</th>
+                            <th style={{color: 'var(--primary-color)'}}>Statut</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {(appointments || []).slice(0, 5).map(apt => (
+                            <tr key={apt.id}>
+                              <td>{apt.client_name}</td>
+                              <td><small>{apt.services?.title || 'N/A'}</small></td>
+                              <td><small>{new Date(apt.desired_date).toLocaleDateString('fr-FR')}</small></td>
+                              <td>
+                                <span className="badge" style={{
+                                  background: apt.status === 'accepted' ? '#00d9ff' : 
+                                              apt.status === 'pending' ? '#ffd700' : '#ff6b6b'
+                                }}>
+                                  {apt.status}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </motion.div>
+
+                <motion.div className="col-12 col-lg-4">
+                  <div className="card" style={{
+                    background: 'var(--surface)',
+                    border: '1px solid var(--primary-color)',
+                    borderRadius: 'var(--border-radius-lg)',
+                    boxShadow: 'var(--shadow-card)',
+                    padding: '1.5rem'
+                  }}>
+                    <h6 style={{ color: 'var(--primary-color)', marginBottom: '1rem' }}>🔥 Top Services</h6>
+                    <div>
+                      {(services || []).slice(0, 4).map((service, idx) => (
+                        <div key={service.id} style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          padding: '0.5rem 0',
+                          borderBottom: '1px solid var(--surface-2)'
+                        }}>
+                          <span>#{idx + 1} {service.title}</span>
+                          <span style={{color: 'var(--primary-color)', fontWeight: 'bold'}}>
+                            {service.price?.toLocaleString()} FCFA
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </motion.div>
               </div>
@@ -524,14 +617,16 @@ const SuperAdminDashboard = () => {
                 <h6 style={{ color: 'var(--primary-color)', marginBottom: '1.5rem' }}>⚡ Actions Rapides</h6>
                 <div className="row g-3">
                   {[
-                    { icon: '📅', text: 'Gérer RDV', tab: 'appointments' },
+                    { icon: '📅', text: 'RDV', tab: 'appointments' },
                     { icon: '💅', text: 'Services', tab: 'services' },
-                    { icon: '📊', text: 'Statistiques', tab: 'statistics' },
-                    { icon: '⚙️', text: 'Paramètres', tab: 'settings' }
+                    { icon: '📊', text: 'Stats', tab: 'statistics' },
+                    { icon: '🌐', text: 'Site', tab: 'site-management' },
+                    { icon: '⚙️', text: 'Config', tab: 'service-management' },
+                    { icon: '🔐', text: 'Sécurité', tab: 'security' }
                   ].map((action, idx) => (
-                    <div key={idx} className="col-6 col-md-3">
+                    <div key={idx} className="col-6 col-md-2">
                       <button
-                        className="btn w-100 p-3"
+                        className="btn w-100 p-2"
                         style={{
                           background: 'var(--gradient-primary)',
                           color: 'white',
@@ -544,8 +639,8 @@ const SuperAdminDashboard = () => {
                         onMouseOver={(e) => e.target.style.transform = 'scale(1.05)'}
                         onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
                       >
-                        <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>{action.icon}</div>
-                        <div style={{ fontSize: '0.9rem' }}>{action.text}</div>
+                        <div style={{ fontSize: '1.3rem', marginBottom: '0.25rem' }}>{action.icon}</div>
+                        <div style={{ fontSize: '0.75rem' }}>{action.text}</div>
                       </button>
                     </div>
                   ))}
@@ -683,43 +778,207 @@ const SuperAdminDashboard = () => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
             >
-              <h5 style={{ marginBottom: '2rem' }}>💅 Services disponibles</h5>
-              <div className="row g-3">
-                {services.length > 0 ? (
-                  services.map(service => (
-                    <motion.div
-                      key={service.id}
-                      className="col-12 col-sm-6 col-md-4 col-lg-3"
-                      whileHover={{ scale: 1.05, y: -10 }}
-                    >
-                      <div className="card h-100" style={{
-                        background: 'var(--gradient-primary)',
-                        border: 'none',
-                        borderRadius: 'var(--border-radius-lg)',
-                        boxShadow: 'var(--shadow-luxury)',
-                        padding: '1.5rem',
-                        color: 'white',
-                        textAlign: 'center'
-                      }}>
-                        <h6 className="card-title" style={{ marginBottom: '0.5rem' }}>{service.title}</h6>
-                        <p style={{ fontSize: '0.85rem', marginBottom: '0.5rem', opacity: 0.9 }}>{service.category}</p>
-                        <p style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: '1rem 0' }}>
-                          {service.price?.toLocaleString()} FCFA
-                        </p>
-                        <p style={{ fontSize: '0.9rem' }}>⏱️ {service.duration_minutes} minutes</p>
-                      </div>
-                    </motion.div>
-                  ))
-                ) : (
-                  <div className="col-12" style={{
-                    textAlign: 'center',
-                    padding: '3rem',
-                    color: 'var(--text-color)',
-                    opacity: 0.6
-                  }}>
-                    Aucun service disponible
+              <div className="card" style={{
+                background: 'var(--surface)',
+                border: '2px solid var(--primary-color)',
+                borderRadius: 'var(--border-radius-lg)',
+                padding: '2rem'
+              }}>
+                <h4 style={{ marginBottom: '1.5rem', color: 'var(--primary-color)' }}>💅 Services - Gestion Complète</h4>
+                
+                {/* Search & Filter Bar */}
+                <div className="row g-2 mb-3">
+                  <div className="col-12 col-md-5">
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="🔍 Rechercher par nom..."
+                      value={searchTerm}
+                      onChange={(e) => {
+                        setSearchTerm(e.target.value)
+                      }}
+                      style={{ borderColor: 'var(--primary-color)' }}
+                    />
                   </div>
+                  <div className="col-12 col-md-3">
+                    <select
+                      className="form-select"
+                      value={filterStatus}
+                      onChange={(e) => setFilterStatus(e.target.value)}
+                      style={{ borderColor: 'var(--primary-color)' }}
+                    >
+                      <option value="all">📊 Tous les statuts</option>
+                      <option value="active">🟢 Actifs</option>
+                      <option value="inactive">⚫ Inactifs</option>
+                    </select>
+                  </div>
+                  <div className="col-12 col-md-4">
+                    <button
+                      className="btn w-100"
+                      style={{ background: 'var(--gradient-primary)', color: 'white', border: 'none' }}
+                      onClick={() => setNewServiceForm(!newServiceForm)}
+                    >
+                      ➕ Ajouter Service
+                    </button>
+                  </div>
+                </div>
+
+                {/* Add Service Form */}
+                {newServiceForm && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    style={{
+                      background: 'var(--bg-color)',
+                      border: '1px solid var(--primary-color)',
+                      borderRadius: 'var(--border-radius-md)',
+                      padding: '1.5rem',
+                      marginBottom: '2rem'
+                    }}
+                  >
+                    <h6 style={{color: 'var(--primary-color)', marginBottom: '1rem'}}>📝 Créer un Nouveau Service</h6>
+                    <div className="row g-2">
+                      <div className="col-12 col-md-6">
+                        <label className="form-label">Titre</label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          value={serviceForm.title}
+                          onChange={(e) => setServiceForm({...serviceForm, title: e.target.value})}
+                          placeholder="ex: Coiffage"
+                          style={{ borderColor: 'var(--primary-color)' }}
+                        />
+                      </div>
+                      <div className="col-12 col-md-6">
+                        <label className="form-label">Catégorie</label>
+                        <select
+                          className="form-select"
+                          value={serviceForm.category}
+                          onChange={(e) => setServiceForm({...serviceForm, category: e.target.value})}
+                          style={{ borderColor: 'var(--primary-color)' }}
+                        >
+                          <option value="">Sélectionner une catégorie</option>
+                          <option value="coiffage">Coiffage</option>
+                          <option value="soin-visage">Soin du Visage</option>
+                          <option value="maquillage">Maquillage</option>
+                          <option value="epilage">Épilage</option>
+                          <option value="massage">Massage</option>
+                        </select>
+                      </div>
+                      <div className="col-12 col-md-3">
+                        <label className="form-label">Prix (FCFA)</label>
+                        <input
+                          type="number"
+                          className="form-control"
+                          value={serviceForm.price}
+                          onChange={(e) => setServiceForm({...serviceForm, price: parseFloat(e.target.value)})}
+                          placeholder="0"
+                          style={{ borderColor: 'var(--primary-color)' }}
+                        />
+                      </div>
+                      <div className="col-12 col-md-3">
+                        <label className="form-label">Durée (min)</label>
+                        <input
+                          type="number"
+                          className="form-control"
+                          value={serviceForm.duration_minutes}
+                          onChange={(e) => setServiceForm({...serviceForm, duration_minutes: parseInt(e.target.value)})}
+                          placeholder="30"
+                          style={{ borderColor: 'var(--primary-color)' }}
+                        />
+                      </div>
+                      <div className="col-12 col-md-6">
+                        <label className="form-label">Description</label>
+                        <textarea
+                          className="form-control"
+                          rows="2"
+                          value={serviceForm.description}
+                          onChange={(e) => setServiceForm({...serviceForm, description: e.target.value})}
+                          placeholder="Description du service..."
+                          style={{ borderColor: 'var(--primary-color)' }}
+                        />
+                      </div>
+                      <div className="col-12">
+                        <div className="form-check">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            id="activeCheck"
+                            checked={serviceForm.active}
+                            onChange={(e) => setServiceForm({...serviceForm, active: e.target.checked})}
+                          />
+                          <label className="form-check-label" htmlFor="activeCheck">Actif</label>
+                        </div>
+                      </div>
+                      <div className="col-12">
+                        <button className="btn btn-success w-50 me-2" onClick={createService}>💾 Créer</button>
+                        <button className="btn btn-secondary w-50" onClick={() => {
+                          setNewServiceForm(false)
+                          setServiceForm({ title: '', category: '', price: 0, duration_minutes: 30, description: '', active: true })
+                        }}>❌ Annuler</button>
+                      </div>
+                    </div>
+                  </motion.div>
                 )}
+
+                {/* Services Table */}
+                <div className="table-responsive">
+                  <table className="table table-hover" style={{ marginBottom: 0 }}>
+                    <thead style={{ background: 'var(--bg-color)' }}>
+                      <tr>
+                        <th style={{ color: 'var(--primary-color)', fontWeight: 'bold' }}>Titre</th>
+                        <th style={{ color: 'var(--primary-color)', fontWeight: 'bold' }}>Catégorie</th>
+                        <th style={{ color: 'var(--primary-color)', fontWeight: 'bold' }}>Prix</th>
+                        <th style={{ color: 'var(--primary-color)', fontWeight: 'bold' }}>Durée</th>
+                        <th style={{ color: 'var(--primary-color)', fontWeight: 'bold' }}>Statut</th>
+                        <th style={{ color: 'var(--primary-color)', fontWeight: 'bold' }}>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(services.filter(s => {
+                        const matchSearch = s.title?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                                          s.description?.toLowerCase().includes(searchTerm.toLowerCase())
+                        const matchStatus = filterStatus === 'all' || 
+                                          (filterStatus === 'active' && s.active) ||
+                                          (filterStatus === 'inactive' && !s.active)
+                        return matchSearch && matchStatus
+                      }) || []).slice(0, 8).map(service => (
+                        <tr key={service.id} style={{ borderBottom: '1px solid var(--surface-2)' }}>
+                          <td style={{ fontWeight: '500' }}>{service.title}</td>
+                          <td>{service.category}</td>
+                          <td>
+                            <strong style={{ color: 'var(--primary-color)' }}>
+                              {service.price?.toLocaleString()} FCFA
+                            </strong>
+                          </td>
+                          <td>{service.duration_minutes} min</td>
+                          <td>
+                            <span className="badge px-2" style={{
+                              background: service.active ? '#00d9ff' : '#ff6b6b',
+                              color: 'white'
+                            }}>
+                              {service.active ? '🟢 ACTIF' : '🔴 INACTIF'}
+                            </span>
+                          </td>
+                          <td>
+                            <button className="btn btn-sm btn-outline-primary me-1" 
+                              onClick={() => {
+                                setEditingService(service.id)
+                                setServiceForm(service)
+                              }}
+                            >✏️</button>
+                            <button className="btn btn-sm btn-outline-danger"
+                              onClick={() => deleteService(service.id)}
+                            >🗑️</button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <small style={{ color: 'var(--text-muted)', marginTop: '1rem' }}>
+                  Affichage: {Math.min(8, (services || []).length)} / {(services || []).length} services
+                </small>
               </div>
             </motion.div>
           )}
