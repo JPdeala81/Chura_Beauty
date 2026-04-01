@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Test Thème</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    padding: 20px;
+    transition: all 0.3s ease;
+  }
+
+  /* Thème Gold */
+  [data-theme="gold"] {
+    --primary-color: #b8860b;
+    --bg-color: #fff9f0;
+    --text-color: #1a1a1a;
+  }
+
+  /* Thème Dark */
+  [data-theme="dark"] {
+    --primary-color: #d4a843;
+    --bg-color: #1a1a2e;
+    --text-color: #e8e8f0;
+  }
+
+  /* Thème Green */
+  [data-theme="green"] {
+    --primary-color: #00cc33;
+    --bg-color: #f0fff0;
+    --text-color: #0a0f0a;
+  }
+
+  /* Thème Blue */
+  [data-theme="blue"] {
+    --primary-color: #0099cc;
+    --bg-color: #f0f8ff;
+    --text-color: #080f0f;
+  }
+
+  /* Thème Rose */
+  [data-theme="rose"] {
+    --primary-color: #c4607a;
+    --bg-color: #fff5f8;
+    --text-color: #1a0810;
+  }
+
+  /* Styles appliqués globalement */
+  html[data-theme] {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+  }
+
+  button {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    margin: 5px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+  }
+
+  button:hover {
+    opacity: 0.8;
+  }
+
+  .container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    border-radius: 10px;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+  }
+
+  .info {
+    margin: 20px 0;
+    padding: 10px;
+    border-left: 4px solid var(--primary-color);
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Test du Système de Thème</h1>
+  <p>Cliquez sur un bouton pour changer le thème:</p>
+  
+  <div>
+    <button onclick="applyTheme('gold')">✨ Gold Luxury</button>
+    <button onclick="applyTheme('dark')">🌙 Dark Elegant</button>
+    <button onclick="applyTheme('green')">💚 Neon Green</button>
+    <button onclick="applyTheme('blue')">🔵 Neon Blue</button>
+    <button onclick="applyTheme('rose')">🌹 Rose Beauty</button>
+  </div>
+
+  <div class="info">
+    <strong>Thème actuel:</strong> <span id="current-theme">gold</span>
+  </div>
+
+  <div class="info">
+    <strong>Couleur primaire:</strong> <span id="primary-color">#b8860b</span>
+  </div>
+
+  <div class="info">
+    <strong>Couleur fond:</strong> <span id="bg-color">#fff9f0</span>
+  </div>
+
+  <div class="info">
+    <strong>Couleur texte:</strong> <span id="text-color">#1a1a1a</span>
+  </div>
+</div>
+
+<script>
+function applyTheme(themeId) {
+  console.log('🎨 Changement de thème:', themeId)
+  
+  // Appliquer sur documentElement et body
+  document.documentElement.setAttribute('data-theme', themeId)
+  document.body.setAttribute('data-theme', themeId)
+  
+  // Sauvegarder dans localStorage
+  localStorage.setItem('theme', themeId)
+  
+  // Mettre à jour l'affichage
+  document.getElementById('current-theme').textContent = themeId
+  
+  // Afficher les variables CSS appliquées
+  const root = document.documentElement
+  const primaryColor = getComputedStyle(root).getPropertyValue('--primary-color').trim()
+  const bgColor = getComputedStyle(root).getPropertyValue('--bg-color').trim()
+  const textColor = getComputedStyle(root).getPropertyValue('--text-color').trim()
+  
+  document.getElementById('primary-color').textContent = primaryColor
+  document.getElementById('bg-color').textContent = bgColor
+  document.getElementById('text-color').textContent = textColor
+  
+  console.log('✅ Thème appliqué:',  {
+    themeId,
+    primaryColor,
+    bgColor,
+    textColor
+  })
+}
+
+// Charger le thème au démarrage
+window.addEventListener('load', () => {
+  const savedTheme = localStorage.getItem('theme') || 'gold'
+  console.log('🎨 Thème chargé au démarrage:', savedTheme)
+  applyTheme(savedTheme)
+})
+</script>
+
+</body>
+</html>

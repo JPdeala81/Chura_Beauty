@@ -48,7 +48,7 @@ export const ThemeProvider = ({ children }) => {
     const savedTheme = localStorage.getItem('theme') || 'gold'
     applyTheme(savedTheme)
     setMounted(true)
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const applyTheme = useCallback((themeId) => {
     // Validation
@@ -86,7 +86,7 @@ export const ThemeProvider = ({ children }) => {
     }))
 
     console.log(`✅ Thème appliqué: ${themeId}`)
-  }, [themes])
+  }, [])
 
   const value = {
     currentTheme,

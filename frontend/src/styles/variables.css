@@ -67,71 +67,9 @@
   --color-neutral-800: #1a1a1a;
   --color-neutral-900: #0a0a0a;
 
-  /* ── 2.2 TOKENS SÉMANTIQUES ── */
-
-  /* Couleurs primaires */
-  --primary-color:      var(--color-gold-500);
-  --primary-light:      var(--color-gold-400);
-  --primary-lighter:    var(--color-gold-300);
-  --primary-dark:       var(--color-gold-700);
-  --primary-darker:     var(--color-gold-800);
-
-  /* Couleurs secondaires */
-  --secondary-color:    var(--color-warm-400);
-  --secondary-light:    var(--color-warm-300);
-  --secondary-dark:     var(--color-warm-600);
-
-  /* Couleurs d'accent */
-  --accent-color:       var(--color-rose-500);
-  --accent-light:       var(--color-rose-300);
-  --accent-dark:        var(--color-rose-700);
-  --accent-rose:        var(--color-rose-400);
-
-  /* Fonds */
-  --bg-color:           var(--color-warm-50);
-  --bg-secondary:       var(--color-neutral-0);
-  --bg-tertiary:        var(--color-warm-100);
-  --bg-elevated:        var(--color-neutral-0);
-  --bg-sunken:          var(--color-gold-50);
-  --bg-overlay:         rgba(26, 15, 8, 0.5);
-  --bg-scrim:           rgba(26, 15, 8, 0.72);
-
-  /* Texte */
-  --text-color:         var(--color-neutral-800);
-  --text-secondary:     var(--color-neutral-600);
-  --text-muted:         var(--color-neutral-500);
-  --text-disabled:      var(--color-neutral-400);
-  --text-inverse:       var(--color-neutral-0);
-  --text-on-primary:    var(--color-neutral-0);
-
-  /* Bordures */
-  --border-color:       var(--color-warm-300);
-  --border-color-light: var(--color-warm-200);
-  --border-color-strong: var(--color-warm-400);
-  --border-color-focus: var(--color-gold-500);
-
-  /* États sémantiques */
-  --success-color:      #2e7d32;
-  --success-light:      #e8f5e9;
-  --success-dark:       #1b5e20;
-  --danger-color:       #c62828;
-  --danger-light:       #ffebee;
-  --danger-dark:        #8e0000;
-  --warning-color:      #f57c00;
-  --warning-light:      #fff3e0;
-  --warning-dark:       #bf360c;
-  --info-color:         #01579b;
-  --info-light:         #e1f5fe;
-  --info-dark:          #003c6b;
-
-  /* Alias héritage */
-  --dark-color:         var(--color-warm-950);
-  --dark-medium:        var(--color-warm-900);
-  --dark-light:         var(--color-warm-800);
-  --light-color:        var(--color-warm-50);
-  --light-medium:       var(--color-warm-100);
-  --light-dark:         var(--color-warm-200);
-  --white:              var(--color-neutral-0);
+  /* ── 2.2 TOKENS SÉMANTIQUES (DÉFINIS PAR THÈME DANS global.css) ── */
+  /* NOTE: Les couleurs sont définies dans global.css par thème */
+  /* Voir [data-theme="gold"], [data-theme="dark"], etc. */
 
   /* ── 2.3 DÉGRADÉS ── */
 
