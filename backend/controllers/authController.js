@@ -151,7 +151,6 @@ export const resetPassword = async (req, res) => {
     res.status(500).json({ message: e.message });
   }
 };
-import { supabase } from '../config/supabase.js'
 import jwt from 'jsonwebtoken'
 import bcrypt from 'bcryptjs'
 
