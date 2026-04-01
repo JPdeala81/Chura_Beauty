@@ -7,13 +7,13 @@ const siteSettingsController = {
       const { data, error } = await supabase
         .from('site_settings')
         .select('*')
-        .single()
+        .limit(1)
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         return res.status(500).json({ error: error.message })
       }
 
-      res.json(data || {})
+      res.json((data && data.length > 0) ? data[0] : {})
     } catch (err) {
       res.status(500).json({ error: err.message })
     }
@@ -25,13 +25,13 @@ const siteSettingsController = {
       const { data, error } = await supabase
         .from('site_settings')
         .select('is_maintenance, maintenance_end, maintenance_reason, salon_name')
-        .single()
+        .limit(1)
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         return res.status(500).json({ error: error.message })
       }
 
-      const settings = data || {}
+      const settings = (data && data.length > 0) ? data[0] : {}
       res.json({
         is_maintenance: settings.is_maintenance || false,
         maintenance_end: settings.maintenance_end,
