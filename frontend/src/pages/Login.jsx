@@ -31,7 +31,8 @@ const Login = () => {
     setError('')
     try {
       await login(email, password)
-      navigate('/admin/dashboard')
+      // Redirect to /admin which will auto-redirect to correct dashboard based on role
+      navigate('/admin')
     } catch (err) {
       setError('Email ou mot de passe incorrect. Veuillez réessayer.')
     } finally {

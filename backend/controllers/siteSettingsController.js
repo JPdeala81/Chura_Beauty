@@ -22,15 +22,18 @@ const siteSettingsController = {
   // Get maintenance status (public)
   getMaintenanceStatus: async (req, res) => {
     try {
+      console.log('⏱️ Fetching maintenance status from Supabase...')
       const { data, error } = await supabase
         .from('site_settings')
         .select('is_maintenance, maintenance_end, maintenance_reason, salon_name')
         .limit(1)
 
       if (error) {
-        return res.status(500).json({ error: error.message })
+        console.error('❌ Supabase error:', error)
+        return res.status(500).json({ error: error.message, code: error.code })
       }
 
+      console.log('✅ Maintenance status data:', data)
       const settings = (data && data.length > 0) ? data[0] : {}
       res.json({
         is_maintenance: settings.is_maintenance || false,
@@ -39,6 +42,7 @@ const siteSettingsController = {
         salon_name: settings.salon_name
       })
     } catch (err) {
+      console.error('❌ Controller error:', err)
       res.status(500).json({ error: err.message })
     }
   },

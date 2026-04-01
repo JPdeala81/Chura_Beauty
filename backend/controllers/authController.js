@@ -1,6 +1,7 @@
 import nodemailer from 'nodemailer'
 import crypto from 'crypto'
 import bcrypt from 'bcryptjs'
+import jwt from 'jsonwebtoken'
 import { supabase } from '../config/supabase.js'
 import { sendEmail } from '../utils/emailUtil.js'
 
@@ -152,10 +153,12 @@ export const resetPassword = async (req, res) => {
   }
 };
 
-import jwt from 'jsonwebtoken'
-
 const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
+  const secret = process.env.JWT_SECRET
+  if (!secret) {
+    throw new Error('JWT_SECRET is not defined in environment variables')
+  }
+  return jwt.sign({ id }, secret, {
     expiresIn: process.env.JWT_EXPIRE || '24h',
   })
 }
