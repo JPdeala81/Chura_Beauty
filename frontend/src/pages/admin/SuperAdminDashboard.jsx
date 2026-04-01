@@ -89,6 +89,26 @@ const SuperAdminDashboard = () => {
       if (settingsRes.status === 'fulfilled') {
         const settingsData = settingsRes.value.data || {}
         setSettings(settingsData)
+        // Pré-remplir le formulaire avec les données existantes
+        setSiteSettingsForm(prev => ({
+          ...prev,
+          app_name: settingsData.app_name || prev.app_name,
+          app_logo: settingsData.app_logo || prev.app_logo,
+          homepage_hero_title: settingsData.homepage_hero_title || prev.homepage_hero_title,
+          homepage_hero_subtitle: settingsData.homepage_hero_subtitle || prev.homepage_hero_subtitle,
+          tagline: settingsData.tagline || prev.tagline,
+          footer_company_name: settingsData.footer_company_name || prev.footer_company_name,
+          footer_address: settingsData.footer_address || prev.footer_address,
+          footer_phone: settingsData.footer_phone || prev.footer_phone,
+          footer_email: settingsData.footer_email || prev.footer_email,
+          footer_whatsapp: settingsData.footer_whatsapp || prev.footer_whatsapp,
+          footer_instagram: settingsData.footer_instagram || prev.footer_instagram,
+          footer_facebook: settingsData.footer_facebook || prev.footer_facebook,
+          footer_twitter: settingsData.footer_twitter || prev.footer_twitter,
+          privacy_policy: settingsData.privacy_policy || '',
+          terms_of_service: settingsData.terms_of_service || '',
+          about_content: settingsData.about_content || ''
+        }))
         setFormData(settingsData)
       }
       if (profileRes.status === 'fulfilled') {
@@ -298,6 +318,9 @@ const SuperAdminDashboard = () => {
       console.log('✅ Réponse:', response.data)
       alert('✅ Paramètres du site sauvegardés avec succès!')
       setEditingSiteSettings(false)
+      
+      // Refetch les données pour mettre à jour immédiatement
+      await fetchAllData()
     } catch (err) {
       console.error('❌ Erreur sauvegarde:', err.response?.data || err.message)
       alert(`❌ Erreur lors de la sauvegarde: ${err.response?.data?.error || err.message}`)
@@ -1762,6 +1785,49 @@ const SuperAdminDashboard = () => {
                         style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
                       />
                     </div>
+
+                    <hr className="my-3" />
+                    <h6 style={{ color: 'var(--primary-color)', marginTop: '1rem' }}>📄 Pages Importantes</h6>
+
+                    <div className="col-12">
+                      <label className="form-label">Politique de Confidentialité</label>
+                      <textarea
+                        className="form-control"
+                        rows="5"
+                        name="privacy_policy"
+                        value={siteSettingsForm.privacy_policy}
+                        onChange={handleSiteSettingsChange}
+                        placeholder="Contenu de la politique de confidentialité..."
+                        style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                      />
+                    </div>
+
+                    <div className="col-12">
+                      <label className="form-label">Conditions d'Utilisation</label>
+                      <textarea
+                        className="form-control"
+                        rows="5"
+                        name="terms_of_service"
+                        value={siteSettingsForm.terms_of_service}
+                        onChange={handleSiteSettingsChange}
+                        placeholder="Contenu des conditions d'utilisation..."
+                        style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                      />
+                    </div>
+
+                    <div className="col-12">
+                      <label className="form-label">À propos de nous</label>
+                      <textarea
+                        className="form-control"
+                        rows="5"
+                        name="about_content"
+                        value={siteSettingsForm.about_content}
+                        onChange={handleSiteSettingsChange}
+                        placeholder="Contenu de la page À propos..."
+                        style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                      />
+                    </div>
+
                     <div className="col-12">
                       <button
                         className="btn btn-success"

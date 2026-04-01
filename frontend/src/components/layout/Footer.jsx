@@ -72,7 +72,33 @@ const Footer = () => {
             </ul>
           </div>
 
-          <div className="col-lg-4 col-md-6">
+          <div className="col-lg-2 col-md-6">
+            <h6 className="footer-section-title">
+              Informations
+            </h6>
+            <ul className="list-unstyled mt-3">
+              <li className="mb-2">
+                <Link to="/about-us" className="footer-link">
+                  <i className="bi bi-chevron-right" style={{ fontSize: '11px' }}></i>
+                  À propos de nous
+                </Link>
+              </li>
+              <li className="mb-2">
+                <Link to="/privacy-policy" className="footer-link">
+                  <i className="bi bi-chevron-right" style={{ fontSize: '11px' }}></i>
+                  Politique de confidentialité
+                </Link>
+              </li>
+              <li className="mb-2">
+                <Link to="/terms-of-service" className="footer-link">
+                  <i className="bi bi-chevron-right" style={{ fontSize: '11px' }}></i>
+                  Conditions d'utilisation
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          <div className="col-lg-2 col-md-6">
             <h6 className="footer-section-title">
               Contact
             </h6>

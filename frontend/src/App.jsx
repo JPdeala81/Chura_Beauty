@@ -12,6 +12,9 @@ import ServiceDetail from './pages/ServiceDetail'
 import Login from './pages/Login'
 import ResetPassword from './pages/admin/ResetPassword'
 import DebugLogin from './pages/admin/DebugLogin'
+import PrivacyPolicy from './pages/PrivacyPolicy'
+import TermsOfService from './pages/TermsOfService'
+import AboutUs from './pages/AboutUs'
 import SuperAdminDashboard from './pages/admin/SuperAdminDashboard'
 import ManageServices from './pages/admin/ManageServices'
 import ManageAppointments from './pages/admin/ManageAppointments'
@@ -66,6 +69,9 @@ function AppRoutes() {
         <Route path="/" element={<Home />} />
         <Route path="/services" element={<Services />} />
         <Route path="/service/:id" element={<ServiceDetail />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms-of-service" element={<TermsOfService />} />
+        <Route path="/about-us" element={<AboutUs />} />
         <Route path="/admin/login" element={<ProtectedLoginRoute><Login /></ProtectedLoginRoute>} />
         <Route path="/admin/reset-password/:token" element={<ResetPassword />} />
         <Route path="/debug/login" element={<DebugLogin />} />
