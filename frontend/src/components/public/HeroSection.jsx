@@ -139,10 +139,10 @@ const HeroSection = ({ onScrollToServices }) => {
               transition={{ delay: 0.5, duration: 0.8 }}
             >
               <motion.div
-                className="floating-element"
+                className="floating-element hero-glass-card"
                 style={{
-                  background: 'rgba(212,165,116,0.1)',
-                  border: '1px solid rgba(212,165,116,0.3)',
+                  background: 'var(--glass-bg)',
+                  border: '1px solid var(--glass-gold-light)',
                   borderRadius: '30px',
                   padding: '40px',
                   backdropFilter: 'blur(10px)',
@@ -150,10 +150,10 @@ const HeroSection = ({ onScrollToServices }) => {
                 }}
               >
                 <div style={{ fontSize: '80px', lineHeight: 1 }}>💆‍♀️</div>
-                <h4 style={{ color: '#d4a574', fontFamily: 'Playfair Display, serif', marginTop: '20px' }}>
+                <h4 className="hero-salon-name" style={{ marginTop: '20px' }}>
                   {adminInfo.salonName}
                 </h4>
-                <p style={{ color: 'rgba(248,200,212,0.7)', fontSize: '14px', marginTop: '10px' }}>
+                <p className="hero-subtitle" style={{ fontSize: '14px', marginTop: '10px' }}>
                   Libreville, Gabon
                 </p>
                 <div className="d-flex justify-content-center gap-3 mt-3">
@@ -195,7 +195,7 @@ const HeroSection = ({ onScrollToServices }) => {
         whileHover={{ scale: 1.15 }}
         whileTap={{ scale: 0.9 }}
       >
-        <i className="bi bi-chevron-double-down" style={{ color: '#d4a574', fontSize: 'clamp(20px, 5vw, 28px)' }}></i>
+        <i className="bi bi-chevron-double-down scroll-indicator-icon" style={{ fontSize: 'clamp(20px, 5vw, 28px)' }}></i>
       </motion.div>
     </section>
   )

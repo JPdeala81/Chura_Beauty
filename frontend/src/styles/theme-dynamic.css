@@ -1,0 +1,164 @@
+/* ============================================================
+   THEME DYNAMIC - Couleurs réactives au changement de thème
+   Ce fichier complète les variables CSS standard
+   ============================================================ */
+
+/* Gold Luxury */
+[data-theme="gold"] {
+  --secondary-light: #d4a843;
+  --secondary-medium: #c49060;
+  --accent-rose-light: rgba(248, 200, 212, 0.7);
+  --accent-rose-lighter: rgba(248, 200, 212, 0.3);
+  --glass-gold-light: rgba(212, 165, 116, 0.3);
+}
+
+/* Dark Elegant */
+[data-theme="dark"] {
+  --secondary-light: #e8c060;
+  --secondary-medium: #d4a843;
+  --accent-rose-light: rgba(232, 180, 200, 0.7);
+  --accent-rose-lighter: rgba(232, 180, 200, 0.3);
+  --glass-gold-light: rgba(232, 192, 96, 0.3);
+}
+
+/* Neon Green */
+[data-theme="green"] {
+  --secondary-light: #00ff41;
+  --secondary-medium: #00cc33;
+  --accent-rose-light: rgba(0, 255, 65, 0.7);
+  --accent-rose-lighter: rgba(0, 255, 65, 0.3);
+  --glass-gold-light: rgba(0, 255, 65, 0.3);
+}
+
+/* Neon Blue */
+[data-theme="blue"] {
+  --secondary-light: #00d9ff;
+  --secondary-medium: #0099cc;
+  --accent-rose-light: rgba(0, 217, 255, 0.7);
+  --accent-rose-lighter: rgba(0, 217, 255, 0.3);
+  --glass-gold-light: rgba(0, 217, 255, 0.3);
+}
+
+/* Rose Beauty */
+[data-theme="rose"] {
+  --secondary-light: #d4809a;
+  --secondary-medium: #c4607a;
+  --accent-rose-light: rgba(240, 160, 176, 0.7);
+  --accent-rose-lighter: rgba(240, 160, 176, 0.3);
+  --glass-gold-light: rgba(240, 160, 176, 0.3);
+}
+
+/* ============================================================
+   COMPOSANTS RÉACTIFS - Utilisent les variables ci-dessus
+   ============================================================ */
+
+/* Hero Section - Salon Name */
+.hero-salon-name {
+  color: var(--secondary-light);
+  font-family: 'Playfair Display', serif;
+  will-change: color;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Hero Section - Subtitle */
+.hero-subtitle {
+  color: var(--accent-rose-light);
+  will-change: color;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Hero Section - Glass Card */
+.hero-glass-card {
+  border-color: var(--glass-gold-light);
+  will-change: border-color;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Scroll Indicator */
+.scroll-indicator-icon {
+  color: var(--secondary-light);
+  will-change: color;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Service Value Indicator */
+.service-price-highlight {
+  background: var(--glass-gold-light);
+  color: var(--secondary-light);
+  will-change: all;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Dynamic Backgrounds */
+.hero-background-gradient {
+  background: var(--gradient-hero);
+  will-change: background;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-glass-background {
+  background: var(--glass-bg);
+  border-color: var(--glass-border);
+  will-change: all;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Text with theme color */
+.text-primary-accent {
+  color: var(--secondary-light);
+  will-change: color;
+  transition: color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.text-secondary-accent {
+  color: var(--accent-rose-light);
+  will-change: color;
+  transition: color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Borders */
+.border-theme-secondary {
+  border-color: var(--secondary-light) !important;
+  will-change: border-color;
+  transition: border-color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Backgrounds with theme */
+.bg-theme-accent {
+  background-color: var(--glass-gold-light);
+  will-change: background-color;
+  transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ============================================================
+   ANIMATIONS & TRANSITIONS
+   ============================================================ */
+
+/* Force GPU acceleration for smooth theme transitions */
+[data-theme] * {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Smooth color transitions on theme change */
+[data-theme] h1,
+[data-theme] h2,
+[data-theme] h3,
+[data-theme] h4,
+[data-theme] h5,
+[data-theme] h6,
+[data-theme] p,
+[data-theme] a,
+[data-theme] button,
+[data-theme] input,
+[data-theme] .text-primary-accent,
+[data-theme] .text-secondary-accent {
+  transition: color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-theme] div,
+[data-theme] section,
+[data-theme] .card,
+[data-theme] .modal {
+  transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
