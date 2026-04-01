@@ -24,14 +24,32 @@ import { useMaintenanceCheck } from './hooks/useMaintenanceCheck'
 
 // Component to redirect /admin to the correct dashboard based on role
 function AdminRedirect() {
-  const { admin } = useContext(AuthContext)
+  const { admin, deviceId } = useContext(AuthContext)
   
-  if (!admin) return <Navigate to="/admin/login" replace />
+  console.log('🔍 AdminRedirect Debug:', {
+    admin,
+    role: admin?.role,
+    deviceId,
+    storageData: {
+      sessionAdmin: sessionStorage.getItem(`admin_${deviceId}`),
+      localAdmin: localStorage.getItem(`admin_${deviceId}`)
+    }
+  })
+  
+  if (!admin) {
+    console.log('⚠️ AdminRedirect: No admin found, redirecting to login')
+    return <Navigate to="/admin/login" replace />
+  }
   
   // Redirect to appropriate dashboard based on role
-  if (admin.role === 'developer') {
+  const role = admin.role || 'admin'
+  console.log(`✅ AdminRedirect: Redirecting ${admin.email} to dashboard for role: ${role}`)
+  
+  if (role === 'developer') {
+    console.log('→ Redirecting to /admin/developer')
     return <Navigate to="/admin/developer" replace />
   }
+  console.log('→ Redirecting to /admin/dashboard')
   return <Navigate to="/admin/dashboard" replace />
 }
 
