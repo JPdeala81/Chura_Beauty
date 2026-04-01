@@ -8,7 +8,7 @@ export const getAllServices = async (req, res) => {
     let query = supabase
       .from('services')
       .select('*')
-      .eq('is_active', true)
+      .eq('active', true)
 
     if (category) {
       query = query.eq('category', category)
@@ -151,12 +151,12 @@ export const createService = async (req, res) => {
       description,
       category,
       price: Number(price),
-      duration: Number(duration),
+      duration_minutes: Number(duration),
       images: images.length > 0 ? images : [],
       main_image_index: main_image_index ? Number(main_image_index) : 0,
       display_style: display_style || 'card',
       checkbox_options: parsedOptions,
-      is_active: true,
+      active: true,
     }
 
     const { data: service, error } = await supabase
@@ -226,12 +226,12 @@ export const updateService = async (req, res) => {
         description,
         category,
         price: Number(price),
-        duration: duration || existingService.duration,
+        duration_minutes: duration || existingService.duration_minutes,
         images,
         main_image_index: main_image_index !== undefined ? main_image_index : existingService.main_image_index,
         display_style: display_style || existingService.display_style,
         checkbox_options: checkbox_options || existingService.checkbox_options,
-        is_active: is_active !== undefined ? is_active : existingService.is_active,
+        active: active !== undefined ? active : existingService.active,
       })
       .eq('id', req.params.id)
       .select()
@@ -286,7 +286,7 @@ export const toggleServiceStatus = async (req, res) => {
   try {
     const { data: service, error: fetchError } = await supabase
       .from('services')
-      .select('is_active')
+      .select('active')
       .eq('id', req.params.id)
       .limit(1)
       .single()
@@ -300,7 +300,7 @@ export const toggleServiceStatus = async (req, res) => {
 
     const { data: updatedService, error } = await supabase
       .from('services')
-      .update({ is_active: !service.is_active })
+      .update({ active: !service.active })
       .eq('id', req.params.id)
       .select()
       .single()
@@ -329,7 +329,7 @@ export const debugAllServices = async (req, res) => {
   try {
     const { data: services, error } = await supabase
       .from('services')
-      .select('id, title, is_active, created_at')
+      .select('id, title, active, created_at')
       .order('created_at', { ascending: false })
 
     if (error) {
@@ -350,9 +350,9 @@ export const activateAllServices = async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('services')
-      .update({ is_active: true })
+      .update({ active: true })
       .neq('id', null)
-      .select('id, title, is_active')
+      .select('id, title, active')
 
     if (error) {
       return res.status(500).json({ error: error.message })
