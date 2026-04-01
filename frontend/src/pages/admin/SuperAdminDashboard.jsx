@@ -72,6 +72,26 @@ const SuperAdminDashboard = () => {
     confirmPassword: ''
   })
 
+  // Enhanced Service Management
+  const [servicePage, setServicePage] = useState(1)
+  const [serviceSearch, setServiceSearch] = useState('')
+  const [showServiceDialog, setShowServiceDialog] = useState(false)
+  const [serviceImage, setServiceImage] = useState(null)
+  const [serviceImagePreview, setServiceImagePreview] = useState(null)
+  const [customCategory, setCustomCategory] = useState('')
+  const SERVICES_PER_PAGE = 8
+
+  // Site Settings - Logo Upload
+  const [logoFile, setLogoFile] = useState(null)
+  const [logoPreview, setLogoPreview] = useState(null)
+
+  // Payment Networks Configuration
+  const [paymentConfig, setPaymentConfig] = useState({
+    airtel_code: '',
+    moov_code: '',
+    is_payment_enabled: false
+  })
+
   const { admin, logout } = useContext(AuthContext)
   const navigate = useNavigate()
 
@@ -432,6 +452,109 @@ const SuperAdminDashboard = () => {
     } catch (err) {
       console.error('❌ Erreur sauvegarde:', err.response?.data || err.message)
       alert(`❌ Erreur lors de la sauvegarde: ${err.response?.data?.error || err.message}`)
+    }
+  }
+
+  // ============ ENHANCED SERVICE MANAGEMENT ============
+  const handleServiceImageUpload = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setServiceImage(reader.result)
+        setServiceImagePreview(reader.result)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleServiceChange = (e) => {
+    const { name, value, type, checked } = e.target
+    setServiceForm(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : (type === 'number' ? parseFloat(value) : value)
+    }))
+  }
+
+  const saveService = async () => {
+    try {
+      if (!serviceForm.title || !serviceForm.category || !serviceForm.price) {
+        alert('❌ Titre, catégorie et prix sont obligatoires')
+        return
+      }
+
+      const payload = {
+        ...serviceForm,
+        category: serviceForm.category === 'autre' && customCategory 
+          ? customCategory 
+          : serviceForm.category,
+        image_url: serviceImage || serviceForm.image_url || null
+      }
+
+      if (editingService) {
+        await api.put(`/services/${editingService.id}`, payload)
+        alert('✅ Service mis à jour')
+      } else {
+        await api.post('/services', payload)
+        alert('✅ Service créé')
+      }
+
+      setShowServiceDialog(false)
+      setServiceForm({ title: '', category: '', price: 0, duration_minutes: 30, description: '', active: true })
+      setServiceImage(null)
+      setServiceImagePreview(null)
+      setCustomCategory('')
+      setEditingService(null)
+      await fetchAllData()
+    } catch (err) {
+      alert('❌ Erreur: ' + err.message)
+    }
+  }
+
+  const getServiceCategories = () => [
+    'Coiffage',
+    'Ongles',
+    'Maquillage',
+    'Soins visage',
+    'Massage',
+    'Épilation',
+    'Colorisation',
+    'Soins corps',
+    'autre'
+  ]
+
+  // Pagination helpers
+  const filteredServices = services.filter(s =>
+    s.title?.toLowerCase().includes(serviceSearch.toLowerCase()) ||
+    s.description?.toLowerCase().includes(serviceSearch.toLowerCase())
+  )
+  const paginatedServices = filteredServices.slice(
+    (servicePage - 1) * SERVICES_PER_PAGE,
+    servicePage * SERVICES_PER_PAGE
+  )
+  const totalServicePages = Math.ceil(filteredServices.length / SERVICES_PER_PAGE)
+
+  // ============ SITE SETTINGS - LOGO ============
+  const handleLogoUpload = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setLogoFile(reader.result)
+        setLogoPreview(reader.result)
+        setSiteSettingsForm(prev => ({ ...prev, app_logo: reader.result }))
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  // ============ PAYMENT NETWORKS ============
+  const savePaymentConfig = async () => {
+    try {
+      await api.put('/auth/admin/payment-config', paymentConfig)
+      alert('✅ Configuration des réseaux mise à jour')
+    } catch (err) {
+      alert('❌ Erreur: ' + err.message)
     }
   }
 
@@ -918,189 +1041,311 @@ const SuperAdminDashboard = () => {
               }}>
                 <h4 style={{ marginBottom: '1.5rem', color: 'var(--primary-color)' }}>💅 Services - Gestion Complète</h4>
                 
-                {/* Search & Filter Bar */}
+                {/* Add Service Button */}
+                <button
+                  className="btn w-100 mb-3"
+                  style={{ background: 'var(--gradient-primary)', color: 'white', border: 'none' }}
+                  onClick={() => {
+                    setShowServiceDialog(true)
+                    setEditingService(null)
+                    setServiceForm({ title: '', category: '', price: 0, duration_minutes: 30, description: '', active: true })
+                    setServiceImage(null)
+                    setServiceImagePreview(null)
+                    setCustomCategory('')
+                  }}
+                >
+                  ➕ Ajouter Service
+                </button>
+
+                {/* Service Dialog Modal */}
+                {showServiceDialog && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    style={{
+                      position: 'fixed',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      background: 'rgba(0,0,0,0.7)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      zIndex: 9999,
+                      padding: '1rem'
+                    }}
+                    onClick={() => setShowServiceDialog(false)}
+                  >
+                    <motion.div
+                      initial={{ y: -50, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      style={{
+                        background: 'var(--surface)',
+                        borderRadius: 'var(--border-radius-lg)',
+                        padding: '2rem',
+                        maxWidth: '600px',
+                        width: '100%',
+                        maxHeight: '90vh',
+                        overflowY: 'auto',
+                        border: '2px solid var(--primary-color)',
+                        boxShadow: '0 10px 50px rgba(0,0,0,0.3)'
+                      }}
+                      onClick={e => e.stopPropagation()}
+                    >
+                      <h5 style={{ color: 'var(--primary-color)', marginBottom: '1.5rem' }}>
+                        {editingService ? '✏️ Éditer Service' : '✨ Créer Nouveau Service'}
+                      </h5>
+
+                      <div className="row g-3">
+                        {/* Image Upload */}
+                        <div className="col-12">
+                          <label className="form-label">📷 Image du Service</label>
+                          <div style={{
+                            border: '2px dashed var(--primary-color)',
+                            borderRadius: 'var(--border-radius-md)',
+                            padding: '2rem',
+                            textAlign: 'center',
+                            cursor: 'pointer',
+                            background: 'var(--bg-color)',
+                            transition: 'all 0.3s',
+                            position: 'relative'
+                          }}>
+                            {serviceImagePreview ? (
+                              <div>
+                                <img src={serviceImagePreview} alt="Preview" style={{
+                                  maxWidth: '100%',
+                                  maxHeight: '200px',
+                                  marginBottom: '1rem',
+                                  borderRadius: 'var(--border-radius-md)'
+                                }} />
+                                <p style={{ fontSize: '0.9rem', marginBottom: 0 }}>Cliquez pour changer l'image</p>
+                              </div>
+                            ) : (
+                              <div>
+                                <p style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>🖼️</p>
+                                <p style={{ marginBottom: 0 }}>Cliquez pour ajouter une image</p>
+                              </div>
+                            )}
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={handleServiceImageUpload}
+                              style={{
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                width: '100%',
+                                height: '100%',
+                                opacity: 0,
+                                cursor: 'pointer'
+                              }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Service Details */}
+                        <div className="col-12">
+                          <label className="form-label">📝 Titre</label>
+                          <input
+                            type="text"
+                            className="form-control"
+                            name="title"
+                            value={serviceForm.title}
+                            onChange={handleServiceChange}
+                            placeholder="ex: Coiffage complet"
+                            style={{ borderColor: 'var(--primary-color)' }}
+                          />
+                        </div>
+
+                        <div className="col-12">
+                          <label className="form-label">🏷️ Catégorie</label>
+                          <select
+                            className="form-select"
+                            name="category"
+                            value={serviceForm.category}
+                            onChange={handleServiceChange}
+                            style={{ borderColor: 'var(--primary-color)' }}
+                          >
+                            <option value="">Sélectionner une catégorie</option>
+                            {getServiceCategories().map(cat => (
+                              <option key={cat} value={cat}>{cat}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        {serviceForm.category === 'autre' && (
+                          <div className="col-12">
+                            <label className="form-label">✍️ Nouvelle catégorie</label>
+                            <input
+                              type="text"
+                              className="form-control"
+                              value={customCategory}
+                              onChange={(e) => setCustomCategory(e.target.value)}
+                              placeholder="ex: Soins spécialisés"
+                              style={{ borderColor: 'var(--primary-color)' }}
+                            />
+                          </div>
+                        )}
+
+                        <div className="col-12 col-md-6">
+                          <label className="form-label">💰 Prix (FCFA)</label>
+                          <input
+                            type="number"
+                            className="form-control"
+                            name="price"
+                            value={serviceForm.price}
+                            onChange={handleServiceChange}
+                            placeholder="0"
+                            step="500"
+                            style={{ borderColor: 'var(--primary-color)' }}
+                          />
+                        </div>
+
+                        <div className="col-12 col-md-6">
+                          <label className="form-label">⏱️ Durée (min)</label>
+                          <input
+                            type="number"
+                            className="form-control"
+                            name="duration_minutes"
+                            value={serviceForm.duration_minutes}
+                            onChange={handleServiceChange}
+                            placeholder="30"
+                            step="15"
+                            style={{ borderColor: 'var(--primary-color)' }}
+                          />
+                        </div>
+
+                        <div className="col-12">
+                          <label className="form-label">📄 Description</label>
+                          <textarea
+                            className="form-control"
+                            name="description"
+                            rows="3"
+                            value={serviceForm.description}
+                            onChange={handleServiceChange}
+                            placeholder="Décrivez votre service..."
+                            style={{ borderColor: 'var(--primary-color)' }}
+                          />
+                        </div>
+
+                        <div className="col-12">
+                          <div className="form-check">
+                            <input
+                              className="form-check-input"
+                              type="checkbox"
+                              name="active"
+                              id="serviceActive"
+                              checked={serviceForm.active}
+                              onChange={handleServiceChange}
+                            />
+                            <label className="form-check-label" htmlFor="serviceActive">
+                              ✅ Service actif
+                            </label>
+                          </div>
+                        </div>
+
+                        <div className="col-12">
+                          <button
+                            className="btn btn-success w-100 mb-2"
+                            onClick={saveService}
+                          >
+                            {editingService ? '✏️ Mettre à jour' : '✨ Créer'} Service
+                          </button>
+                          <button
+                            className="btn btn-secondary w-100"
+                            onClick={() => setShowServiceDialog(false)}
+                          >
+                            ❌ Annuler
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  </motion.div>
+                )}
+
+                {/* Search and Pagination */}
                 <div className="row g-2 mb-3">
-                  <div className="col-12 col-md-5">
+                  <div className="col-12 col-md-6">
                     <input
                       type="text"
                       className="form-control"
-                      placeholder="🔍 Rechercher par nom..."
-                      value={searchTerm}
+                      placeholder="🔍 Rechercher..."
+                      value={serviceSearch}
                       onChange={(e) => {
-                        setSearchTerm(e.target.value)
+                        setServiceSearch(e.target.value)
+                        setServicePage(1)
                       }}
                       style={{ borderColor: 'var(--primary-color)' }}
                     />
                   </div>
-                  <div className="col-12 col-md-3">
-                    <select
-                      className="form-select"
-                      value={filterStatus}
-                      onChange={(e) => setFilterStatus(e.target.value)}
-                      style={{ borderColor: 'var(--primary-color)' }}
-                    >
-                      <option value="all">📊 Tous les statuts</option>
-                      <option value="active">🟢 Actifs</option>
-                      <option value="inactive">⚫ Inactifs</option>
-                    </select>
-                  </div>
-                  <div className="col-12 col-md-4">
-                    <button
-                      className="btn w-100"
-                      style={{ background: 'var(--gradient-primary)', color: 'white', border: 'none' }}
-                      onClick={() => setNewServiceForm(!newServiceForm)}
-                    >
-                      ➕ Ajouter Service
-                    </button>
+                  <div className="col-12 col-md-6">
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      <small>Page {servicePage} / {totalServicePages}</small>
+                    </div>
                   </div>
                 </div>
 
-                {/* Add Service Form */}
-                {newServiceForm && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    style={{
-                      background: 'var(--bg-color)',
-                      border: '1px solid var(--primary-color)',
-                      borderRadius: 'var(--border-radius-md)',
-                      padding: '1.5rem',
-                      marginBottom: '2rem'
-                    }}
-                  >
-                    <h6 style={{color: 'var(--primary-color)', marginBottom: '1rem'}}>📝 Créer un Nouveau Service</h6>
-                    <div className="row g-2">
-                      <div className="col-12 col-md-6">
-                        <label className="form-label">Titre</label>
-                        <input
-                          type="text"
-                          className="form-control"
-                          value={serviceForm.title}
-                          onChange={(e) => setServiceForm({...serviceForm, title: e.target.value})}
-                          placeholder="ex: Coiffage"
-                          style={{ borderColor: 'var(--primary-color)' }}
-                        />
-                      </div>
-                      <div className="col-12 col-md-6">
-                        <label className="form-label">Catégorie</label>
-                        <select
-                          className="form-select"
-                          value={serviceForm.category}
-                          onChange={(e) => setServiceForm({...serviceForm, category: e.target.value})}
-                          style={{ borderColor: 'var(--primary-color)' }}
-                        >
-                          <option value="">Sélectionner une catégorie</option>
-                          <option value="coiffage">Coiffage</option>
-                          <option value="soin-visage">Soin du Visage</option>
-                          <option value="maquillage">Maquillage</option>
-                          <option value="epilage">Épilage</option>
-                          <option value="massage">Massage</option>
-                        </select>
-                      </div>
-                      <div className="col-12 col-md-3">
-                        <label className="form-label">Prix (FCFA)</label>
-                        <input
-                          type="number"
-                          className="form-control"
-                          value={serviceForm.price}
-                          onChange={(e) => setServiceForm({...serviceForm, price: parseFloat(e.target.value)})}
-                          placeholder="0"
-                          style={{ borderColor: 'var(--primary-color)' }}
-                        />
-                      </div>
-                      <div className="col-12 col-md-3">
-                        <label className="form-label">Durée (min)</label>
-                        <input
-                          type="number"
-                          className="form-control"
-                          value={serviceForm.duration_minutes}
-                          onChange={(e) => setServiceForm({...serviceForm, duration_minutes: parseInt(e.target.value)})}
-                          placeholder="30"
-                          style={{ borderColor: 'var(--primary-color)' }}
-                        />
-                      </div>
-                      <div className="col-12 col-md-6">
-                        <label className="form-label">Description</label>
-                        <textarea
-                          className="form-control"
-                          rows="2"
-                          value={serviceForm.description}
-                          onChange={(e) => setServiceForm({...serviceForm, description: e.target.value})}
-                          placeholder="Description du service..."
-                          style={{ borderColor: 'var(--primary-color)' }}
-                        />
-                      </div>
-                      <div className="col-12">
-                        <div className="form-check">
-                          <input
-                            className="form-check-input"
-                            type="checkbox"
-                            id="activeCheck"
-                            checked={serviceForm.active}
-                            onChange={(e) => setServiceForm({...serviceForm, active: e.target.checked})}
-                          />
-                          <label className="form-check-label" htmlFor="activeCheck">Actif</label>
-                        </div>
-                      </div>
-                      <div className="col-12">
-                        <button className="btn btn-success w-50 me-2" onClick={createService}>💾 Créer</button>
-                        <button className="btn btn-secondary w-50" onClick={() => {
-                          setNewServiceForm(false)
-                          setServiceForm({ title: '', category: '', price: 0, duration_minutes: 30, description: '', active: true })
-                        }}>❌ Annuler</button>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-
-                {/* Services Table */}
+                {/* Services Table with Pagination */}
                 <div className="table-responsive">
-                  <table className="table table-hover" style={{ marginBottom: 0 }}>
+                  <table className="table table-hover" style={{ marginBottom: '1rem' }}>
                     <thead style={{ background: 'var(--bg-color)' }}>
                       <tr>
+                        <th style={{ color: 'var(--primary-color)', fontWeight: 'bold' }}>📷</th>
                         <th style={{ color: 'var(--primary-color)', fontWeight: 'bold' }}>Titre</th>
                         <th style={{ color: 'var(--primary-color)', fontWeight: 'bold' }}>Catégorie</th>
                         <th style={{ color: 'var(--primary-color)', fontWeight: 'bold' }}>Prix</th>
                         <th style={{ color: 'var(--primary-color)', fontWeight: 'bold' }}>Durée</th>
-                        <th style={{ color: 'var(--primary-color)', fontWeight: 'bold' }}>Statut</th>
+                        <th style={{ color: 'var(--primary-color)', fontWeight: 'bold' }}>Status</th>
                         <th style={{ color: 'var(--primary-color)', fontWeight: 'bold' }}>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {(services.filter(s => {
-                        const matchSearch = s.title?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                                          s.description?.toLowerCase().includes(searchTerm.toLowerCase())
-                        const matchStatus = filterStatus === 'all' || 
-                                          (filterStatus === 'active' && s.active) ||
-                                          (filterStatus === 'inactive' && !s.active)
-                        return matchSearch && matchStatus
-                      }) || []).slice(0, 8).map(service => (
+                      {paginatedServices.map(service => (
                         <tr key={service.id} style={{ borderBottom: '1px solid var(--surface-2)' }}>
-                          <td style={{ fontWeight: '500' }}>{service.title}</td>
-                          <td>{service.category}</td>
                           <td>
-                            <strong style={{ color: 'var(--primary-color)' }}>
-                              {service.price?.toLocaleString()} FCFA
-                            </strong>
+                            {service.image_url ? (
+                              <img src={service.image_url} alt="" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />
+                            ) : (
+                              <span style={{ fontSize: '1.2rem' }}>🖼️</span>
+                            )}
                           </td>
+                          <td style={{ fontWeight: '500' }}>{service.title}</td>
+                          <td style={{ fontSize: '0.9rem' }}>{service.category}</td>
+                          <td><strong style={{ color: 'var(--primary-color)' }}>{service.price?.toLocaleString()} FCFA</strong></td>
                           <td>{service.duration_minutes} min</td>
                           <td>
                             <span className="badge px-2" style={{
                               background: service.active ? '#00d9ff' : '#ff6b6b',
-                              color: 'white'
+                              color: 'white',
+                              fontSize: '0.8rem'
                             }}>
-                              {service.active ? '🟢 ACTIF' : '🔴 INACTIF'}
+                              {service.active ? '✅ Actif' : '❌ Inactif'}
                             </span>
                           </td>
                           <td>
                             <button className="btn btn-sm btn-outline-primary me-1" 
                               onClick={() => {
-                                setEditingService(service.id)
+                                setEditingService(service)
                                 setServiceForm(service)
+                                setServiceImagePreview(service.image_url)
+                                setShowServiceDialog(true)
                               }}
+                              title="Éditer"
                             >✏️</button>
                             <button className="btn btn-sm btn-outline-danger"
-                              onClick={() => deleteService(service.id)}
+                              onClick={async () => {
+                                if (confirm('Êtes-vous sûr?')) {
+                                  try {
+                                    await api.delete(`/services/${service.id}`)
+                                    alert('✅ Service supprimé')
+                                    await fetchAllData()
+                                  } catch (err) {
+                                    alert('❌ Erreur: ' + err.message)
+                                  }
+                                }
+                              }}
+                              title="Supprimer"
                             >🗑️</button>
                           </td>
                         </tr>
@@ -1108,8 +1353,38 @@ const SuperAdminDashboard = () => {
                     </tbody>
                   </table>
                 </div>
-                <small style={{ color: 'var(--text-muted)', marginTop: '1rem' }}>
-                  Affichage: {Math.min(8, (services || []).length)} / {(services || []).length} services
+
+                {/* Pagination Controls */}
+                {totalServicePages > 1 && (
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginTop: '1rem', flexWrap: 'wrap' }}>
+                    <button
+                      className="btn btn-sm btn-outline-primary"
+                      disabled={servicePage === 1}
+                      onClick={() => setServicePage(servicePage - 1)}
+                    >
+                      ← Précédent
+                    </button>
+                    {Array.from({ length: totalServicePages }, (_, i) => i + 1).map(page => (
+                      <button
+                        key={page}
+                        className={`btn btn-sm ${servicePage === page ? 'btn-primary' : 'btn-outline-primary'}`}
+                        onClick={() => setServicePage(page)}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                    <button
+                      className="btn btn-sm btn-outline-primary"
+                      disabled={servicePage === totalServicePages}
+                      onClick={() => setServicePage(servicePage + 1)}
+                    >
+                      Suivant →
+                    </button>
+                  </div>
+                )}
+
+                <small style={{ color: 'var(--text-muted)', marginTop: '1rem', display: 'block' }}>
+                  Affichage: {paginatedServices.length} / {filteredServices.length} services | Total: {services.length}
                 </small>
               </div>
             </motion.div>
@@ -2024,15 +2299,63 @@ const SuperAdminDashboard = () => {
                       />
                     </div>
                     <div className="col-12 col-md-6">
-                      <label className="form-label">URL Logo</label>
+                      <label className="form-label">📷 Logo de l'Entreprise</label>
+                      <div style={{
+                        border: '2px dashed var(--primary-color)',
+                        borderRadius: 'var(--border-radius-md)',
+                        padding: '1.5rem',
+                        textAlign: 'center',
+                        cursor: 'pointer',
+                        background: 'var(--bg-color)',
+                        position: 'relative',
+                        transition: 'all 0.3s'
+                      }}>
+                        {logoPreview || siteSettingsForm.app_logo ? (
+                          <div>
+                            <img 
+                              src={logoPreview || siteSettingsForm.app_logo} 
+                              alt="Logo" 
+                              style={{
+                                maxWidth: '100%',
+                                maxHeight: '120px',
+                                marginBottom: '0.5rem',
+                                borderRadius: 'var(--border-radius-md)'
+                              }}
+                            />
+                            <p style={{ fontSize: '0.8rem', marginBottom: 0 }}>Cliquez pour changer</p>
+                          </div>
+                        ) : (
+                          <div>
+                            <p style={{ fontSize: '2rem', marginBottom: '0.3rem' }}>🏢</p>
+                            <p style={{ marginBottom: 0, fontSize: '0.9rem' }}>Cliquez pour ajouter un logo</p>
+                          </div>
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleLogoUpload}
+                          style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '100%',
+                            opacity: 0,
+                            cursor: 'pointer'
+                          }}
+                        />
+                      </div>
+                      <small style={{ color: 'var(--text-secondary)', display: 'block', marginTop: '0.5rem' }}>
+                        Ou entrez une URL:
+                      </small>
                       <input
                         type="text"
-                        className="form-control"
+                        className="form-control mt-2"
                         name="app_logo"
                         value={siteSettingsForm.app_logo}
                         onChange={handleSiteSettingsChange}
                         placeholder="https://..."
-                        style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                        style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)', fontSize: '0.85rem' }}
                       />
                     </div>
                     <div className="col-12">
@@ -2497,6 +2820,97 @@ const SuperAdminDashboard = () => {
                 padding: '2rem'
               }}>
                 <QRCodeConfig showTitle={true} />
+              </div>
+
+              {/* Payment Networks Configuration */}
+              <div className="card mt-4" style={{
+                background: 'var(--surface)',
+                border: '2px solid #00d9ff',
+                borderRadius: 'var(--border-radius-lg)',
+                padding: '2rem'
+              }}>
+                <h5 style={{ color: '#00d9ff', marginBottom: '1.5rem' }}>💳 Configuration Réseaux de Paiement - Gabon</h5>
+                
+                <div className="row g-3">
+                  <div className="col-12">
+                    <div className="alert" style={{
+                      background: 'rgba(0, 217, 255, 0.1)',
+                      border: '1px solid #00d9ff',
+                      borderRadius: 'var(--border-radius-md)',
+                      color: 'var(--text-color)'
+                    }}>
+                      <strong>ℹ️ Info:</strong> Lorsqu'un utilisateur scanne le QR code, il lui sera demandé de choisir son réseau de paiement (Airtel ou Moov). Selon son choix, il sera redirigé vers l'une des coordonnées ci-dessous.
+                    </div>
+                  </div>
+
+                  <div className="col-12 col-md-6">
+                    <label className="form-label">📱 Code Airtel (Gabon)</label>
+                    <input
+                      type="tel"
+                      className="form-control"
+                      value={paymentConfig.airtel_code}
+                      onChange={(e) => setPaymentConfig(prev => ({ ...prev, airtel_code: e.target.value }))}
+                      placeholder="+241 XX XX XX XX ou +24161234567"
+                      style={{ borderColor: '#00d9ff', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                    />
+                    <small style={{ color: 'var(--text-secondary)' }}>Format: +241XXXXXXXXX</small>
+                  </div>
+
+                  <div className="col-12 col-md-6">
+                    <label className="form-label">📱 Code Moov (Gabon)</label>
+                    <input
+                      type="tel"
+                      className="form-control"
+                      value={paymentConfig.moov_code}
+                      onChange={(e) => setPaymentConfig(prev => ({ ...prev, moov_code: e.target.value }))}
+                      placeholder="+241 XX XX XX XX ou +24162234567"
+                      style={{ borderColor: '#00d9ff', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                    />
+                    <small style={{ color: 'var(--text-secondary)' }}>Format: +241XXXXXXXXX</small>
+                  </div>
+
+                  <div className="col-12">
+                    <div className="form-check">
+                      <input
+                        className="form-check-input"
+                        type="checkbox"
+                        id="paymentEnabled"
+                        checked={paymentConfig.is_payment_enabled}
+                        onChange={(e) => setPaymentConfig(prev => ({ ...prev, is_payment_enabled: e.target.checked }))}
+                      />
+                      <label className="form-check-label" htmlFor="paymentEnabled">
+                        ✅ Activer les configurations de paiement
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="col-12">
+                    <button
+                      className="btn btn-success w-100"
+                      onClick={savePaymentConfig}
+                    >
+                      💾 Sauvegarder Configuration Réseaux
+                    </button>
+                  </div>
+
+                  <div className="col-12">
+                    <div style={{
+                      background: 'var(--bg-color)',
+                      border: '1px solid var(--primary-color)',
+                      borderRadius: 'var(--border-radius-md)',
+                      padding: '1rem',
+                      marginTop: '1rem'
+                    }}>
+                      <h6 style={{ color: 'var(--primary-color)', marginBottom: '0.5rem' }}>📝 Exemple d'utilisation:</h6>
+                      <p style={{ fontSize: '0.9rem', marginBottom: '0.3rem' }}>
+                        <strong>Airtel:</strong> {paymentConfig.airtel_code || '+241XX XXXX XX'}
+                      </p>
+                      <p style={{ fontSize: '0.9rem', marginBottom: 0 }}>
+                        <strong>Moov:</strong> {paymentConfig.moov_code || '+241XX XXXX XX'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </motion.div>
           )}
