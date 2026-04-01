@@ -56,6 +56,27 @@ const DeveloperDashboard = () => {
     { id: 1, timestamp: new Date(Date.now() - 3600000), userAgent: 'Mobile Safari', action: 'viewed_services' }
   ])
 
+  // ──── SITE MANAGEMENT ────
+  const [editingSiteSettings, setEditingSiteSettings] = useState(false)
+  const [siteSettingsForm, setSiteSettingsForm] = useState({
+    app_name: 'Chura Beauty',
+    app_logo: '',
+    homepage_hero_title: 'Bienvenue',
+    homepage_hero_subtitle: 'Services de beauté premium',
+    tagline: 'Excellence et élégance',
+    footer_company_name: 'Chura Beauty Salon',
+    footer_address: '',
+    footer_phone: '',
+    footer_email: '',
+    footer_whatsapp: '',
+    footer_instagram: '',
+    footer_facebook: '',
+    footer_twitter: '',
+    privacy_policy: '',
+    terms_of_service: '',
+    about_content: ''
+  })
+
   useEffect(() => {
     fetchAllData()
     const interval = setInterval(fetchAllData, 5000)
@@ -119,10 +140,74 @@ const DeveloperDashboard = () => {
         console.warn('❌ Erreur logs:', err.message)
         setLogs([])
       }
+
+      try {
+        const settingsRes = await api.get('/site-settings')
+        const settingsData = settingsRes.data || {}
+        console.log('✅ Site settings chargés:', settingsData)
+        // Pré-remplir le formulaire avec les données existantes
+        setSiteSettingsForm(prev => ({
+          ...prev,
+          app_name: settingsData.app_name || prev.app_name,
+          app_logo: settingsData.app_logo || prev.app_logo,
+          homepage_hero_title: settingsData.homepage_hero_title || prev.homepage_hero_title,
+          homepage_hero_subtitle: settingsData.homepage_hero_subtitle || prev.homepage_hero_subtitle,
+          tagline: settingsData.tagline || prev.tagline,
+          footer_company_name: settingsData.footer_company_name || prev.footer_company_name,
+          footer_address: settingsData.footer_address || prev.footer_address,
+          footer_phone: settingsData.footer_phone || prev.footer_phone,
+          footer_email: settingsData.footer_email || prev.footer_email,
+          footer_whatsapp: settingsData.footer_whatsapp || prev.footer_whatsapp,
+          footer_instagram: settingsData.footer_instagram || prev.footer_instagram,
+          footer_facebook: settingsData.footer_facebook || prev.footer_facebook,
+          footer_twitter: settingsData.footer_twitter || prev.footer_twitter,
+          privacy_policy: settingsData.privacy_policy || '',
+          terms_of_service: settingsData.terms_of_service || '',
+          about_content: settingsData.about_content || ''
+        }))
+      } catch (err) {
+        console.warn('❌ Erreur site settings:', err.message)
+      }
     } catch (error) {
       console.error('❌ Erreur générale fetch:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleSiteSettingsChange = (e) => {
+    const { name, value } = e.target
+    setSiteSettingsForm(prev => ({ ...prev, [name]: value }))
+  }
+
+  const saveSiteSettings = async () => {
+    try {
+      const payload = {
+        app_name: siteSettingsForm.app_name,
+        app_logo: siteSettingsForm.app_logo,
+        homepage_hero_title: siteSettingsForm.homepage_hero_title,
+        homepage_hero_subtitle: siteSettingsForm.homepage_hero_subtitle,
+        tagline: siteSettingsForm.tagline,
+        footer_company_name: siteSettingsForm.footer_company_name,
+        footer_address: siteSettingsForm.footer_address,
+        footer_phone: siteSettingsForm.footer_phone,
+        footer_email: siteSettingsForm.footer_email,
+        footer_whatsapp: siteSettingsForm.footer_whatsapp,
+        footer_instagram: siteSettingsForm.footer_instagram,
+        footer_facebook: siteSettingsForm.footer_facebook,
+        footer_twitter: siteSettingsForm.footer_twitter,
+        privacy_policy: siteSettingsForm.privacy_policy,
+        terms_of_service: siteSettingsForm.terms_of_service,
+        about_content: siteSettingsForm.about_content
+      }
+      
+      await api.put('/site-settings', payload)
+      alert('✅ Paramètres sauvegardés avec succès!')
+      // Refetch data after save
+      await fetchAllData()
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde:', error)
+      alert('❌ Erreur lors de la sauvegarde: ' + error.message)
     }
   }
 
@@ -298,6 +383,7 @@ const DeveloperDashboard = () => {
               { id: 'services', label: '💅 Services' },
               { id: 'logs', label: '📝 Logs' },
               { id: 'security', label: '🔐 Sécurité' },
+              { id: 'site-management', label: '🌐 Paramètres' },
               { id: 'maintenance', label: '🔧 Maintenance' },
               { id: 'qrcode', label: '📱 Code QR' }
             ].map(tab => (
@@ -1248,6 +1334,250 @@ const DeveloperDashboard = () => {
                     </div>
                   </div>
                 ))}
+              </div>
+            </motion.div>
+          )}
+
+          {/* SITE MANAGEMENT TAB */}
+          {activeTab === 'site-management' && (
+            <motion.div
+              key="site-management"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+            >
+              <div className="card" style={{
+                background: 'var(--surface)',
+                border: '1px solid var(--primary-color)',
+                borderRadius: 'var(--border-radius-lg)',
+                padding: '2rem'
+              }}>
+                <div className="d-flex justify-content-between align-items-center mb-3">
+                  <h5 style={{ margin: 0, color: 'var(--primary-color)' }}>🌐 Paramètres du Site</h5>
+                  <button
+                    className={`btn ${editingSiteSettings ? 'btn-secondary' : 'btn-primary'}`}
+                    onClick={() => setEditingSiteSettings(!editingSiteSettings)}
+                  >
+                    {editingSiteSettings ? '❌ Annuler' : '✏️ Modifier'}
+                  </button>
+                </div>
+
+                {editingSiteSettings ? (
+                  <div className="row g-3">
+                    <div className="col-12 col-md-6">
+                      <label className="form-label">Nom de l'Application</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        name="app_name"
+                        value={siteSettingsForm.app_name}
+                        onChange={handleSiteSettingsChange}
+                        style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                      />
+                    </div>
+                    <div className="col-12 col-md-6">
+                      <label className="form-label">URL Logo</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        name="app_logo"
+                        value={siteSettingsForm.app_logo}
+                        onChange={handleSiteSettingsChange}
+                        placeholder="https://..."
+                        style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                      />
+                    </div>
+                    <div className="col-12">
+                      <label className="form-label">Titre Héros (Page d'accueil)</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        name="homepage_hero_title"
+                        value={siteSettingsForm.homepage_hero_title}
+                        onChange={handleSiteSettingsChange}
+                        style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                      />
+                    </div>
+                    <div className="col-12">
+                      <label className="form-label">Sous-titre Héros</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        name="homepage_hero_subtitle"
+                        value={siteSettingsForm.homepage_hero_subtitle}
+                        onChange={handleSiteSettingsChange}
+                        style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                      />
+                    </div>
+                    <div className="col-12">
+                      <label className="form-label">Slogan</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        name="tagline"
+                        value={siteSettingsForm.tagline}
+                        onChange={handleSiteSettingsChange}
+                        style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                      />
+                    </div>
+                    <hr className="my-3" />
+                    <h6 style={{ color: 'var(--primary-color)', marginTop: '1rem' }}>📍 Pied de Page</h6>
+                    <div className="col-12 col-md-6">
+                      <label className="form-label">Nom Entreprise</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        name="footer_company_name"
+                        value={siteSettingsForm.footer_company_name}
+                        onChange={handleSiteSettingsChange}
+                        style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                      />
+                    </div>
+                    <div className="col-12 col-md-6">
+                      <label className="form-label">Adresse</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        name="footer_address"
+                        value={siteSettingsForm.footer_address}
+                        onChange={handleSiteSettingsChange}
+                        style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                      />
+                    </div>
+                    <div className="col-12 col-md-6">
+                      <label className="form-label">Téléphone</label>
+                      <input
+                        type="tel"
+                        className="form-control"
+                        name="footer_phone"
+                        value={siteSettingsForm.footer_phone}
+                        onChange={handleSiteSettingsChange}
+                        style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                      />
+                    </div>
+                    <div className="col-12 col-md-6">
+                      <label className="form-label">Email</label>
+                      <input
+                        type="email"
+                        className="form-control"
+                        name="footer_email"
+                        value={siteSettingsForm.footer_email}
+                        onChange={handleSiteSettingsChange}
+                        style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                      />
+                    </div>
+                    <div className="col-12 col-md-6">
+                      <label className="form-label">WhatsApp</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        name="footer_whatsapp"
+                        value={siteSettingsForm.footer_whatsapp}
+                        onChange={handleSiteSettingsChange}
+                        placeholder="+33..."
+                        style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                      />
+                    </div>
+                    <div className="col-12 col-md-6">
+                      <label className="form-label">Instagram</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        name="footer_instagram"
+                        value={siteSettingsForm.footer_instagram}
+                        onChange={handleSiteSettingsChange}
+                        placeholder="@handle"
+                        style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                      />
+                    </div>
+                    <div className="col-12 col-md-6">
+                      <label className="form-label">Facebook</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        name="footer_facebook"
+                        value={siteSettingsForm.footer_facebook}
+                        onChange={handleSiteSettingsChange}
+                        placeholder="Page Facebook"
+                        style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                      />
+                    </div>
+                    <div className="col-12 col-md-6">
+                      <label className="form-label">Twitter/X</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        name="footer_twitter"
+                        value={siteSettingsForm.footer_twitter}
+                        onChange={handleSiteSettingsChange}
+                        placeholder="@handle"
+                        style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                      />
+                    </div>
+
+                    <hr className="my-3" />
+                    <h6 style={{ color: 'var(--primary-color)', marginTop: '1rem' }}>📄 Pages Importantes</h6>
+
+                    <div className="col-12">
+                      <label className="form-label">Politique de Confidentialité</label>
+                      <textarea
+                        className="form-control"
+                        rows="5"
+                        name="privacy_policy"
+                        value={siteSettingsForm.privacy_policy}
+                        onChange={handleSiteSettingsChange}
+                        placeholder="Contenu de la politique de confidentialité..."
+                        style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                      />
+                    </div>
+
+                    <div className="col-12">
+                      <label className="form-label">Conditions d'Utilisation</label>
+                      <textarea
+                        className="form-control"
+                        rows="5"
+                        name="terms_of_service"
+                        value={siteSettingsForm.terms_of_service}
+                        onChange={handleSiteSettingsChange}
+                        placeholder="Contenu des conditions d'utilisation..."
+                        style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                      />
+                    </div>
+
+                    <div className="col-12">
+                      <label className="form-label">À propos de nous</label>
+                      <textarea
+                        className="form-control"
+                        rows="5"
+                        name="about_content"
+                        value={siteSettingsForm.about_content}
+                        onChange={handleSiteSettingsChange}
+                        placeholder="Contenu de la page À propos..."
+                        style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                      />
+                    </div>
+
+                    <div className="col-12">
+                      <button
+                        className="btn btn-success"
+                        onClick={saveSiteSettings}
+                      >
+                        💾 Sauvegarder
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="row g-3">
+                    <div className="col-12 col-md-6">
+                      <p><strong>Nom App:</strong> {siteSettingsForm.app_name}</p>
+                      <p><strong>Slogan:</strong> {siteSettingsForm.tagline}</p>
+                    </div>
+                    <div className="col-12 col-md-6">
+                      <p><strong>Titre Héros:</strong> {siteSettingsForm.homepage_hero_title}</p>
+                      <p><strong>Société:</strong> {siteSettingsForm.footer_company_name}</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </motion.div>
           )}
