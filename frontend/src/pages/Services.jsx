@@ -5,7 +5,10 @@ import Footer from '../components/layout/Footer';
 import SearchBar from '../components/public/SearchBar';
 import CategoryFilter from '../components/public/CategoryFilter';
 import ServiceCard from '../components/public/ServiceCard';
+import Pagination from '../components/public/Pagination';
 import * as serviceService from '../services/serviceService';
+
+const ITEMS_PER_PAGE = 6
 
 export default function Services() {
   const [services, setServices] = useState([]);
@@ -15,6 +18,7 @@ export default function Services() {
   const [searchTerm, setSearchTerm] = useState('');
   const [priceRange, setPriceRange] = useState([0, 100000]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     fetchServices();
@@ -22,6 +26,7 @@ export default function Services() {
 
   useEffect(() => {
     filterServices();
+    setCurrentPage(1); // Reset to page 1 when filters change
   }, [services, selectedCategory, searchTerm, priceRange]);
 
   const fetchServices = async () => {
@@ -33,6 +38,7 @@ export default function Services() {
 
       const uniqueCategories = ['Tous', ...new Set(fetchedServices.map((s) => s.category).filter(Boolean))];
       setCategories(uniqueCategories);
+      console.log('✅ Services chargés:', fetchedServices.length)
     } catch (error) {
       console.error('Error fetching services:', error);
       setServices([]);
@@ -62,6 +68,12 @@ export default function Services() {
     });
     setFiltered(result);
   };
+
+  // Pagination logic
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedServices = filtered.slice(startIndex, endIndex);
 
   return (
     <>
@@ -194,26 +206,48 @@ export default function Services() {
                 </motion.button>
               </motion.div>
             ) : (
-              <motion.div
-                key="services"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="row g-4 mt-2"
-              >
-                {filtered.map((service, index) => (
-                  <motion.div
-                    key={service._id || service.id || index}
-                    className="col-lg-4 col-md-6"
-                    initial={{ opacity: 0, y: 40 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: Math.min(index * 0.08, 0.4) }}
-                    viewport={{ once: true, margin: '-50px' }}
-                  >
-                    <ServiceCard service={service} />
-                  </motion.div>
-                ))}
-              </motion.div>
+              <>
+                <motion.div
+                  key="services"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="row g-4 mt-2"
+                >
+                  {paginatedServices.map((service, index) => (
+                    <motion.div
+                      key={service._id || service.id || index}
+                      className="col-lg-4 col-md-6"
+                      initial={{ opacity: 0, y: 40 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, delay: Math.min(index * 0.08, 0.4) }}
+                      viewport={{ once: true, margin: '-50px' }}
+                    >
+                      <ServiceCard service={service} />
+                    </motion.div>
+                  ))}
+                </motion.div>
+
+                {/* Pagination Component */}
+                {totalPages > 1 && (
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={setCurrentPage}
+                    perPage={ITEMS_PER_PAGE}
+                  />
+                )}
+
+                {/* Results Info */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-center mt-4"
+                  style={{ color: 'var(--text-muted)', fontSize: '14px' }}
+                >
+                  Affichage de <strong>{startIndex + 1}</strong> à <strong>{Math.min(endIndex, filtered.length)}</strong> sur <strong>{filtered.length}</strong> résultats
+                </motion.div>
+              </>
             )}
           </AnimatePresence>
         </div>

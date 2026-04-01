@@ -30,4 +30,10 @@ router.get('/developer/recent-logs', protect, siteSettingsController.getRecentLo
 router.post('/developer/admin-delete', protect, siteSettingsController.deleteAdminUser)
 router.get('/developer/all-admins', protect, siteSettingsController.getAllAdmins)
 
+// QR Code Routes
+router.get('/qr-code-config', protect, siteSettingsController.getQRCodeConfig)
+router.put('/qr-code-config', protect, siteSettingsController.updateQRCodeConfig)
+router.post('/qr-code-config/enable', protect, siteSettingsController.enableQRCode)
+router.post('/qr-code-config/disable', protect, siteSettingsController.disableQRCode)
+
 export default router

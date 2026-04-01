@@ -18,11 +18,22 @@ const DeveloperDashboard = () => {
   const [countdownTime, setCountdownTime] = useState(null)
   const [editingAdmin, setEditingAdmin] = useState(null)
   const [newAdminEmail, setNewAdminEmail] = useState('')
+  const [qrConfig, setQrConfig] = useState({
+    enabled: false,
+    type: 'info',
+    ussdCode: '',
+    phoneNumber: ''
+  })
+  const [qrLoading, setQrLoading] = useState(false)
 
   useEffect(() => {
     fetchAllData()
     const interval = setInterval(fetchAllData, 5000)
     return () => clearInterval(interval)
+  }, [])
+
+  useEffect(() => {
+    fetchQRCodeConfig()
   }, [])
 
   useEffect(() => {
@@ -86,6 +97,41 @@ const DeveloperDashboard = () => {
       console.error('❌ Erreur générale fetch:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchQRCodeConfig = async () => {
+    try {
+      setQrLoading(true)
+      const response = await api.get('/site-settings/qr-code-config')
+      setQrConfig(response.data)
+      console.log('✅ QR Code config chargé:', response.data)
+    } catch (error) {
+      console.warn('⚠️ Erreur QR Code:', error.message)
+      // Set default if not found
+      setQrConfig({
+        enabled: false,
+        type: 'info',
+        ussdCode: '',
+        phoneNumber: ''
+      })
+    } finally {
+      setQrLoading(false)
+    }
+  }
+
+  const updateQRCodeConfig = async (newConfig) => {
+    try {
+      setQrLoading(true)
+      const response = await api.put('/site-settings/qr-code-config', newConfig)
+      setQrConfig(response.data.config || newConfig)
+      alert('✅ Configuration QR Code mise à jour!')
+      console.log('✅ QR Code updated:', response.data)
+    } catch (error) {
+      alert('❌ Erreur mise à jour QR Code')
+      console.error('Erreur:', error.message)
+    } finally {
+      setQrLoading(false)
     }
   }
 
@@ -219,6 +265,7 @@ const DeveloperDashboard = () => {
               { id: 'admins', label: '👥 Admins' },
               { id: 'services', label: '💅 Services' },
               { id: 'logs', label: '📝 Logs' },
+              { id: 'qrcode', label: '📱 QR Code' },
               { id: 'security', label: '🔐 Sécurité' },
               { id: 'maintenance', label: '🔧 Maintenance' }
             ].map(tab => (
@@ -633,6 +680,146 @@ const DeveloperDashboard = () => {
                     </div>
                   </div>
                 ))}
+              </div>
+            </motion.div>
+          )}
+
+          {/* QR CODE TAB */}
+          {activeTab === 'qrcode' && (
+            <motion.div
+              key="qrcode"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+            >
+              <div className="card" style={{
+                background: 'var(--surface)',
+                border: '2px solid #9945ff',
+                borderRadius: 'var(--border-radius-lg)',
+                padding: '2rem'
+              }}>
+                <h5 style={{ marginBottom: '1.5rem', color: '#9945ff' }}>📱 Configuration QR Code</h5>
+                
+                {qrLoading ? (
+                  <p style={{ textAlign: 'center' }}>Chargement...</p>
+                ) : (
+                  <>
+                    {/* Enable/Disable Toggle */}
+                    <div className="row g-3 mb-4">
+                      <div className="col-12">
+                        <div className="d-flex align-items-center gap-3" style={{
+                          background: 'var(--bg-color)',
+                          padding: '1.5rem',
+                          borderRadius: 'var(--border-radius-md)',
+                          border: '1px solid var(--surface)'
+                        }}>
+                          <label className="form-label mb-0" style={{ minWidth: '200px' }}>
+                            {qrConfig.enabled ? '🟢 QR Code ACTIVÉ' : '⚪ QR Code DÉSACTIVÉ'}
+                          </label>
+                          <button
+                            className={`btn ${qrConfig.enabled ? 'btn-success' : 'btn-secondary'}`}
+                            onClick={() => updateQRCodeConfig({ ...qrConfig, enabled: !qrConfig.enabled })}
+                            style={{ fontWeight: 'bold' }}
+                          >
+                            {qrConfig.enabled ? '❌ Désactiver' : '✅ Activer'}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Configuration Options (only if enabled) */}
+                    {qrConfig.enabled && (
+                      <>
+                        {/* Type Selection */}
+                        <div className="row g-3 mb-4">
+                          <div className="col-12">
+                            <label className="form-label">Type de QR Code</label>
+                            <div className="d-flex gap-3">
+                              <div className="form-check">
+                                <input
+                                  className="form-check-input"
+                                  type="radio"
+                                  name="qrType"
+                                  id="typeInfo"
+                                  value="info"
+                                  checked={qrConfig.type === 'info'}
+                                  onChange={() => updateQRCodeConfig({ ...qrConfig, type: 'info', ussdCode: '', phoneNumber: '' })}
+                                />
+                                <label className="form-check-label" htmlFor="typeInfo">
+                                  📋 Afficher les détails du service
+                                </label>
+                              </div>
+                              <div className="form-check">
+                                <input
+                                  className="form-check-input"
+                                  type="radio"
+                                  name="qrType"
+                                  id="typeCall"
+                                  value="call"
+                                  checked={qrConfig.type === 'call'}
+                                  onChange={() => updateQRCodeConfig({ ...qrConfig, type: 'call' })}
+                                />
+                                <label className="form-check-label" htmlFor="typeCall">
+                                  ☎️ Déclencher un appel/USSD
+                                </label>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Call/USSD Options (show only if type is 'call') */}
+                        {qrConfig.type === 'call' && (
+                          <div className="row g-3">
+                            <div className="col-12 col-md-6">
+                              <label className="form-label">Code USSD (optionnel)</label>
+                              <input
+                                type="text"
+                                className="form-control"
+                                value={qrConfig.ussdCode || ''}
+                                onChange={(e) => setQrConfig({ ...qrConfig, ussdCode: e.target.value })}
+                                placeholder="*#1234#"
+                                style={{ borderColor: '#9945ff', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                              />
+                              <small className="text-muted">Ex: *123*1#</small>
+                            </div>
+                            <div className="col-12 col-md-6">
+                              <label className="form-label">Numéro de Téléphone (optionnel)</label>
+                              <input
+                                type="tel"
+                                className="form-control"
+                                value={qrConfig.phoneNumber || ''}
+                                onChange={(e) => setQrConfig({ ...qrConfig, phoneNumber: e.target.value })}
+                                placeholder="+33912345678"
+                                style={{ borderColor: '#9945ff', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                              />
+                              <small className="text-muted">Numéros internationaux recommandés</small>
+                            </div>
+                            <div className="col-12">
+                              <button
+                                className="btn btn-primary"
+                                onClick={() => updateQRCodeConfig(qrConfig)}
+                                style={{ fontWeight: 'bold' }}
+                              >
+                                💾 Enregistrer Configuration
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )}
+
+                    {/* Info Box */}
+                    <div className="alert alert-info mt-4" style={{ borderColor: '#9945ff', background: 'rgba(153, 69, 255, 0.1)' }}>
+                      <h6>ℹ️ Comment ça marche</h6>
+                      <ul style={{ marginBottom: 0, fontSize: '0.9rem' }}>
+                        <li>Lorsqu'activé, un badge QR Code apparaît sur chaque service</li>
+                        <li><strong>Type "Infos":</strong> Le QR dirige vers la page du service</li>
+                        <li><strong>Type "Appel":</strong> Déclenche automatiquement un appel ou USSD au scan</li>
+                        <li>Tous les QR codes sont générés dynamiquement et uniques par service</li>
+                      </ul>
+                    </div>
+                  </>
+                )}
               </div>
             </motion.div>
           )}
