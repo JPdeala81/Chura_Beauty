@@ -46,6 +46,7 @@ export const ThemeProvider = ({ children }) => {
     localStorage.getItem('theme') || 'gold' : 'gold'
   
   const [currentTheme, setCurrentTheme] = useState(savedTheme)
+  const [themeVersion, setThemeVersion] = useState(0) // Force re-render on theme change
   const [mounted, setMounted] = useState(false)
 
   // useMemo pour eviter de redéfinir themes à chaque rendu
@@ -54,8 +55,23 @@ export const ThemeProvider = ({ children }) => {
   // Appliquer le thème IMMÉDIATEMENT au premier rendu
   useEffect(() => {
     const theme = localStorage.getItem('theme') || 'gold'
+    console.log('🎨 ThemeProvider: Initial theme from localStorage:', theme)
     applyThemeImmediate(theme)
+    setCurrentTheme(theme)
     setMounted(true)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Écouter les changements de thème depuis d'autres onglets/fenêtres
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === 'theme' && e.newValue) {
+        console.log('🎨 ThemeProvider: Theme changed from another tab:', e.newValue)
+        applyTheme(e.newValue)
+      }
+    }
+
+    window.addEventListener('storage', handleStorageChange)
+    return () => window.removeEventListener('storage', handleStorageChange)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const applyTheme = useCallback((themeId) => {
@@ -65,9 +81,9 @@ export const ThemeProvider = ({ children }) => {
       return
     }
 
-    console.log(`🎨 Changement de thème: ${themeId}`)
+    console.log(`🎨 ApplyTheme called: ${themeId}`)
 
-    // 1. Appliquer le thème immédiatement
+    // 1. Appliquer le thème sur le DOM IMMÉDIATEMENT
     document.documentElement.setAttribute('data-theme', themeId)
     document.body.setAttribute('data-theme', themeId)
     
@@ -77,14 +93,16 @@ export const ThemeProvider = ({ children }) => {
     // 3. Sauvegarder dans localStorage
     localStorage.setItem('theme', themeId)
     
-    // 4. Mettre à jour l'état
+    // 4. Mettre à jour l'état React (FORCE REACT RERENDER)
     setCurrentTheme(themeId)
+    // Incrémenter la version pour forcer les composants qui observent à se re-rendre
+    setThemeVersion(prev => prev + 1)
 
     // 5. Force une reflow/repaint complète
     const html = document.documentElement
     html.offsetHeight
     
-    // 6. Dispatcher un événement pour d'autres composants
+    // 6. Dispatcher un événement pour d'autres composants/onglets
     window.dispatchEvent(new CustomEvent('themechange', { 
       detail: { theme: themeId } 
     }))
@@ -107,12 +125,13 @@ export const ThemeProvider = ({ children }) => {
     console.log(`✅ Thème initial appliqué à DOM: ${themeId}`)
   }
 
-  const value = {
+  const value = useMemo(() => ({
     currentTheme,
     themes,
     applyTheme,
-    mounted
-  }
+    mounted,
+    themeVersion // Include version so components can depend on it
+  }), [currentTheme, themes, applyTheme, mounted, themeVersion])
 
   return (
     <ThemeContext.Provider value={value}>
