@@ -1,22 +1,18 @@
 import { Card, Button } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import QRCodeBlock from './QRCodeBlock';
-import QRCodeDisplay from './QRCodeDisplay';
 
 export default function ServiceCard({ service }) {
   const mainImage = service.images?.[service.main_image_index] || service.images?.[0] || '/placeholder.jpg';
 
   return (
-    <Card className="service-card h-100 shadow-sm" style={{ position: 'relative' }}>
+    <Card className="service-card h-100 shadow-sm">
       <Card.Img
         variant="top"
         src={mainImage}
         alt={service.title}
         style={{ height: '250px', objectFit: 'contain', backgroundColor: '#f5f5f5', padding: '10px' }}
       />
-
-      {/* QR Code Badge */}
-      <QRCodeDisplay serviceId={service.id} serviceName={service.title} />
 
       <Card.Body className="d-flex flex-column">
         <Card.Title>{service.title}</Card.Title>
@@ -35,6 +31,10 @@ export default function ServiceCard({ service }) {
           <span className="badge bg-secondary">
             ⏱️ {service.duration} min
           </span>
+        </div>
+
+        <div className="mb-3">
+          <QRCodeBlock service={service} isEnabled={false} />
         </div>
 
         <Link

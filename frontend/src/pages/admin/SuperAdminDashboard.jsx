@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { AuthContext } from '../../context/AuthContext'
 import api from '../../services/api'
+import QRCodeConfig from '../../components/admin/QRCodeConfig'
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
@@ -390,6 +391,7 @@ const SuperAdminDashboard = () => {
               { id: 'maintenance', label: '🔧 Maintenance' },
               { id: 'app-closure', label: '🚪 Fermeture App' },
               { id: 'security', label: '🔐 Sécurité' },
+              { id: 'qrcode', label: '📱 Code QR' },
               { id: 'settings', label: '⚙️ Paramètres' }
             ].map(tab => (
               <button
@@ -1774,6 +1776,25 @@ const SuperAdminDashboard = () => {
                     </div>
                   </div>
                 )}
+              </div>
+            </motion.div>
+          )}
+
+          {/* QR CODE TAB */}
+          {activeTab === 'qrcode' && (
+            <motion.div
+              key="qrcode"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+            >
+              <div className="card" style={{
+                background: 'var(--surface)',
+                border: '2px solid var(--primary-color)',
+                borderRadius: 'var(--border-radius-lg)',
+                padding: '2rem'
+              }}>
+                <QRCodeConfig showTitle={true} />
               </div>
             </motion.div>
           )}

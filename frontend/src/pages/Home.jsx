@@ -20,6 +20,8 @@ const Home = () => {
   const [searchQuery, setSearchQuery] = useState('')
   const [priceRange, setPriceRange] = useState([0, 100000])
   const [errorMessage, setErrorMessage] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const ITEMS_PER_PAGE = 6
   const servicesRef = useRef(null)
 
   useEffect(() => {
@@ -32,7 +34,10 @@ const Home = () => {
 
   useEffect(() => { fetchServices() }, [])
 
-  useEffect(() => { filterServices() }, [services, activeCategory, searchQuery, priceRange])
+  useEffect(() => { 
+    filterServices()
+    setCurrentPage(1)
+  }, [services, activeCategory, searchQuery, priceRange])
 
   const fetchServices = async () => {
     try {
@@ -69,6 +74,18 @@ const Home = () => {
       return price >= priceRange[0] && price <= priceRange[1]
     })
     setFiltered(result)
+  }
+
+  // Pagination logic
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE)
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+  const endIndex = startIndex + ITEMS_PER_PAGE
+  const paginatedServices = filtered.slice(startIndex, endIndex)
+
+  const goToPage = (page) => {
+    const pageNum = Math.max(1, Math.min(page, totalPages))
+    setCurrentPage(pageNum)
+    window.scrollTo({ top: 300, behavior: 'smooth' })
   }
 
   const scrollToServices = () => {
@@ -141,12 +158,12 @@ const Home = () => {
 
           {/* Search and Filters */}
           <div style={{ marginBottom: '40px' }}>
-            <SearchBar onSearch={setSearchQuery} onPriceChange={setPriceRange} />
+            <SearchBar onSearch={setSearchQuery} />
             <div style={{ marginTop: '24px' }}>
               <CategoryFilter
                 categories={categories}
-                active={activeCategory}
-                onChange={setActiveCategory}
+                selectedCategory={activeCategory}
+                onSelect={setActiveCategory}
               />
             </div>
           </div>
@@ -201,26 +218,145 @@ const Home = () => {
                 </motion.button>
               </motion.div>
             ) : (
-              <motion.div
-                key="services"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="row g-4"
-              >
-                {filtered.map((service, index) => (
-                  <motion.div
-                    key={service.id || service._id || index}
-                    className="col-lg-4 col-md-6"
-                    initial={{ opacity: 0, y: 40 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: Math.min(index * 0.08, 0.4) }}
-                    viewport={{ once: true, margin: '-50px' }}
-                  >
-                    <ServiceCard service={service} />
-                  </motion.div>
-                ))}
-              </motion.div>
+              <>
+                <motion.div
+                  key="services"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="row g-4"
+                >
+                  {paginatedServices.map((service, index) => (
+                    <motion.div
+                      key={service.id || service._id || index}
+                      className="col-lg-4 col-md-6"
+                      initial={{ opacity: 0, y: 40 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, delay: Math.min(index * 0.08, 0.4) }}
+                      viewport={{ once: true, margin: '-50px' }}
+                    >
+                      <ServiceCard service={service} />
+                    </motion.div>
+                  ))}
+                </motion.div>
+
+                {/* Pagination Info and Controls */}
+                {filtered.length > ITEMS_PER_PAGE && (
+                  <div style={{
+                    marginTop: '60px',
+                    paddingTop: '40px',
+                    borderTop: '2px solid rgba(184,134,11,0.2)',
+                    textAlign: 'center'
+                  }}>
+                    <p className="text-muted mb-4" style={{ fontSize: '14px', fontWeight: '600', marginBottom: '20px' }}>
+                      📊 Affichage {startIndex + 1}-{Math.min(endIndex, filtered.length)} sur {filtered.length} services
+                    </p>
+
+                    {totalPages > 1 && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="d-flex justify-content-center align-items-center gap-3"
+                        style={{ 
+                          flexWrap: 'wrap',
+                          marginTop: '20px'
+                        }}
+                      >
+                        <motion.button
+                          onClick={() => goToPage(currentPage - 1)}
+                          disabled={currentPage === 1}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          style={{
+                            padding: '10px 16px',
+                            borderRadius: '8px',
+                            border: '1px solid var(--primary-color)',
+                            background: currentPage === 1 ? 'rgba(184,134,11,0.1)' : 'var(--primary-color)',
+                            color: currentPage === 1 ? 'var(--primary-color)' : 'white',
+                            cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                            fontWeight: '600',
+                            opacity: currentPage === 1 ? 0.5 : 1
+                          }}
+                        >
+                          ← Précédent
+                        </motion.button>
+
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                          {Array.from({ length: Math.min(totalPages, 5) }).map((_, i) => {
+                            let pageNum;
+                            if (totalPages <= 5) {
+                              pageNum = i + 1;
+                            } else if (currentPage <= 3) {
+                              pageNum = i + 1;
+                            } else if (currentPage >= totalPages - 2) {
+                              pageNum = totalPages - 4 + i;
+                            } else {
+                              pageNum = currentPage - 2 + i;
+                            }
+
+                            if (pageNum < 1 || pageNum > totalPages) return null;
+
+                            return (
+                              <motion.button
+                                key={pageNum}
+                                onClick={() => goToPage(pageNum)}
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.95 }}
+                                style={{
+                                  width: '40px',
+                                  height: '40px',
+                                  borderRadius: '6px',
+                                  border: currentPage === pageNum ? 'none' : '1px solid var(--primary-color)',
+                                  background: currentPage === pageNum ? 'var(--primary-color)' : 'transparent',
+                                  color: currentPage === pageNum ? 'white' : 'var(--primary-color)',
+                                  fontWeight: '600',
+                                  cursor: 'pointer',
+                                  fontSize: '14px'
+                                }}
+                              >
+                                {pageNum}
+                              </motion.button>
+                            );
+                          })}
+                        </div>
+
+                        <motion.button
+                          onClick={() => goToPage(currentPage + 1)}
+                          disabled={currentPage === totalPages}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          style={{
+                            padding: '10px 16px',
+                            borderRadius: '8px',
+                            border: '1px solid var(--primary-color)',
+                            background: currentPage === totalPages ? 'rgba(184,134,11,0.1)' : 'var(--primary-color)',
+                            color: currentPage === totalPages ? 'var(--primary-color)' : 'white',
+                            cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                            fontWeight: '600',
+                            opacity: currentPage === totalPages ? 0.5 : 1
+                          }}
+                        >
+                          Suivant →
+                        </motion.button>
+
+                        <span
+                          style={{
+                            color: 'var(--primary-color)',
+                            fontWeight: '600',
+                            marginLeft: '16px',
+                            fontSize: '14px',
+                            background: 'rgba(184,134,11,0.1)',
+                            padding: '6px 12px',
+                            borderRadius: '6px'
+                          }}
+                        >
+                          Page {currentPage} / {totalPages}
+                        </span>
+                      </motion.div>
+                    )}
+                  </div>
+                )}
+              </>
             )}
           </AnimatePresence>
         </div>
