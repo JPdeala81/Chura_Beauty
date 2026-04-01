@@ -5,7 +5,6 @@ import { AuthProvider } from './context/AuthContext'
 import { NotificationProvider } from './context/NotificationContext'
 import { ThemeProvider } from './context/ThemeContext'
 import ThemeSwitcherFloating from './components/ThemeSwitcherFloating'
-import ThemeDiagnostics from './components/ThemeDiagnostics'
 import Home from './pages/Home'
 import Services from './pages/Services'
 import ServiceDetail from './pages/ServiceDetail'
@@ -88,7 +87,6 @@ function AppRoutes() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <ThemeSwitcherFloating />
-      <ThemeDiagnostics />
     </>
   )
 }
