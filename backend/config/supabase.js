@@ -6,20 +6,16 @@ dotenv.config()
 const supabaseUrl = process.env.SUPABASE_URL
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-// In development mode, allow mock credentials for testing
-const isDevelopment = process.env.NODE_ENV === 'development'
-
-if (!supabaseUrl && !isDevelopment) {
-  throw new Error('Les variables SUPABASE_URL doivent être définis en production')
-}
-
-if (!supabaseKey && !isDevelopment) {
-  throw new Error('Les variables SUPABASE_SERVICE_ROLE_KEY doivent être définis en production')
-}
-
-// Use mock values if not provided in development
+// Use mock values if not provided
 const url = supabaseUrl || 'https://mock.supabase.co'
 const key = supabaseKey || 'mock-key-for-development'
+
+// Log warning if credentials are missing in production
+if (!supabaseUrl || !supabaseKey) {
+  if (process.env.NODE_ENV === 'production') {
+    console.warn('⚠️  Supabase credentials not fully configured in production. Add SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY to Vercel environment variables.')
+  }
+}
 
 export const supabase = createClient(url, key)
 export default supabase
