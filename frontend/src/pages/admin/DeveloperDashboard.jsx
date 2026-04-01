@@ -77,6 +77,23 @@ const DeveloperDashboard = () => {
     about_content: ''
   })
 
+  // Profile Management
+  const [editingProfile, setEditingProfile] = useState(false)
+  const [adminInfo, setAdminInfo] = useState({})
+  const [profileForm, setProfileForm] = useState({
+    full_name: '',
+    email: '',
+    phone: '',
+    whatsapp: '',
+    profile_photo: ''
+  })
+  const [showPasswordChange, setShowPasswordChange] = useState(false)
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  })
+
   useEffect(() => {
     fetchAllData()
     const interval = setInterval(fetchAllData, 5000)
@@ -168,6 +185,23 @@ const DeveloperDashboard = () => {
       } catch (err) {
         console.warn('❌ Erreur site settings:', err.message)
       }
+
+      try {
+        const profileRes = await api.get('/auth/profile')
+        const adminData = profileRes.data?.admin || profileRes.data || {}
+        setAdminInfo(adminData)
+        // Pré-remplir le formulaire de profil
+        setProfileForm({
+          full_name: adminData.full_name || '',
+          email: adminData.email || '',
+          phone: adminData.phone || '',
+          whatsapp: adminData.whatsapp || '',
+          profile_photo: adminData.profile_photo || ''
+        })
+        console.log('✅ Profile chargé:', adminData)
+      } catch (err) {
+        console.warn('❌ Erreur profile:', err.message)
+      }
     } catch (error) {
       console.error('❌ Erreur générale fetch:', error)
     } finally {
@@ -208,6 +242,89 @@ const DeveloperDashboard = () => {
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error)
       alert('❌ Erreur lors de la sauvegarde: ' + error.message)
+    }
+  }
+
+  // Profile Management Handlers
+  const handleProfileChange = (e) => {
+    const { name, value } = e.target
+    setProfileForm(prev => ({ ...prev, [name]: value }))
+  }
+
+  const handleAvatarUpload = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setProfileForm(prev => ({ ...prev, profile_photo: reader.result }))
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handlePasswordChange = (e) => {
+    const { name, value } = e.target
+    setPasswordForm(prev => ({ ...prev, [name]: value }))
+  }
+
+  const saveProfile = async () => {
+    try {
+      if (!profileForm.full_name || !profileForm.email) {
+        alert('❌ Le nom et l\'email sont obligatoires')
+        return
+      }
+      
+      const payload = {
+        full_name: profileForm.full_name,
+        email: profileForm.email,
+        phone: profileForm.phone,
+        whatsapp: profileForm.whatsapp,
+        profile_photo: profileForm.profile_photo
+      }
+      
+      await api.put('/auth/profile', payload)
+      alert('✅ Profil mis à jour avec succès!')
+      setEditingProfile(false)
+      // Refetch to update the profile
+      await fetchAllData()
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde:', error)
+      alert('❌ Erreur lors de la sauvegarde: ' + error.message)
+    }
+  }
+
+  const changePassword = async () => {
+    try {
+      if (!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
+        alert('❌ Tous les champs sont obligatoires')
+        return
+      }
+      
+      if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+        alert('❌ Les nouveaux mots de passe ne correspondent pas')
+        return
+      }
+      
+      if (passwordForm.newPassword.length < 6) {
+        alert('❌ Le mot de passe doit faire au moins 6 caractères')
+        return
+      }
+      
+      await api.put('/auth/change-password', {
+        currentPassword: passwordForm.currentPassword,
+        newPassword: passwordForm.newPassword
+      })
+      
+      alert('✅ Mot de passe changé avec succès!')
+      setPasswordForm({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      })
+      setShowPasswordChange(false)
+    } catch (error) {
+      console.error('Erreur:', error)
+      alert('❌ Erreur: ' + (error.response?.data?.message || error.message))
     }
   }
 
@@ -383,6 +500,7 @@ const DeveloperDashboard = () => {
               { id: 'services', label: '💅 Services' },
               { id: 'logs', label: '📝 Logs' },
               { id: 'security', label: '🔐 Sécurité' },
+              { id: 'profile', label: '👤 Mon Profil' },
               { id: 'site-management', label: '🌐 Paramètres' },
               { id: 'maintenance', label: '🔧 Maintenance' },
               { id: 'qrcode', label: '📱 Code QR' }
@@ -1301,6 +1419,277 @@ const DeveloperDashboard = () => {
                     </div>
                   )}
                 </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* PROFILE MANAGEMENT TAB */}
+          {activeTab === 'profile' && (
+            <motion.div
+              key="profile"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+            >
+              <div className="card" style={{
+                background: 'var(--surface)',
+                border: '1px solid var(--primary-color)',
+                borderRadius: 'var(--border-radius-lg)',
+                padding: '2rem'
+              }}>
+                <div className="d-flex justify-content-between align-items-center mb-4">
+                  <h5 style={{ margin: 0, color: 'var(--primary-color)' }}>👤 Mon Profil</h5>
+                  <button
+                    className={`btn ${editingProfile ? 'btn-secondary' : 'btn-primary'}`}
+                    onClick={() => setEditingProfile(!editingProfile)}
+                  >
+                    {editingProfile ? '❌ Annuler' : '✏️ Modifier'}
+                  </button>
+                </div>
+
+                {editingProfile ? (
+                  <div className="row g-3">
+                    {/* Avatar Upload */}
+                    <div className="col-12 col-md-4 text-center">
+                      <div style={{
+                        background: 'var(--bg-color)',
+                        border: '2px dashed var(--primary-color)',
+                        borderRadius: 'var(--border-radius-lg)',
+                        padding: '2rem',
+                        cursor: 'pointer',
+                        position: 'relative',
+                        transition: 'all 0.3s'
+                      }}>
+                        {profileForm.profile_photo ? (
+                          <div>
+                            <img 
+                              src={profileForm.profile_photo} 
+                              alt="Avatar" 
+                              style={{
+                                width: '150px',
+                                height: '150px',
+                                borderRadius: '50%',
+                                objectFit: 'cover',
+                                marginBottom: '1rem'
+                              }}
+                            />
+                            <p style={{ fontSize: '0.9rem', marginBottom: '0.5rem' }}>Cliquez pour changer</p>
+                          </div>
+                        ) : (
+                          <div>
+                            <p style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>📷</p>
+                            <p style={{ marginBottom: 0 }}>Cliquez pour ajouter une photo</p>
+                          </div>
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleAvatarUpload}
+                          style={{
+                            position: 'absolute',
+                            width: '100%',
+                            height: '100%',
+                            opacity: 0,
+                            cursor: 'pointer',
+                            top: 0,
+                            left: 0
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Profile Info */}
+                    <div className="col-12 col-md-8">
+                      <div className="row g-3">
+                        <div className="col-12">
+                          <label className="form-label">Nom Complet</label>
+                          <input
+                            type="text"
+                            className="form-control"
+                            name="full_name"
+                            value={profileForm.full_name}
+                            onChange={handleProfileChange}
+                            style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                          />
+                        </div>
+                        <div className="col-12">
+                          <label className="form-label">Email</label>
+                          <input
+                            type="email"
+                            className="form-control"
+                            name="email"
+                            value={profileForm.email}
+                            onChange={handleProfileChange}
+                            style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                          />
+                        </div>
+                        <div className="col-12 col-md-6">
+                          <label className="form-label">Téléphone</label>
+                          <input
+                            type="tel"
+                            className="form-control"
+                            name="phone"
+                            value={profileForm.phone}
+                            onChange={handleProfileChange}
+                            placeholder="+33..."
+                            style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                          />
+                        </div>
+                        <div className="col-12 col-md-6">
+                          <label className="form-label">WhatsApp</label>
+                          <input
+                            type="tel"
+                            className="form-control"
+                            name="whatsapp"
+                            value={profileForm.whatsapp}
+                            onChange={handleProfileChange}
+                            placeholder="+33..."
+                            style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                          />
+                        </div>
+
+                        <div className="col-12">
+                          <hr />
+                          <h6 style={{ color: 'var(--primary-color)', marginTop: '1rem', marginBottom: '1rem' }}>🔐 Sécurité</h6>
+                        </div>
+
+                        {!showPasswordChange ? (
+                          <div className="col-12">
+                            <button
+                              className="btn btn-warning"
+                              onClick={() => setShowPasswordChange(true)}
+                            >
+                              🔑 Changer le mot de passe
+                            </button>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="col-12">
+                              <label className="form-label">Mot de passe actuel</label>
+                              <input
+                                type="password"
+                                className="form-control"
+                                name="currentPassword"
+                                value={passwordForm.currentPassword}
+                                onChange={handlePasswordChange}
+                                style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                              />
+                            </div>
+                            <div className="col-12 col-md-6">
+                              <label className="form-label">Nouveau mot de passe</label>
+                              <input
+                                type="password"
+                                className="form-control"
+                                name="newPassword"
+                                value={passwordForm.newPassword}
+                                onChange={handlePasswordChange}
+                                style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                              />
+                            </div>
+                            <div className="col-12 col-md-6">
+                              <label className="form-label">Confirmer le mot de passe</label>
+                              <input
+                                type="password"
+                                className="form-control"
+                                name="confirmPassword"
+                                value={passwordForm.confirmPassword}
+                                onChange={handlePasswordChange}
+                                style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                              />
+                            </div>
+                            <div className="col-12">
+                              <button
+                                className="btn btn-success me-2"
+                                onClick={changePassword}
+                              >
+                                ✅ Confirmer
+                              </button>
+                              <button
+                                className="btn btn-secondary"
+                                onClick={() => {
+                                  setShowPasswordChange(false)
+                                  setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
+                                }}
+                              >
+                                ❌ Annuler
+                              </button>
+                            </div>
+                          </>
+                        )}
+
+                        <div className="col-12">
+                          <button
+                            className="btn btn-success mt-3"
+                            onClick={saveProfile}
+                          >
+                            💾 Sauvegarder le profil
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="row g-3">
+                    <div className="col-12 col-md-4 text-center">
+                      {profileForm.profile_photo ? (
+                        <img 
+                          src={profileForm.profile_photo} 
+                          alt="Avatar" 
+                          style={{
+                            width: '150px',
+                            height: '150px',
+                            borderRadius: '50%',
+                            objectFit: 'cover',
+                            border: '3px solid var(--primary-color)'
+                          }}
+                        />
+                      ) : (
+                        <div style={{
+                          width: '150px',
+                          height: '150px',
+                          borderRadius: '50%',
+                          background: 'var(--bg-color)',
+                          border: '3px dashed var(--primary-color)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '4rem',
+                          margin: '0 auto'
+                        }}>
+                          👤
+                        </div>
+                      )}
+                      <p style={{ marginTop: '1rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                        ID: {adminInfo.id?.substring(0, 8)}...
+                      </p>
+                    </div>
+
+                    <div className="col-12 col-md-8">
+                      <div className="row g-3">
+                        <div className="col-12">
+                          <p><strong>Nom Complet:</strong> {profileForm.full_name || 'Non défini'}</p>
+                        </div>
+                        <div className="col-12">
+                          <p><strong>Email:</strong> {profileForm.email || 'Non défini'}</p>
+                        </div>
+                        <div className="col-12 col-md-6">
+                          <p><strong>Téléphone:</strong> {profileForm.phone || 'Non défini'}</p>
+                        </div>
+                        <div className="col-12 col-md-6">
+                          <p><strong>WhatsApp:</strong> {profileForm.whatsapp || 'Non défini'}</p>
+                        </div>
+                        <div className="col-12">
+                          <p><strong>Rôle:</strong> <span style={{ color: 'var(--success-color)', fontWeight: 'bold' }}>Developer</span></p>
+                        </div>
+                        {adminInfo.created_at && (
+                          <div className="col-12">
+                            <p><strong>Compte créé:</strong> {new Date(adminInfo.created_at).toLocaleDateString('fr-FR')}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </motion.div>
           )}
