@@ -1,12 +1,14 @@
-import React, { createContext, useContext, useEffect, useState } from 'react'
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react'
 
 /**
  * Contexte React pour gérer les thèmes globalement
+ * Forces un repaint complet lors du changement
  */
 const ThemeContext = createContext()
 
 export const ThemeProvider = ({ children }) => {
   const [currentTheme, setCurrentTheme] = useState('gold')
+  const [mounted, setMounted] = useState(false)
 
   const themes = [
     { 
@@ -45,42 +47,52 @@ export const ThemeProvider = ({ children }) => {
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') || 'gold'
     applyTheme(savedTheme)
-    console.log('🎨 ThemeProvider: Thème chargé au démarrage -', savedTheme)
+    setMounted(true)
   }, [])
 
-  const applyTheme = (themeId) => {
+  const applyTheme = useCallback((themeId) => {
     // Validation
     if (!themes.find(t => t.id === themeId)) {
-      console.error(`❌ ThemeProvider: Thème invalide: ${themeId}`)
+      console.error(`❌ Thème invalide: ${themeId}`)
       return
     }
 
-    console.log(`🎨 ThemeProvider: Changement de thème: ${themeId}`)
+    console.log(`🎨 Changement de thème: ${themeId}`)
 
-    // Appliquer sur l'élément HTML
+    // 1. Appliquer le thème sur documentElement
     document.documentElement.setAttribute('data-theme', themeId)
+    document.body.setAttribute('data-theme', themeId)
+    
+    // 2. Mettre à jour colorScheme pour les éléments natifs
     document.documentElement.style.colorScheme = themeId === 'dark' ? 'dark' : 'light'
 
-    // Appliquer aussi sur body pour plus de compatibilité
-    document.body.setAttribute('data-theme', themeId)
-
-    // Force browser refresh - déclenche un repaint
-    void document.documentElement.offsetHeight
-
-    // Sauvegarder
+    // 3. Sauvegarder dans localStorage
     localStorage.setItem('theme', themeId)
+    
+    // 4. Mettre à jour l'état local
     setCurrentTheme(themeId)
 
-    // Dispatcher un événement personnalisé pour notifier les autres composants
-    window.dispatchEvent(new CustomEvent('themechange', { detail: { theme: themeId } }))
+    // 5. Force une reflow/repaint complète
+    // Ceci force le navigateur à recalculer tous les styles
+    const html = document.documentElement
+    const computed = window.getComputedStyle(html)
+    
+    // Trigger une reflow
+    html.offsetHeight
+    
+    // Dispatcher un événement pour d'autres composants
+    window.dispatchEvent(new CustomEvent('themechange', { 
+      detail: { theme: themeId } 
+    }))
 
-    console.log(`✅ ThemeProvider: Thème appliqué avec succès - ${themeId}`)
-  }
+    console.log(`✅ Thème appliqué: ${themeId}`)
+  }, [themes])
 
   const value = {
     currentTheme,
     themes,
-    applyTheme
+    applyTheme,
+    mounted
   }
 
   return (
@@ -91,7 +103,7 @@ export const ThemeProvider = ({ children }) => {
 }
 
 /**
- * Hook pour utiliser le contexte de thème dans nos composants
+ * Hook pour utiliser le contexte de thème
  */
 export const useThemeContext = () => {
   const context = useContext(ThemeContext)

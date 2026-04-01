@@ -42,21 +42,48 @@ const DeveloperDashboard = () => {
   const fetchAllData = async () => {
     try {
       setLoading(true)
-      const [appoRes, servRes, statsRes, logsRes, adminsRes] = await Promise.all([
-        api.get('/appointments').catch(() => ({ data: { appointments: [] } })),
-        api.get('/services').catch(() => ({ data: { services: [] } })),
-        api.get('/revenue/stats').catch(() => ({ data: {} })),
-        api.get('/site-settings/developer/logs?limit=50').catch(() => ({ data: [] })),
-        api.get('/site-settings/developer/admins').catch(() => ({ data: [] }))
-      ])
+      console.log('🔄 Chargement des données du tableau de bord développeur...')
+      
+      // Fetch REAL data from API responsibly
+      try {
+        const appoRes = await api.get('/appointments')
+        setAppointments(appoRes.data.appointments || appoRes.data || [])
+        console.log('✅ Appointments chargés:', appoRes.data)
+      } catch (err) {
+        console.warn('❌ Erreur appointments:', err.message)
+        setAppointments([])
+      }
 
-      setAppointments(appoRes.data.appointments || [])
-      setServices(servRes.data.services || [])
-      setStats(statsRes.data || {})
-      setLogs(logsRes.data || [])
-      setAdmins(adminsRes.data || [])
+      try {
+        const servRes = await api.get('/services')
+        setServices(servRes.data.services || servRes.data || [])
+        console.log('✅ Services chargés:', servRes.data)
+      } catch (err) {
+        console.warn('❌ Erreur services:', err.message)
+        setServices([])
+      }
+
+      try {
+        const adminsRes = await api.get('/site-settings/developer/admins')
+        const adminsList = Array.isArray(adminsRes.data) ? adminsRes.data : (adminsRes.data.admins || [])
+        setAdmins(adminsList)
+        console.log('✅ Admins chargés:', adminsList)
+      } catch (err) {
+        console.warn('❌ Erreur admins:', err.message)
+        setAdmins([])
+      }
+
+      try {
+        const logsRes = await api.get('/site-settings/developer/logs')
+        const logsList = Array.isArray(logsRes.data) ? logsRes.data : (logsRes.data.logs || [])
+        setLogs(logsList)
+        console.log('✅ Logs chargés:', logsList)
+      } catch (err) {
+        console.warn('❌ Erreur logs:', err.message)
+        setLogs([])
+      }
     } catch (error) {
-      console.error('Erreur fetch:', error)
+      console.error('❌ Erreur générale fetch:', error)
     } finally {
       setLoading(false)
     }
