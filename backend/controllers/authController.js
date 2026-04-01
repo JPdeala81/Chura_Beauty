@@ -150,9 +150,8 @@ export const resetPassword = async (req, res) => {
   } catch (e) {
     res.status(500).json({ message: e.message });
   }
-};
+
 import jwt from 'jsonwebtoken'
-import bcrypt from 'bcryptjs'
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
