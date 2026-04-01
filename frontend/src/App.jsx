@@ -10,6 +10,7 @@ import Home from './pages/Home'
 import Services from './pages/Services'
 import ServiceDetail from './pages/ServiceDetail'
 import Login from './pages/Login'
+import ResetPassword from './pages/admin/ResetPassword'
 import DebugLogin from './pages/admin/DebugLogin'
 import SuperAdminDashboard from './pages/admin/SuperAdminDashboard'
 import ManageServices from './pages/admin/ManageServices'
@@ -66,6 +67,7 @@ function AppRoutes() {
         <Route path="/services" element={<Services />} />
         <Route path="/service/:id" element={<ServiceDetail />} />
         <Route path="/admin/login" element={<ProtectedLoginRoute><Login /></ProtectedLoginRoute>} />
+        <Route path="/admin/reset-password/:token" element={<ResetPassword />} />
         <Route path="/debug/login" element={<DebugLogin />} />
         <Route path="/owner-profile/:slug" element={<OwnerProfile />} />
 
