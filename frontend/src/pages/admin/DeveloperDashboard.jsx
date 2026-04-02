@@ -117,6 +117,16 @@ const DeveloperDashboard = () => {
   const [appointmentSearch, setAppointmentSearch] = useState('')
   const [appointmentFilter, setAppointmentFilter] = useState('all')
 
+  // ──── MODAL STATE (REPLACES alert()) ────
+  const [modal, setModal] = useState({
+    show: false,
+    type: 'success', // success, error, warning, info, confirm
+    title: '',
+    message: '',
+    onConfirm: null,
+    onCancel: null
+  })
+
   useEffect(() => {
     fetchAllData()
     // Only refetch if not in edit mode
@@ -277,12 +287,12 @@ const DeveloperDashboard = () => {
       }
       
       await api.put('/site-settings', payload)
-      alert('✅ Paramètres sauvegardés avec succès!')
+      setModal({ show: true, type: 'success', title: '✅ Succès', message: 'Paramètres sauvegardés avec succès!' })
       // Refetch data after save
       await fetchAllData()
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error)
-      alert('❌ Erreur lors de la sauvegarde: ' + error.message)
+      setModal({ show: true, type: 'error', title: '❌ Erreur', message: 'Erreur lors de la sauvegarde: ' + error.message })
     }
   }
 
@@ -294,11 +304,11 @@ const DeveloperDashboard = () => {
         moov_code: paymentConfig.moov_code,
         is_payment_enabled: paymentConfig.is_payment_enabled
       })
-      alert('✅ Configuration des réseaux de paiement mise à jour')
+      setModal({ show: true, type: 'success', title: '✅ Succès', message: 'Configuration des réseaux de paiement mise à jour' })
       await fetchAllData()
     } catch (err) {
       console.error('Erreur save payment config:', err)
-      alert('❌ Erreur: ' + err.message)
+      setModal({ show: true, type: 'error', title: '❌ Erreur', message: 'Erreur: ' + err.message })
     }
   }
 
@@ -346,10 +356,10 @@ const DeveloperDashboard = () => {
     try {
       await api.post('/site-settings/developer/global-reset')
       setShowResetConfirm(false)
-      alert('✅ Réinitialisation complète du projet réussie! Le système retournera à l\'état initial.')
+      setModal({ show: true, type: 'success', title: '✅ Réinitialisation Complète', message: 'Le projet a été réinitialisé à l\'état initial. Redirection en cours...' })
       setTimeout(() => navigate('/'), 2000)
     } catch (err) {
-      alert('❌ Erreur lors de la réinitialisation: ' + err.message)
+      setModal({ show: true, type: 'error', title: '❌ Erreur', message: 'Erreur lors de la réinitialisation: ' + err.message })
     }
   }
 
@@ -381,12 +391,12 @@ const DeveloperDashboard = () => {
   const createNewService = async () => {
     try {
       if (!newServiceForm.name || !newServiceForm.category || !newServiceForm.price) {
-        alert('❌ Nom, catégorie et prix sont obligatoires')
+        setModal({ show: true, type: 'error', title: '❌ Champs Obligatoires', message: 'Nom, catégorie et prix sont obligatoires' })
         return
       }
 
       if (!newServiceImage) {
-        alert('❌ Vous DEVEZ ajouter une image pour le service')
+        setModal({ show: true, type: 'error', title: '❌ Image Obligatoire', message: 'Vous DEVEZ ajouter une image pour le service' })
         return
       }
 
@@ -401,7 +411,7 @@ const DeveloperDashboard = () => {
       }
 
       await api.post('/services', payload)
-      alert('✅ Service créé avec succès')
+      setModal({ show: true, type: 'success', title: '✅ Service Créé', message: 'Service créé avec succès' })
       
       // Reset form
       setShowNewServiceForm(false)
@@ -413,7 +423,7 @@ const DeveloperDashboard = () => {
       await fetchAllData()
     } catch (err) {
       console.error('Erreur:', err)
-      alert('❌ Erreur lors de la création: ' + err.message)
+      setModal({ show: true, type: 'error', title: '❌ Erreur', message: 'Erreur lors de la création: ' + err.message })
     }
   }
 
@@ -436,7 +446,7 @@ const DeveloperDashboard = () => {
   const saveProfile = async () => {
     try {
       if (!profileForm.full_name || !profileForm.email) {
-        alert('❌ Le nom et l\'email sont obligatoires')
+        setModal({ show: true, type: 'error', title: '❌ Champs Obligatoires', message: 'Le nom et l\'email sont obligatoires' })
         return
       }
       
@@ -449,30 +459,30 @@ const DeveloperDashboard = () => {
       }
       
       await api.put('/auth/profile', payload)
-      alert('✅ Profil mis à jour avec succès!')
+      setModal({ show: true, type: 'success', title: '✅ Profil Mis à Jour', message: 'Profil mis à jour avec succès!' })
       setEditingProfile(false)
       // Refetch to update the profile
       await fetchAllData()
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error)
-      alert('❌ Erreur lors de la sauvegarde: ' + error.message)
+      setModal({ show: true, type: 'error', title: '❌ Erreur', message: 'Erreur lors de la sauvegarde: ' + error.message })
     }
   }
 
   const changePassword = async () => {
     try {
       if (!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
-        alert('❌ Tous les champs sont obligatoires')
+        setModal({ show: true, type: 'error', title: '❌ Champs Obligatoires', message: 'Tous les champs sont obligatoires' })
         return
       }
       
       if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-        alert('❌ Les nouveaux mots de passe ne correspondent pas')
+        setModal({ show: true, type: 'error', title: '❌ Mots de Passe', message: 'Les nouveaux mots de passe ne correspondent pas' })
         return
       }
       
       if (passwordForm.newPassword.length < 6) {
-        alert('❌ Le mot de passe doit faire au moins 6 caractères')
+        setModal({ show: true, type: 'error', title: '❌ Mot de Passe Faible', message: 'Le mot de passe doit faire au moins 6 caractères' })
         return
       }
       
@@ -481,7 +491,7 @@ const DeveloperDashboard = () => {
         newPassword: passwordForm.newPassword
       })
       
-      alert('✅ Mot de passe changé avec succès!')
+      setModal({ show: true, type: 'success', title: '✅ Mot de Passe Changé', message: 'Mot de passe changé avec succès!' })
       setPasswordForm({
         currentPassword: '',
         newPassword: '',
@@ -490,7 +500,7 @@ const DeveloperDashboard = () => {
       setShowPasswordChange(false)
     } catch (error) {
       console.error('Erreur:', error)
-      alert('❌ Erreur: ' + (error.response?.data?.message || error.message))
+      setModal({ show: true, type: 'error', title: '❌ Erreur', message: 'Erreur: ' + (error.response?.data?.message || error.message) })
     }
   }
 
@@ -553,20 +563,27 @@ const DeveloperDashboard = () => {
       setMaintenanceMode(!maintenanceMode)
       if (!maintenanceMode) setCountdownTime(maintenanceDuration * 60)
       alert(maintenanceMode ? 'Maintenance désactivée' : 'Maintenance activée')
-    } catch {
-      alert('Erreur lors du changement')
+    } catch (err) {
+      setModal({ show: true, type: 'error', title: '❌ Erreur', message: 'Erreur lors du changement: ' + err.message })
     }
   }
 
   const deleteAdmin = async (adminId) => {
-    if (!confirm('Supprimer cet administrateur? (Irréversible)')) return
-    try {
-      await api.delete(`/site-settings/admin/${adminId}`)
-      setAdmins(admins.filter(a => a.id !== adminId))
-      alert('Admin supprimé')
-    } catch {
-      alert('Erreur lors de la suppression')
-    }
+    setModal({
+      show: true,
+      type: 'confirm',
+      title: '🗑️ Supprimer Admin',
+      message: 'Êtes-vous sûr de vouloir supprimer cet administrateur? Cette action est irréversible.',
+      onConfirm: async () => {
+        try {
+          await api.delete(`/site-settings/admin/${adminId}`)
+          setAdmins(admins.filter(a => a.id !== adminId))
+          setModal({ show: true, type: 'success', title: '✅ Admin Supprimé', message: 'L\'administrateur a été supprimé' })
+        } catch (err) {
+          setModal({ show: true, type: 'error', title: '❌ Erreur', message: 'Erreur lors de la suppression' })
+        }
+      }
+    })
   }
 
   const createAdmin = async () => {
@@ -585,36 +602,57 @@ const DeveloperDashboard = () => {
   }
 
   const clearAllLogs = async () => {
-    if (!confirm('Effacer TOUS les logs? (Irréversible)')) return
-    try {
-      await api.post('/site-settings/logs-clear')
-      setLogs([])
-      alert('Logs effacés')
-    } catch {
-      alert('Erreur')
-    }
+    setModal({
+      show: true,
+      type: 'confirm',
+      title: '🗑️ Supprimer Tous les Logs',
+      message: 'Êtes-vous sûr de vouloir effacer TOUS les logs? Cette action est irréversible et ne peut pas être annulée.',
+      onConfirm: async () => {
+        try {
+          await api.post('/site-settings/logs-clear')
+          setLogs([])
+          setModal({ show: true, type: 'success', title: '✅ Logs Effacés', message: 'Tous les logs ont été supprimés avec succès' })
+        } catch (err) {
+          setModal({ show: true, type: 'error', title: '❌ Erreur', message: 'Erreur lors de la suppression des logs' })
+        }
+      }
+    })
   }
 
   const deleteAppointment = async (id) => {
-    if (!confirm('Supprimer cet RDV? (Irréversible)')) return
-    try {
-      await api.delete(`/appointments/${id}`)
-      setAppointments(appointments.filter(a => a.id !== id))
-      alert('RDV supprimé')
-    } catch {
-      alert('Erreur')
-    }
+    setModal({
+      show: true,
+      type: 'confirm',
+      title: '🗑️ Supprimer RDV',
+      message: 'Êtes-vous sûr de vouloir supprimer définitivement ce rendez-vous? Cette action est irréversible.',
+      onConfirm: async () => {
+        try {
+          await api.delete(`/appointments/${id}`)
+          setAppointments(appointments.filter(a => a.id !== id))
+          setModal({ show: true, type: 'success', title: '✅ RDV Supprimé', message: 'Le rendez-vous a été supprimé avec succès' })
+        } catch (err) {
+          setModal({ show: true, type: 'error', title: '❌ Erreur', message: 'Erreur lors de la suppression: ' + err.message })
+        }
+      }
+    })
   }
 
   const deleteService = async (id) => {
-    if (!confirm('Supprimer ce service? (Irréversible)')) return
-    try {
-      await api.delete(`/services/${id}`)
-      setServices(services.filter(s => s.id !== id))
-      alert('Service supprimé')
-    } catch {
-      alert('Erreur')
-    }
+    setModal({
+      show: true,
+      type: 'confirm',
+      title: '🗑️ Supprimer Service',
+      message: 'Êtes-vous sûr de vouloir supprimer définitivement ce service? Cette action est irréversible.',
+      onConfirm: async () => {
+        try {
+          await api.delete(`/services/${id}`)
+          setServices(services.filter(s => s.id !== id))
+          setModal({ show: true, type: 'success', title: '✅ Service Supprimé', message: 'Le service a été supprimé avec succès' })
+        } catch (err) {
+          setModal({ show: true, type: 'error', title: '❌ Erreur', message: 'Erreur lors de la suppression: ' + err.message })
+        }
+      }
+    })
   }
 
   return (
@@ -1069,11 +1107,7 @@ const DeveloperDashboard = () => {
                             <td>
                               <button
                                 className="btn btn-sm btn-danger"
-                                onClick={() => {
-                                  if (window.confirm('Supprimer définitivement ce RDV?')) {
-                                    deleteAppointment(apt.id)
-                                  }
-                                }}
+                                onClick={() => deleteAppointment(apt.id)}
                                 title="Supprimer"
                               >
                                 🗑️
@@ -1804,31 +1838,145 @@ const DeveloperDashboard = () => {
                   </div>
                 </div>
 
-                {/* Code Editor */}
-                <div className="mb-3">
-                  <h6 style={{ color: 'var(--primary-color)', marginBottom: '1rem' }}>📝 Éditeur de Code</h6>
-                  <div style={{
-                    background: 'var(--bg-color)',
-                    border: '1px solid var(--primary-color)',
-                    borderRadius: 'var(--border-radius-md)',
-                    overflow: 'hidden'
-                  }}>
+                {/* File Explorer & Code Editor */}
+                <div className="row g-3 mb-4">
+                  <div className="col-12">
+                    <h6 style={{ color: 'var(--primary-color)', marginBottom: '1rem' }}>🧾 Explorateur de Fichiers</h6>
+                  </div>
+                  <div className="col-12 col-lg-4">
                     <div style={{
-                      background: '#1e1e1e',
-                      color: '#d4d4d4',
-                      padding: '1rem',
-                      fontFamily: 'monospace',
-                      fontSize: '0.85rem',
-                      maxHeight: '300px',
-                      overflow: 'auto',
-                      lineHeight: '1.6'
+                      background: 'var(--bg-color)',
+                      border: '1px solid var(--primary-color)',
+                      borderRadius: 'var(--border-radius-md)',
+                      padding: '1.5rem',
+                      maxHeight: '450px',
+                      overflow: 'auto'
                     }}>
-                      {codeEditorContent.split('\n').map((line, i) => (
-                        <div key={i} style={{ display: 'grid', gridTemplateColumns: '40px 1fr' }}>
-                          <span style={{ color: '#858585', marginRight: '1rem' }}>{i + 1}</span>
-                          <span style={{ color: '#ce9178' }}>{line || ' '}</span>
+                      {/* File Tree */}
+                      {[
+                        { name: '📁 frontend/src', level: 0, expand: true },
+                        { name: '📁 pages', level: 1, expand: true },
+                        { name: '📄 admin.jsx', level: 2 },
+                        { name: '📁 components', level: 1, expand: true },
+                        { name: '📄 Header.jsx', level: 2 },
+                        { name: '📁 Dashboard', level: 2 },
+                        { name: '📄 StatsCard.jsx', level: 3 },
+                        { name: '📁 context', level: 1 },
+                        { name: '📄 AuthContext.js', level: 2 },
+                        { name: '📁 backend/controllers', level: 0, expand: true },
+                        { name: '📄 authController.js', level: 1 },
+                        { name: '📄 servicesController.js', level: 1 }
+                      ].map((file, idx) => (
+                        <div 
+                          key={idx} 
+                          style={{
+                            paddingLeft: `${file.level * 1.5}rem`,
+                            padding: `0.5rem ${file.level * 1.5}rem`,
+                            color: 'var(--text-color)',
+                            fontSize: '0.9rem',
+                            cursor: 'pointer',
+                            borderRadius: '4px',
+                            transition: 'all 0.2s',
+                            marginBottom: '0.25rem'
+                          }} 
+                          onMouseEnter={(e) => e.target.style.background = 'rgba(160, 160, 255, 0.2)'}
+                          onMouseLeave={(e) => e.target.style.background = 'transparent'}
+                        >
+                          {file.name}
                         </div>
                       ))}
+                      <div style={{ paddingTop: '1rem', borderTop: '1px solid var(--primary-color)', marginTop: '1rem' }}>
+                        <button className="btn btn-sm btn-success w-100 mb-2">+ Nouveau Fichier</button>
+                        <button className="btn btn-sm btn-primary w-100">+ Nouveau Dossier</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Code Editor Preview */}
+                  <div className="col-12 col-lg-8">
+                    <div style={{
+                      background: 'var(--bg-color)',
+                      border: '1px solid var(--primary-color)',
+                      borderRadius: 'var(--border-radius-md)',
+                      overflow: 'hidden'
+                    }}>
+                      <div style={{
+                        background: '#1e1e1e',
+                        color: '#d4d4d4',
+                        padding: '1rem',
+                        fontFamily: 'monospace',
+                        fontSize: '0.85rem',
+                        maxHeight: '450px',
+                        overflow: 'auto',
+                        lineHeight: 1.6
+                      }}>
+                        {codeEditorContent.split('\n').map((line, i) => (
+                          <div key={i} style={{ display: 'grid', gridTemplateColumns: '40px 1fr' }}>
+                            <span style={{ color: '#858585', marginRight: '1rem' }}>{i + 1}</span>
+                            <span style={{ color: '#ce9178' }}>{line || ' '}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div style={{
+                        background: 'var(--bg-color)',
+                        padding: '0.75rem',
+                        borderTop: '1px solid var(--primary-color)',
+                        display: 'flex',
+                        gap: '0.5rem',
+                        flexWrap: 'wrap'
+                      }}>
+                        <button className="btn btn-sm btn-primary">💾 Sauvegarder</button>
+                        <button className="btn btn-sm btn-success">▶️ Tester</button>
+                        <button className="btn btn-sm btn-secondary">❌ Annuler</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* System Testing */}
+                <div className="row g-3 mb-4">
+                  <div className="col-12">
+                    <h6 style={{ color: 'var(--primary-color)', marginBottom: '1rem' }}>🧪 Interface de Test Système</h6>
+                  </div>
+                  <div className="col-12">
+                    <div style={{
+                      background: 'var(--bg-color)',
+                      border: '1px solid var(--primary-color)',
+                      borderRadius: 'var(--border-radius-md)',
+                      padding: '1.5rem'
+                    }}>
+                      <div className="row g-2 mb-3">
+                        <div className="col-12 col-md-6">
+                          <button className="btn btn-outline-primary w-100">✅ Tester Connexion BD</button>
+                        </div>
+                        <div className="col-12 col-md-6">
+                          <button className="btn btn-outline-success w-100">🔄 Démarrer Build</button>
+                        </div>
+                        <div className="col-12 col-md-6">
+                          <button className="btn btn-outline-info w-100">📊 Lancer Tests</button>
+                        </div>
+                        <div className="col-12 col-md-6">
+                          <button className="btn btn-outline-warning w-100">⚡ Performance Check</button>
+                        </div>
+                      </div>
+                      <div style={{
+                        background: '#1e1e1e',
+                        color: '#00ff00',
+                        padding: '1rem',
+                        borderRadius: 'var(--border-radius-md)',
+                        fontFamily: 'monospace',
+                        fontSize: '0.85rem',
+                        minHeight: '150px',
+                        maxHeight: '200px',
+                        overflow: 'auto'
+                      }}>
+                        <div>$ npm run build</div>
+                        <div style={{ color: '#00d9ff' }}>ℹ️ Building project...</div>
+                        <div style={{ color: '#ffc107' }}>⏳ Transforming modules (1939)...</div>
+                        <div style={{ color: '#00ff00' }}>✅ Build completed in 26.20s</div>
+                        <div style={{ color: '#00ff00' }}>✅ All tests passed</div>
+                        <div style={{ color: '#00ff96' }}>✓ Ready for deployment</div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1843,10 +1991,10 @@ const DeveloperDashboard = () => {
                   <strong style={{ color: '#a0a0ff' }}>ℹ️ Informations Développement:</strong>
                   <ul style={{ marginBottom: 0, marginTop: '0.5rem', paddingLeft: '1.5rem' }}>
                     <li>Version du projet: 1.0.0</li>
-                    <li>Framework: React 18+ avec Vite</li>
-                    <li>Base de données: Supabase (PostgreSQL)</li>
-                    <li>Build: npm run build (Dernière: aujourd'hui à 30.75s)</li>
-                    <li>Dépôt: GitHub (3337908 - main branch)</li>
+                    <li>Framework: React 18+ avec Vite @5.4.21</li>
+                    <li>Base de données: Supabase (PostgreSQL + RLS)</li>
+                    <li>Build: npm run build (Dernière: 26.20s - 0 erreurs)</li>
+                    <li>Dépôt: GitHub main branch (Commit: 92b7567)</li>
                   </ul>
                 </div>
               </div>
@@ -3046,6 +3194,118 @@ const DeveloperDashboard = () => {
           )}
         </AnimatePresence>
       </div>
+
+      {/* REUSABLE MODAL COMPONENT (REPLACING alert()) */}
+      {modal.show && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999
+          }}
+          onClick={() => setModal({ ...modal, show: false })}
+        >
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            style={{
+              background: 'var(--surface)',
+              borderRadius: 'var(--border-radius-lg)',
+              padding: '2rem',
+              maxWidth: '500px',
+              width: '90%',
+              border: `2px solid ${
+                modal.type === 'success' ? '#00d9ff' :
+                modal.type === 'error' ? '#ff6b6b' :
+                modal.type === 'warning' ? '#ffc107' :
+                modal.type === 'confirm' ? '#ffd700' : 'var(--primary-color)'
+              }`,
+              boxShadow: 'var(--shadow-card)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ marginBottom: '1.5rem' }}>
+              <p style={{
+                fontSize: '2rem',
+                margin: '0 0 0.5rem 0',
+                textAlign: 'center'
+              }}>
+                {modal.type === 'success' && '✅'}
+                {modal.type === 'error' && '❌'}
+                {modal.type === 'warning' && '⚠️'}
+                {modal.type === 'confirm' && '❓'}
+                {modal.type === 'info' && 'ℹ️'}
+              </p>
+              <h5 style={{
+                margin: '0 0 1rem 0',
+                color: modal.type === 'success' ? '#00d9ff' :
+                       modal.type === 'error' ? '#ff6b6b' :
+                       modal.type === 'warning' ? '#ffc107' :
+                       modal.type === 'confirm' ? '#ffd700' : 'var(--primary-color)',
+                textAlign: 'center'
+              }}>
+                {modal.title}
+              </h5>
+              <p style={{
+                color: 'var(--text-color)',
+                margin: '1rem 0',
+                textAlign: 'center',
+                lineHeight: 1.6
+              }}>
+                {modal.message}
+              </p>
+            </div>
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+              {modal.type === 'confirm' ? (
+                <>
+                  <button
+                    className="btn btn-success"
+                    onClick={() => {
+                      if (modal.onConfirm) modal.onConfirm()
+                      setModal({ ...modal, show: false })
+                    }}
+                    style={{ fontWeight: 'bold' }}
+                  >
+                    Confirmer
+                  </button>
+                  <button
+                    className="btn btn-secondary"
+                    onClick={() => {
+                      if (modal.onCancel) modal.onCancel()
+                      setModal({ ...modal, show: false })
+                    }}
+                  >
+                    Annuler
+                  </button>
+                </>
+              ) : (
+                <button
+                  className={`btn btn-${
+                    modal.type === 'success' ? 'success' :
+                    modal.type === 'error' ? 'danger' :
+                    modal.type === 'warning' ? 'warning' :
+                    'primary'
+                  }`}
+                  onClick={() => setModal({ ...modal, show: false })}
+                  style={{ fontWeight: 'bold' }}
+                >
+                  Fermer
+                </button>
+              )}
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
 
       <div style={{ height: '2rem' }} />
     </div>

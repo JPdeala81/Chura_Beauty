@@ -80,6 +80,8 @@ const SuperAdminDashboard = () => {
   const [serviceImage, setServiceImage] = useState(null)
   const [serviceImagePreview, setServiceImagePreview] = useState(null)
   const [customCategory, setCustomCategory] = useState('')
+  const [selectedServiceForQR, setSelectedServiceForQR] = useState(null)
+  const [showServiceQRModal, setShowServiceQRModal] = useState(false)
   const SERVICES_PER_PAGE = 8
 
   // Site Settings - Logo Upload
@@ -1560,6 +1562,13 @@ const SuperAdminDashboard = () => {
                               }}
                               title="Éditer"
                             >✏️</button>
+                            <button className="btn btn-sm btn-outline-info me-1"
+                              onClick={() => {
+                                setSelectedServiceForQR(service)
+                                setShowServiceQRModal(true)
+                              }}
+                              title="Afficher QR Code"
+                            >📱</button>
                             <button className="btn btn-sm btn-outline-danger"
                               onClick={async () => {
                                 if (confirm('Êtes-vous sûr?')) {
@@ -1614,6 +1623,80 @@ const SuperAdminDashboard = () => {
                   Affichage: {paginatedServices.length} / {filteredServices.length} services | Total: {services.length}
                 </small>
               </div>
+            </motion.div>
+          )}
+
+          {/* SERVICE QR CODE MODAL */}
+          {showServiceQRModal && selectedServiceForQR && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: 'rgba(0, 0, 0, 0.7)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 1050
+              }}
+              onClick={() => setShowServiceQRModal(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.8 }}
+                animate={{ scale: 1 }}
+                exit={{ scale: 0.8 }}
+                style={{
+                  background: 'var(--surface)',
+                  border: '2px solid var(--primary-color)',
+                  borderRadius: 'var(--border-radius-lg)',
+                  padding: '2rem',
+                  maxWidth: '500px',
+                  textAlign: 'center'
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <h5 style={{ color: 'var(--primary-color)', marginBottom: '1.5rem' }}>📱 QR Code Service</h5>
+                <div style={{
+                  background: 'white',
+                  padding: '1.5rem',
+                  borderRadius: 'var(--border-radius-md)',
+                  marginBottom: '1.5rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minHeight: '300px'
+                }}>
+                  <div style={{ textAlign: 'center' }}>
+                    <p style={{ fontSize: '4rem', margin: 0, marginBottom: '0.5rem' }}>📱</p>
+                    <p style={{ color: 'var(--text-muted)', marginBottom: 0 }}>Service: {selectedServiceForQR.title}</p>
+                    <p style={{ color: 'var(--text-muted)', margin: '0.25rem 0 0 0', fontSize: '0.9rem' }}>Prix: {selectedServiceForQR.price} FCFA</p>
+                  </div>
+                </div>
+                <div style={{
+                  background: 'var(--bg-color)',
+                  border: '1px solid var(--primary-color)',
+                  borderRadius: 'var(--border-radius-md)',
+                  padding: '1rem',
+                  marginBottom: '1.5rem'
+                }}>
+                  <h6 style={{ color: 'var(--primary-color)', marginBottom: '0.5rem' }}>Détails du Service</h6>
+                  <p style={{ fontSize: '0.9rem', marginBottom: '0.3rem' }}><strong>Titre:</strong> {selectedServiceForQR.title}</p>
+                  <p style={{ fontSize: '0.9rem', marginBottom: '0.3rem' }}><strong>Catégorie:</strong> {selectedServiceForQR.category}</p>
+                  <p style={{ fontSize: '0.9rem', marginBottom: '0.3rem' }}><strong>Prix:</strong> {selectedServiceForQR.price?.toLocaleString()} FCFA</p>
+                  <p style={{ fontSize: '0.9rem', marginBottom: 0 }}><strong>Durée:</strong> {selectedServiceForQR.duration_minutes} minutes</p>
+                </div>
+                <button
+                  className="btn btn-primary w-100"
+                  onClick={() => setShowServiceQRModal(false)}
+                >
+                  ✅ Fermer
+                </button>
+              </motion.div>
             </motion.div>
           )}
 
@@ -1768,6 +1851,17 @@ const SuperAdminDashboard = () => {
                 padding: '2rem'
               }}>
                 <h6 style={{ color: 'var(--primary-color)', marginBottom: '1rem' }}>Administrateurs actuels</h6>
+                <div className="alert" style={{
+                  background: 'rgba(0, 217, 255, 0.1)',
+                  border: '1px solid #00d9ff',
+                  borderRadius: 'var(--border-radius-md)',
+                  color: 'var(--text-color)',
+                  marginBottom: '1rem'
+                }}>
+                  <small>
+                    <strong>ℹ️ Nota:</strong> Le super administrateur ne peut pas supprimer le développeur ou son propre compte pour assurer la sécurité du système.
+                  </small>
+                </div>
                 <div className="table-responsive">
                   <table className="table table-hover" style={{ marginBottom: 0 }}>
                     <thead style={{ background: 'var(--bg-color)' }}>
@@ -1899,7 +1993,7 @@ const SuperAdminDashboard = () => {
                             name="phone"
                             value={profileForm.phone}
                             onChange={handleProfileChange}
-                            placeholder="+33..."
+                            placeholder="+241 XX XX XX XX (Gabon)"
                             style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
                           />
                         </div>
@@ -1911,7 +2005,7 @@ const SuperAdminDashboard = () => {
                             name="whatsapp"
                             value={profileForm.whatsapp}
                             onChange={handleProfileChange}
-                            placeholder="+33..."
+                            placeholder="+241 XX XX XX XX (Gabon)"
                             style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
                           />
                         </div>
@@ -2272,217 +2366,6 @@ const SuperAdminDashboard = () => {
                   <p className="mb-2">✓ Dernier audit de sécurité: <strong>{new Date().toLocaleDateString('fr-FR')}</strong></p>
                   <p className="mb-2">✓ Certificat SSL/TLS: <strong>Valide jusqu'au 31/12/2025</strong></p>
                   <p className="mb-0">✓ Version API: <strong>v1.0.5</strong></p>
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {/* SERVICE MANAGEMENT TAB */}
-          {activeTab === 'service-management' && (
-            <motion.div
-              key="service-management"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-            >
-              {/* Create/Edit Service Form */}
-              {(newServiceForm || editingService) && (
-                <motion.div
-                  className="card mb-4"
-                  style={{
-                    background: 'var(--surface)',
-                    border: '2px solid var(--primary-color)',
-                    borderRadius: 'var(--border-radius-lg)',
-                    padding: '2rem'
-                  }}
-                >
-                  <h5 style={{ marginBottom: '1.5rem', color: 'var(--primary-color)' }}>
-                    {editingService ? '✏️ Modifier Service' : '➕ Nouveau Service'}
-                  </h5>
-                  <div className="row g-3 mb-3">
-                    <div className="col-12 col-md-6">
-                      <label className="form-label">Titre *</label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        name="title"
-                        value={serviceForm.title}
-                        onChange={handleServiceFormChange}
-                        placeholder="Manucure, Pédicure..."
-                        style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
-                      />
-                    </div>
-                    <div className="col-12 col-md-6">
-                      <label className="form-label">Catégorie *</label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        name="category"
-                        value={serviceForm.category}
-                        onChange={handleServiceFormChange}
-                        placeholder="Ongles, Beauté..."
-                        style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
-                      />
-                    </div>
-                    <div className="col-12 col-md-6">
-                      <label className="form-label">Prix (FCFA) *</label>
-                      <input
-                        type="number"
-                        className="form-control"
-                        name="price"
-                        value={serviceForm.price}
-                        onChange={handleServiceFormChange}
-                        min="0"
-                        style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
-                      />
-                    </div>
-                    <div className="col-12 col-md-6">
-                      <label className="form-label">Durée (minutes)</label>
-                      <input
-                        type="number"
-                        className="form-control"
-                        name="duration_minutes"
-                        value={serviceForm.duration_minutes}
-                        onChange={handleServiceFormChange}
-                        min="5"
-                        style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
-                      />
-                    </div>
-                    <div className="col-12">
-                      <label className="form-label">Description</label>
-                      <textarea
-                        className="form-control"
-                        name="description"
-                        value={serviceForm.description}
-                        onChange={handleServiceFormChange}
-                        rows="3"
-                        placeholder="Description du service..."
-                        style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
-                      />
-                    </div>
-                    <div className="col-12">
-                      <div className="form-check form-switch">
-                        <input
-                          className="form-check-input"
-                          type="checkbox"
-                          name="active"
-                          checked={serviceForm.active}
-                          onChange={handleServiceFormChange}
-                          id="serviceActive"
-                          style={{ width: '3em', height: '1.5em' }}
-                        />
-                        <label className="form-check-label" htmlFor="serviceActive">
-                          Service actif
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="d-flex gap-2">
-                    <button
-                      className="btn btn-success"
-                      onClick={editingService ? updateService : createService}
-                    >
-                      💾 {editingService ? 'Mettre à jour' : 'Créer'}
-                    </button>
-                    <button
-                      className="btn btn-secondary"
-                      onClick={() => {
-                        setEditingService(null)
-                        setNewServiceForm(false)
-                        setServiceForm({ title: '', category: '', price: 0, duration_minutes: 30, description: '', active: true })
-                      }}
-                    >
-                      ❌ Annuler
-                    </button>
-                  </div>
-                </motion.div>
-              )}
-
-              {/* Services List */}
-              <div className="card" style={{
-                background: 'var(--surface)',
-                border: '1px solid var(--primary-color)',
-                borderRadius: 'var(--border-radius-lg)',
-                padding: '2rem'
-              }}>
-                <div className="d-flex justify-content-between align-items-center mb-3">
-                  <h5 style={{ margin: 0, color: 'var(--primary-color)' }}>💅 Services</h5>
-                  <button
-                    className="btn btn-primary"
-                    onClick={() => {
-                      setNewServiceForm(true)
-                      setServiceForm({ title: '', category: '', price: 0, duration_minutes: 30, description: '', active: true })
-                    }}
-                  >
-                    ➕ Nouveau Service
-                  </button>
-                </div>
-                <div className="table-responsive">
-                  <table className="table table-hover" style={{ marginBottom: 0 }}>
-                    <thead style={{ background: 'var(--bg-color)' }}>
-                      <tr>
-                        <th style={{ color: 'var(--primary-color)' }}>Titre</th>
-                        <th style={{ color: 'var(--primary-color)' }}>Catégorie</th>
-                        <th style={{ color: 'var(--primary-color)' }}>Prix</th>
-                        <th style={{ color: 'var(--primary-color)' }}>Durée</th>
-                        <th style={{ color: 'var(--primary-color)' }}>Statut</th>
-                        <th style={{ color: 'var(--primary-color)' }}>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {services.map(service => (
-                        <tr key={service.id}>
-                          <td>{service.title}</td>
-                          <td>{service.category}</td>
-                          <td>{service.price?.toLocaleString()} FCFA</td>
-                          <td>{service.duration_minutes} min</td>
-                          <td>
-                            <span className="badge" style={{ background: service.active ? '#00d9ff' : '#ff6b6b' }}>
-                              {service.active ? '✓ Actif' : '✗ Inactif'}
-                            </span>
-                          </td>
-                          <td>
-                            <div className="d-flex gap-1">
-                              <button
-                                className="btn btn-sm btn-primary"
-                                onClick={() => {
-                                  setEditingService(service.id)
-                                  setServiceForm(service)
-                                }}
-                                title="Modifier"
-                              >
-                                ✏️
-                              </button>
-                              {service.active ? (
-                                <button
-                                  className="btn btn-sm btn-warning"
-                                  onClick={() => rejectService(service.id)}
-                                  title="Désactiver"
-                                >
-                                  ⛔
-                                </button>
-                              ) : (
-                                <button
-                                  className="btn btn-sm btn-success"
-                                  onClick={() => acceptService(service.id)}
-                                  title="Activer"
-                                >
-                                  ✅
-                                </button>
-                              )}
-                              <button
-                                className="btn btn-sm btn-danger"
-                                onClick={() => deleteService(service.id)}
-                                title="Supprimer"
-                              >
-                                🗑️
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
                 </div>
               </div>
             </motion.div>
