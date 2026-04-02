@@ -1740,262 +1740,294 @@ const DeveloperDashboard = () => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
             >
-              <div className="card" style={{
-                background: 'var(--surface)',
+              <div style={{
+                background: '#1e1e1e',
                 border: '2px solid #a0a0ff',
                 borderRadius: 'var(--border-radius-lg)',
-                padding: '2rem',
-                marginBottom: '2rem'
+                overflow: 'hidden',
+                height: '100vh',
+                display: 'flex',
+                flexDirection: 'column',
+                color: '#d4d4d4'
               }}>
-                <h4 style={{ marginBottom: '1.5rem', color: '#a0a0ff' }}>💻 Interface de Développement Avancée</h4>
-                
-                {/* Dashboard Technique */}
-                <div className="row g-3 mb-4">
-                  <div className="col-12 col-md-6">
-                    <div style={{
-                      background: 'var(--bg-color)',
-                      border: '1px solid #a0a0ff',
-                      borderRadius: 'var(--border-radius-md)',
-                      padding: '1.5rem',
-                      textAlign: 'center'
-                    }}>
-                      <p style={{ fontSize: '2.5rem', margin: 0 }}>📁</p>
-                      <p style={{ color: 'var(--text-muted)', margin: '0.5rem 0 0 0', fontSize: '0.9rem' }}>Fichiers Total</p>
-                      <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#a0a0ff', margin: '0.5rem 0' }}>245</p>
-                    </div>
-                  </div>
-                  <div className="col-12 col-md-6">
-                    <div style={{
-                      background: 'var(--bg-color)',
-                      border: '1px solid #a0a0ff',
-                      borderRadius: 'var(--border-radius-md)',
-                      padding: '1.5rem',
-                      textAlign: 'center'
-                    }}>
-                      <p style={{ fontSize: '2.5rem', margin: 0 }}>📄</p>
-                      <p style={{ color: 'var(--text-muted)', margin: '0.5rem 0 0 0', fontSize: '0.9rem' }}>Lignes de Code</p>
-                      <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#a0a0ff', margin: '0.5rem 0' }}>8.542</p>
-                    </div>
-                  </div>
+                {/* VS Code Style Header */}
+                <div style={{
+                  background: '#332f2f',
+                  borderBottom: '1px solid #3e3e42',
+                  padding: '0.75rem 1rem',
+                  display: 'flex',
+                  gap: '1rem',
+                  alignItems: 'center'
+                }}>
+                  <button title="Explorateur" className="btn btn-sm" style={{
+                    background: '#a0a0ff',
+                    color: '#1e1e1e',
+                    border: 'none',
+                    padding: '0.4rem 0.8rem',
+                    fontSize: '0.9rem'
+                  }}>📁 Explorateur</button>
+                  <button title="Rechercher" className="btn btn-sm" style={{
+                    background: 'transparent',
+                    color: '#d4d4d4',
+                    border: '1px solid #3e3e42',
+                    padding: '0.4rem 0.8rem'
+                  }}>🔍 Rechercher</button>
+                  <button title="Débogueur" className="btn btn-sm" style={{
+                    background: 'transparent',
+                    color: '#d4d4d4',
+                    border: '1px solid #3e3e42',
+                    padding: '0.4rem 0.8rem'
+                  }}>🐛 Débogue</button>
+                  <button title="Terminal" className="btn btn-sm" style={{
+                    background: 'transparent',
+                    color: '#d4d4d4',
+                    border: '1px solid #3e3e42',
+                    padding: '0.4rem 0.8rem'
+                  }}>⌨️ Terminal</button>
+                  <input 
+                    type="text" 
+                    placeholder="Palette de commandes... (Ctrl+Shift+P)" 
+                    style={{
+                      flex: 1,
+                      background: '#3e3e42',
+                      color: '#d4d4d4',
+                      border: '1px solid #555',
+                      borderRadius: '4px',
+                      padding: '0.4rem 0.8rem',
+                      fontSize: '0.85rem'
+                    }}
+                  />
                 </div>
 
-                {/* File Types Distribution */}
-                <div className="row g-3 mb-4">
-                  <div className="col-12">
-                    <h6 style={{ color: 'var(--primary-color)', marginBottom: '1rem' }}>📊 Répartition des Fichiers</h6>
-                  </div>
-                  <div className="col-12 col-md-3">
+                {/* Main IDE Layout */}
+                <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+                  {/* Sidebar - File Explorer */}
+                  <div style={{
+                    width: '250px',
+                    background: '#252526',
+                    borderRight: '1px solid #3e3e42',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    overflow: 'hidden'
+                  }}>
                     <div style={{
-                      background: 'var(--bg-color)',
-                      border: '1px solid #ffd700',
-                      borderRadius: 'var(--border-radius-md)',
-                      padding: '1rem',
-                      textAlign: 'center'
+                      padding: '0.75rem 1rem',
+                      borderBottom: '1px solid #3e3e42',
+                      fontSize: '0.9rem',
+                      fontWeight: 'bold'
                     }}>
-                      <small style={{ color: 'var(--text-muted)' }}>Fichiers JavaScript</small>
-                      <p style={{ fontSize: '1.8rem', fontWeight: 'bold', color: '#ffd700', margin: '0.5rem 0' }}>120</p>
-                      <small style={{ color: 'var(--text-muted)' }}>49%</small>
+                      EXPLORATEUR
                     </div>
-                  </div>
-                  <div className="col-12 col-md-3">
                     <div style={{
-                      background: 'var(--bg-color)',
-                      border: '1px solid #00d9ff',
-                      borderRadius: 'var(--border-radius-md)',
-                      padding: '1rem',
-                      textAlign: 'center'
+                      flex: 1,
+                      overflow: 'auto',
+                      padding: '0.5rem',
+                      fontSize: '0.85rem'
                     }}>
-                      <small style={{ color: 'var(--text-muted)' }}>Fichiers CSS</small>
-                      <p style={{ fontSize: '1.8rem', fontWeight: 'bold', color: '#00d9ff', margin: '0.5rem 0' }}>85</p>
-                      <small style={{ color: 'var(--text-muted)' }}>35%</small>
-                    </div>
-                  </div>
-                  <div className="col-12 col-md-3">
-                    <div style={{
-                      background: 'var(--bg-color)',
-                      border: '1px solid #00ff96',
-                      borderRadius: 'var(--border-radius-md)',
-                      padding: '1rem',
-                      textAlign: 'center'
-                    }}>
-                      <small style={{ color: 'var(--text-muted)' }}>Fichiers JSON</small>
-                      <p style={{ fontSize: '1.8rem', fontWeight: 'bold', color: '#00ff96', margin: '0.5rem 0' }}>25</p>
-                      <small style={{ color: 'var(--text-muted)' }}>10%</small>
-                    </div>
-                  </div>
-                  <div className="col-12 col-md-3">
-                    <div style={{
-                      background: 'var(--bg-color)',
-                      border: '1px solid #ff6b6b',
-                      borderRadius: 'var(--border-radius-md)',
-                      padding: '1rem',
-                      textAlign: 'center'
-                    }}>
-                      <small style={{ color: 'var(--text-muted)' }}>Autres</small>
-                      <p style={{ fontSize: '1.8rem', fontWeight: 'bold', color: '#ff6b6b', margin: '0.5rem 0' }}>15</p>
-                      <small style={{ color: 'var(--text-muted)' }}>6%</small>
-                    </div>
-                  </div>
-                </div>
-
-                {/* File Explorer & Code Editor */}
-                <div className="row g-3 mb-4">
-                  <div className="col-12">
-                    <h6 style={{ color: 'var(--primary-color)', marginBottom: '1rem' }}>🧾 Explorateur de Fichiers</h6>
-                  </div>
-                  <div className="col-12 col-lg-4">
-                    <div style={{
-                      background: 'var(--bg-color)',
-                      border: '1px solid var(--primary-color)',
-                      borderRadius: 'var(--border-radius-md)',
-                      padding: '1.5rem',
-                      maxHeight: '450px',
-                      overflow: 'auto'
-                    }}>
-                      {/* File Tree */}
                       {[
-                        { name: '📁 frontend/src', level: 0, expand: true },
-                        { name: '📁 pages', level: 1, expand: true },
-                        { name: '📄 admin.jsx', level: 2 },
-                        { name: '📁 components', level: 1, expand: true },
-                        { name: '📄 Header.jsx', level: 2 },
-                        { name: '📁 Dashboard', level: 2 },
-                        { name: '📄 StatsCard.jsx', level: 3 },
-                        { name: '📁 context', level: 1 },
-                        { name: '📄 AuthContext.js', level: 2 },
-                        { name: '📁 backend/controllers', level: 0, expand: true },
-                        { name: '📄 authController.js', level: 1 },
-                        { name: '📄 servicesController.js', level: 1 }
-                      ].map((file, idx) => (
+                        { name: 'frontend/', level: 0, expand: true, type: 'folder' },
+                        { name: 'src/', level: 1, expand: true, type: 'folder' },
+                        { name: 'pages/', level: 2, expand: true, type: 'folder' },
+                        { name: 'admin.jsx', level: 3, type: 'jsx' },
+                        { name: 'components/', level: 2, expand: true, type: 'folder' },
+                        { name: 'Header.jsx', level: 3, type: 'jsx' },
+                        { name: 'Dashboard.jsx', level: 3, type: 'jsx' },
+                        { name: 'context/', level: 2, expand: true, type: 'folder' },
+                        { name: 'AuthContext.js', level: 3, type: 'js' },
+                        { name: 'backend/', level: 0, expand: true, type: 'folder' },
+                        { name: 'controllers/', level: 1, expand: true, type: 'folder' },
+                        { name: 'authController.js', level: 2, type: 'js' },
+                        { name: 'servicesController.js', level: 2, type: 'js' }
+                      ].map((file, idx) => {
+                        const icons = {
+                          'folder': '📁',
+                          'jsx': '⚛️',
+                          'js': '🟨',
+                          'css': '🎨',
+                          'json': '{ }'
+                        }
+                        const paddingLeftValue = file.level * 8 + 'px'
+                        const paddingValue = '0.4rem ' + (file.level * 8 + 4) + 'px'
+                        return (
+                          <div 
+                            key={idx}
+                            style={{
+                              paddingLeft: paddingLeftValue,
+                              padding: paddingValue,
+                              cursor: 'pointer',
+                              borderRadius: '3px',
+                              transition: 'all 0.2s',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.4rem'
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'}
+                            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                          >
+                            <span>{icons[file.type] || '📄'}</span>
+                            <span>{file.name}</span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Editor Area */}
+                  <div style={{
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    overflow: 'hidden'
+                  }}>
+                    {/* Tabs */}
+                    <div style={{
+                      background: '#1e1e1e',
+                      borderBottom: '1px solid #3e3e42',
+                      display: 'flex',
+                      gap: '0.5rem',
+                      padding: '0.5rem 0.75rem',
+                      overflowX: 'auto'
+                    }}>
+                      {['admin.jsx', 'Header.jsx', 'AuthContext.js'].map((tab, idx) => (
                         <div 
-                          key={idx} 
+                          key={idx}
                           style={{
-                            paddingLeft: `${file.level * 1.5}rem`,
-                            padding: `0.5rem ${file.level * 1.5}rem`,
-                            color: 'var(--text-color)',
-                            fontSize: '0.9rem',
+                            padding: '0.5rem 1rem',
+                            borderBottom: idx === 0 ? '2px solid #a0a0ff' : '2px solid transparent',
                             cursor: 'pointer',
-                            borderRadius: '4px',
-                            transition: 'all 0.2s',
-                            marginBottom: '0.25rem'
-                          }} 
-                          onMouseEnter={(e) => e.target.style.background = 'rgba(160, 160, 255, 0.2)'}
-                          onMouseLeave={(e) => e.target.style.background = 'transparent'}
+                            fontSize: '0.9rem',
+                            whiteSpace: 'nowrap',
+                            transition: 'all 0.2s'
+                          }}
                         >
-                          {file.name}
+                          {tab === 'admin.jsx' ? '⚛️' : tab === 'Header.jsx' ? '⚛️' : '🟨'} {tab}
                         </div>
                       ))}
-                      <div style={{ paddingTop: '1rem', borderTop: '1px solid var(--primary-color)', marginTop: '1rem' }}>
-                        <button className="btn btn-sm btn-success w-100 mb-2">+ Nouveau Fichier</button>
-                        <button className="btn btn-sm btn-primary w-100">+ Nouveau Dossier</button>
-                      </div>
                     </div>
-                  </div>
 
-                  {/* Code Editor Preview */}
-                  <div className="col-12 col-lg-8">
+                    {/* Code Editor */}
                     <div style={{
-                      background: 'var(--bg-color)',
-                      border: '1px solid var(--primary-color)',
-                      borderRadius: 'var(--border-radius-md)',
+                      flex: 1,
+                      display: 'flex',
                       overflow: 'hidden'
                     }}>
+                      {/* Line Numbers & Code */}
                       <div style={{
-                        background: '#1e1e1e',
-                        color: '#d4d4d4',
-                        padding: '1rem',
-                        fontFamily: 'monospace',
-                        fontSize: '0.85rem',
-                        maxHeight: '450px',
-                        overflow: 'auto',
-                        lineHeight: 1.6
-                      }}>
-                        {codeEditorContent.split('\n').map((line, i) => (
-                          <div key={i} style={{ display: 'grid', gridTemplateColumns: '40px 1fr' }}>
-                            <span style={{ color: '#858585', marginRight: '1rem' }}>{i + 1}</span>
-                            <span style={{ color: '#ce9178' }}>{line || ' '}</span>
-                          </div>
-                        ))}
-                      </div>
-                      <div style={{
-                        background: 'var(--bg-color)',
-                        padding: '0.75rem',
-                        borderTop: '1px solid var(--primary-color)',
+                        flex: 1,
                         display: 'flex',
-                        gap: '0.5rem',
-                        flexWrap: 'wrap'
+                        overflow: 'auto',
+                        background: '#1e1e1e'
                       }}>
-                        <button className="btn btn-sm btn-primary">💾 Sauvegarder</button>
-                        <button className="btn btn-sm btn-success">▶️ Tester</button>
-                        <button className="btn btn-sm btn-secondary">❌ Annuler</button>
+                        <div style={{
+                          background: '#1e1e1e',
+                          color: '#858585',
+                          padding: '1rem 0.75rem',
+                          fontFamily: 'Consolas, monospace',
+                          fontSize: '0.9rem',
+                          lineHeight: 1.6,
+                          userSelect: 'none',
+                          borderRight: '1px solid #3e3e42',
+                          textAlign: 'right',
+                          minWidth: 'fit-content'
+                        }}>
+                          {Array.from({ length: 50 }, (_, i) => (
+                            <div key={i}>{i + 1}</div>
+                          ))}
+                        </div>
+                        <div style={{
+                          flex: 1,
+                          padding: '1rem',
+                          fontFamily: 'Consolas, monospace',
+                          fontSize: '0.9rem',
+                          lineHeight: 1.6,
+                          color: '#ce9178',
+                          overflow: 'auto'
+                        }}>
+                          {codeEditorContent.split('\n').slice(0, 50).map((line, i) => (
+                            <div key={i} style={{ minHeight: '1.6em' }}>
+                              <span style={{ color: '#ce9178' }}>{line || ' '}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Minimap */}
+                      <div style={{
+                        width: '70px',
+                        background: '#1e1e1e',
+                        borderLeft: '1px solid #3e3e42',
+                        padding: '0.5rem 0.25rem'
+                      }}>
+                        <div style={{
+                          width: '100%',
+                          height: '100%',
+                          background: 'rgba(160, 160, 255, 0.1)',
+                          borderRadius: '2px',
+                          fontSize: '0.6rem',
+                          color: '#666'
+                        }}>
+                          {codeEditorContent.split('\n').slice(0, 20).map((_, i) => (
+                            <div key={i} style={{ height: '3px', background: 'rgba(160, 160, 255, 0.2)', margin: '1px 0' }}></div>
+                          ))}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </div>
 
-                {/* System Testing */}
-                <div className="row g-3 mb-4">
-                  <div className="col-12">
-                    <h6 style={{ color: 'var(--primary-color)', marginBottom: '1rem' }}>🧪 Interface de Test Système</h6>
-                  </div>
-                  <div className="col-12">
+                    {/* Bottom Panel - Terminal & Issues */}
                     <div style={{
-                      background: 'var(--bg-color)',
-                      border: '1px solid var(--primary-color)',
-                      borderRadius: 'var(--border-radius-md)',
-                      padding: '1.5rem'
+                      height: '200px',
+                      background: '#1e1e1e',
+                      borderTop: '1px solid #3e3e42',
+                      display: 'flex',
+                      flexDirection: 'column'
                     }}>
-                      <div className="row g-2 mb-3">
-                        <div className="col-12 col-md-6">
-                          <button className="btn btn-outline-primary w-100">✅ Tester Connexion BD</button>
-                        </div>
-                        <div className="col-12 col-md-6">
-                          <button className="btn btn-outline-success w-100">🔄 Démarrer Build</button>
-                        </div>
-                        <div className="col-12 col-md-6">
-                          <button className="btn btn-outline-info w-100">📊 Lancer Tests</button>
-                        </div>
-                        <div className="col-12 col-md-6">
-                          <button className="btn btn-outline-warning w-100">⚡ Performance Check</button>
-                        </div>
+                      <div style={{
+                        display: 'flex',
+                        gap: '1rem',
+                        padding: '0.5rem 1rem',
+                        borderBottom: '1px solid #3e3e42',
+                        fontSize: '0.9rem'
+                      }}>
+                        <span style={{ cursor: 'pointer' }}>Terminal</span>
+                        <span style={{ cursor: 'pointer' }}>Problèmes</span>
+                        <span style={{ cursor: 'pointer' }}>Débogueur</span>
                       </div>
                       <div style={{
-                        background: '#1e1e1e',
-                        color: '#00ff00',
+                        flex: 1,
+                        overflow: 'auto',
                         padding: '1rem',
-                        borderRadius: 'var(--border-radius-md)',
-                        fontFamily: 'monospace',
-                        fontSize: '0.85rem',
-                        minHeight: '150px',
-                        maxHeight: '200px',
-                        overflow: 'auto'
+                        fontFamily: 'Consolas, monospace',
+                        fontSize: '0.85rem'
                       }}>
                         <div>$ npm run build</div>
                         <div style={{ color: '#00d9ff' }}>ℹ️ Building project...</div>
-                        <div style={{ color: '#ffc107' }}>⏳ Transforming modules (1939)...</div>
-                        <div style={{ color: '#00ff00' }}>✅ Build completed in 26.20s</div>
-                        <div style={{ color: '#00ff00' }}>✅ All tests passed</div>
-                        <div style={{ color: '#00ff96' }}>✓ Ready for deployment</div>
+                        <div style={{ color: '#ffc107' }}>⏳ Vite 5.4.21</div>
+                        <div style={{ color: '#00ff00' }}>✓ 1939 modules transformed.</div>
+                        <div style={{ color: '#00ff00' }}>✓ Built in 26.20s</div>
+                        <div style={{ color: '#00ff96' }}>Ready for deployment ✓</div>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Info Box */}
-                <div className="alert" style={{
-                  background: 'rgba(160, 160, 255, 0.1)',
-                  border: '1px solid #a0a0ff',
-                  borderRadius: 'var(--border-radius-md)',
-                  color: 'var(--text-color)'
+                {/* Status Bar */}
+                <div style={{
+                  background: '#332f2f',
+                  borderTop: '1px solid #3e3e42',
+                  padding: '0.5rem 1rem',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  fontSize: '0.85rem',
+                  color: '#d4d4d4'
                 }}>
-                  <strong style={{ color: '#a0a0ff' }}>ℹ️ Informations Développement:</strong>
-                  <ul style={{ marginBottom: 0, marginTop: '0.5rem', paddingLeft: '1.5rem' }}>
-                    <li>Version du projet: 1.0.0</li>
-                    <li>Framework: React 18+ avec Vite @5.4.21</li>
-                    <li>Base de données: Supabase (PostgreSQL + RLS)</li>
-                    <li>Build: npm run build (Dernière: 26.20s - 0 erreurs)</li>
-                    <li>Dépôt: GitHub main branch (Commit: 92b7567)</li>
-                  </ul>
+                  <div>Ln 42, Col 15</div>
+                  <div style={{ display: 'flex', gap: '1rem' }}>
+                    <span>UTF-8</span>
+                    <span>LF</span>
+                    <span>JavaScript React</span>
+                    <span>🟢 0 erreurs, ⚠️ 1 avertissement</span>
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -2462,27 +2494,257 @@ const DeveloperDashboard = () => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
             >
-              <div className="row g-3">
+              {/* Security Controls - Interactive */}
+              <div className="row g-3 mb-4">
                 {[
-                  { icon: '🔒', title: 'HTTPS', desc: 'Connexion sécurisée' },
-                  { icon: '🔐', title: 'JWT Auth', desc: 'Authentification tokens' },
-                  { icon: '🛡️', title: 'bcryptJS', desc: 'Hachage mots de passe' },
-                  { icon: '⚔️', title: 'RLS', desc: 'Row Level Security' },
-                  { icon: '🚦', title: 'Rate Limit', desc: '1000 req/min' },
-                  { icon: '📝', title: 'Audit Logs', desc: 'Tous les accès enregistrés' }
+                  { icon: '🔒', title: 'HTTPS', desc: 'Connexion sécurisée', status: true, configurable: true },
+                  { icon: '🔐', title: 'JWT Auth', desc: 'Authentification tokens', status: true, configurable: true },
+                  { icon: '🛡️', title: 'bcryptJS', desc: 'Hachage mots de passe', status: true, configurable: false },
+                  { icon: '⚔️', title: 'RLS', desc: 'Row Level Security', status: true, configurable: true },
+                  { icon: '🚦', title: 'Rate Limit', desc: '1000 req/min', status: true, configurable: true },
+                  { icon: '📝', title: 'Audit Logs', desc: 'Tous les accès enregistrés', status: true, configurable: true }
                 ].map((item, idx) => (
-                  <div key={idx} className="col-12 col-md-6">
-                    <div className="card" style={{
-                      background: 'var(--surface)',
-                      border: '2px solid #00ff96',
-                      borderRadius: 'var(--border-radius-lg)',
-                      padding: '1.5rem'
-                    }}>
-                      <h6 style={{ color: '#00ff96', marginBottom: '0.5rem' }}>{item.icon} {item.title}</h6>
-                      <p style={{ margin: 0, fontSize: '0.9rem' }}>{item.desc}</p>
-                    </div>
+                  <div key={idx} className="col-12 col-md-6 col-lg-4">
+                    <motion.div 
+                      className="card" 
+                      whileHover={{ y: -5, boxShadow: '0 10px 30px rgba(0, 255, 150, 0.3)' }}
+                      style={{
+                        background: 'var(--surface)',
+                        border: `2px solid ${item.status ? '#00ff96' : '#ff6b6b'}`,
+                        borderRadius: 'var(--border-radius-lg)',
+                        padding: '1.5rem',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s'
+                      }}
+                      onClick={() => item.configurable && alert(`Configuration de ${item.title}`)}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '1rem' }}>
+                        <div>
+                          <h6 style={{ color: '#00ff96', marginBottom: '0.5rem', fontSize: '1.1rem' }}>
+                            {item.icon} {item.title}
+                          </h6>
+                          <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-color)' }}>{item.desc}</p>
+                        </div>
+                        <div style={{
+                          width: '40px',
+                          height: '40px',
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          background: item.status ? 'rgba(0, 255, 150, 0.2)' : 'rgba(255, 107, 107, 0.2)',
+                          border: `2px solid ${item.status ? '#00ff96' : '#ff6b6b'}`
+                        }}>
+                          {item.status ? '✓' : '✗'}
+                        </div>
+                      </div>
+                      
+                      {/* Toggle Switch */}
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        marginTop: '1rem',
+                        paddingTop: '1rem',
+                        borderTop: '1px solid rgba(0, 255, 150, 0.2)'
+                      }}>
+                        <div className="form-check form-switch">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            checked={item.status}
+                            onChange={(e) => e.stopPropagation()}
+                            style={{
+                              width: '3em',
+                              height: '1.5em',
+                              cursor: item.configurable ? 'pointer' : 'not-allowed',
+                              opacity: item.configurable ? 1 : 0.5
+                            }}
+                            disabled={!item.configurable}
+                          />
+                        </div>
+                        <small style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                          {item.configurable ? 'Cliquez pour configurer' : 'Système'}
+                        </small>
+                      </div>
+                    </motion.div>
                   </div>
                 ))}
+              </div>
+
+              {/* Security Settings Panel */}
+              <div className="card" style={{
+                background: 'var(--surface)',
+                border: '2px solid #00d9ff',
+                borderRadius: 'var(--border-radius-lg)',
+                padding: '2rem'
+              }}>
+                <h5 style={{ color: '#00d9ff', marginBottom: '1.5rem' }}>⚙️ Paramètres de Sécurité Avancés</h5>
+                
+                <div className="row g-4">
+                  {/* HTTPS Settings */}
+                  <div className="col-12 col-md-6">
+                    <label style={{ color: 'var(--primary-color)', fontWeight: 'bold', marginBottom: '1rem', display: 'block' }}>
+                      🔒 Configuration HTTPS
+                    </label>
+                    <div style={{
+                      background: 'var(--bg-color)',
+                      padding: '1.5rem',
+                      borderRadius: 'var(--border-radius-md)',
+                      border: '1px solid var(--primary-color)'
+                    }}>
+                      <div className="mb-3">
+                        <small className="form-text" style={{ color: 'var(--text-muted)' }}>Version du certificat</small>
+                        <select className="form-select mt-2" style={{
+                          background: 'var(--surface)',
+                          borderColor: 'var(--primary-color)',
+                          color: 'var(--text-color)'
+                        }}>
+                          <option value="TLS1.2">TLS 1.2</option>
+                          <option value="TLS1.3">TLS 1.3 (Recommandé)</option>
+                        </select>
+                      </div>
+                      <div className="mb-3">
+                        <small className="form-text" style={{ color: 'var(--text-muted)' }}>Algorithme de chiffrement</small>
+                        <select className="form-select mt-2" style={{
+                          background: 'var(--surface)',
+                          borderColor: 'var(--primary-color)',
+                          color: 'var(--text-color)'
+                        }}>
+                          <option value="AES256">AES-256 (Recommandé)</option>
+                          <option value="AES128">AES-128</option>
+                          <option value="ChaCha20">ChaCha20</option>
+                        </select>
+                      </div>
+                      <button className="btn btn-sm btn-success w-100">💾 Sauvegarder HTTPS</button>
+                    </div>
+                  </div>
+
+                  {/* JWT Settings */}
+                  <div className="col-12 col-md-6">
+                    <label style={{ color: 'var(--primary-color)', fontWeight: 'bold', marginBottom: '1rem', display: 'block' }}>
+                      🔐 Configuration JWT
+                    </label>
+                    <div style={{
+                      background: 'var(--bg-color)',
+                      padding: '1.5rem',
+                      borderRadius: 'var(--border-radius-md)',
+                      border: '1px solid var(--primary-color)'
+                    }}>
+                      <div className="mb-3">
+                        <small className="form-text" style={{ color: 'var(--text-muted)' }}>Expiration des tokens (heures)</small>
+                        <input type="number" className="form-control mt-2" defaultValue="24" style={{
+                          background: 'var(--surface)',
+                          borderColor: 'var(--primary-color)',
+                          color: 'var(--text-color)'
+                        }} />
+                      </div>
+                      <div className="mb-3">
+                        <label style={{ fontSize: '0.9rem', color: 'var(--text-color)' }}>
+                          <input type="checkbox" defaultChecked /> Token Refresh activé
+                        </label>
+                      </div>
+                      <button className="btn btn-sm btn-info w-100">🔄 Regénérer Clé Secrète</button>
+                    </div>
+                  </div>
+
+                  {/* Rate Limiting */}
+                  <div className="col-12 col-md-6">
+                    <label style={{ color: 'var(--primary-color)', fontWeight: 'bold', marginBottom: '1rem', display: 'block' }}>
+                      🚦 Limitation de Débit
+                    </label>
+                    <div style={{
+                      background: 'var(--bg-color)',
+                      padding: '1.5rem',
+                      borderRadius: 'var(--border-radius-md)',
+                      border: '1px solid var(--primary-color)'
+                    }}>
+                      <div className="mb-3">
+                        <small className="form-text" style={{ color: 'var(--text-muted)' }}>Requêtes par minute (par IP)</small>
+                        <input type="number" className="form-control mt-2" defaultValue="1000" style={{
+                          background: 'var(--surface)',
+                          borderColor: 'var(--primary-color)',
+                          color: 'var(--text-color)'
+                        }} />
+                      </div>
+                      <div className="mb-3">
+                        <small className="form-text" style={{ color: 'var(--text-muted)' }}>Fenêtre de temps (secondes)</small>
+                        <input type="number" className="form-control mt-2" defaultValue="60" style={{
+                          background: 'var(--surface)',
+                          borderColor: 'var(--primary-color)',
+                          color: 'var(--text-color)'
+                        }} />
+                      </div>
+                      <button className="btn btn-sm btn-warning w-100">⚙️ Appliquer Rate Limit</button>
+                    </div>
+                  </div>
+
+                  {/* Audit Logs Settings */}
+                  <div className="col-12 col-md-6">
+                    <label style={{ color: 'var(--primary-color)', fontWeight: 'bold', marginBottom: '1rem', display: 'block' }}>
+                      📝 Audit & Logs
+                    </label>
+                    <div style={{
+                      background: 'var(--bg-color)',
+                      padding: '1.5rem',
+                      borderRadius: 'var(--border-radius-md)',
+                      border: '1px solid var(--primary-color)'
+                    }}>
+                      <div className="mb-3">
+                        <label style={{ fontSize: '0.9rem', color: 'var(--text-color)' }}>
+                          <input type="checkbox" defaultChecked /> Enregistrer tous les accès
+                        </label>
+                      </div>
+                      <div className="mb-3">
+                        <label style={{ fontSize: '0.9rem', color: 'var(--text-color)' }}>
+                          <input type="checkbox" defaultChecked /> Enregistrer les modifications
+                        </label>
+                      </div>
+                      <div className="mb-3">
+                        <small className="form-text" style={{ color: 'var(--text-muted)' }}>Rétention des logs (jours)</small>
+                        <input type="number" className="form-control mt-2" defaultValue="90" style={{
+                          background: 'var(--surface)',
+                          borderColor: 'var(--primary-color)',
+                          color: 'var(--text-color)'
+                        }} />
+                      </div>
+                      <button className="btn btn-sm btn-secondary w-100">📥 Exporter Logs</button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Security Status */}
+                <div style={{
+                  background: 'rgba(0, 255, 150, 0.1)',
+                  border: '1px solid #00ff96',
+                  borderRadius: 'var(--border-radius-md)',
+                  padding: '1.5rem',
+                  marginTop: '2rem'
+                }}>
+                  <h6 style={{ color: '#00ff96', marginBottom: '1rem' }}>✓ Statut de Sécurité</h6>
+                  <div className="row g-2">
+                    <div className="col-12 col-md-6">
+                      <small style={{ color: 'var(--text-color)' }}>
+                        <strong>Dernier audit:</strong> {new Date().toLocaleDateString('fr-FR')}
+                      </small>
+                    </div>
+                    <div className="col-12 col-md-6">
+                      <small style={{ color: 'var(--text-color)' }}>
+                        <strong>Certificat SSL:</strong> Valide jusqu'au 31/12/2025
+                      </small>
+                    </div>
+                    <div className="col-12 col-md-6">
+                      <small style={{ color: 'var(--text-color)' }}>
+                        <strong>Score de sécurité:</strong> <span style={{ color: '#00ff96', fontWeight: 'bold' }}>A+ (98/100)</span>
+                      </small>
+                    </div>
+                    <div className="col-12 col-md-6">
+                      <small style={{ color: 'var(--text-color)' }}>
+                        <strong>Vulnérabilités:</strong> <span style={{ color: '#00ff96', fontWeight: 'bold' }}>0 détectées</span>
+                      </small>
+                    </div>
+                  </div>
+                </div>
               </div>
             </motion.div>
           )}
