@@ -34,6 +34,7 @@ const SuperAdminDashboard = () => {
   const [siteSettingsForm, setSiteSettingsForm] = useState({
     app_name: 'Chura Beauty',
     app_logo: '',
+    hero_background_image: '',
     homepage_hero_title: 'Bienvenue',
     homepage_hero_subtitle: 'Services de beauté premium',
     tagline: 'Excellence et élégance',
@@ -101,7 +102,14 @@ const SuperAdminDashboard = () => {
 
   useEffect(() => {
     fetchAllData()
-  }, [])
+  }, []);
+
+  // Stop auto-refetch when editing forms
+  useEffect(() => {
+    if (editingProfile || editingSiteSettings) return
+    const interval = setInterval(fetchAllData, 5000)
+    return () => clearInterval(interval)
+  }, [editingProfile, editingSiteSettings])
 
   const fetchAllData = async () => {
     try {
@@ -134,6 +142,7 @@ const SuperAdminDashboard = () => {
           ...prev,
           app_name: settingsData.app_name || prev.app_name,
           app_logo: settingsData.app_logo || prev.app_logo,
+          hero_background_image: settingsData.hero_background_image || prev.hero_background_image,
           homepage_hero_title: settingsData.homepage_hero_title || prev.homepage_hero_title,
           homepage_hero_subtitle: settingsData.homepage_hero_subtitle || prev.homepage_hero_subtitle,
           tagline: settingsData.tagline || prev.tagline,
@@ -428,20 +437,23 @@ const SuperAdminDashboard = () => {
   const saveSiteSettings = async () => {
     try {
       const payload = {
-        privacy_policy: siteSettingsForm.privacy_policy || '',
-        terms_of_service: siteSettingsForm.terms_of_service || '',
-        about_content: siteSettingsForm.about_content || '',
-        footer_services: siteSettingsForm.footer_services || [],
-        footer_custom_links: siteSettingsForm.footer_custom_links || [],
-        meta_title: siteSettingsForm.app_name || 'Chura Beauty',
-        meta_description: siteSettingsForm.tagline || '',
-        faviconEmoji: siteSettingsForm.faviconEmoji || '💆‍♀️',
-        faviconImage: siteSettingsForm.app_logo || '',
-        heroAnimation: siteSettingsForm.heroAnimation || 'particles',
-        heroCta: 'Prendre RDV',
-        heroCtaSecondary: 'Découvrir',
-        navbarCta: 'Réserver',
-        adminBtnText: 'Admin'
+        app_name: siteSettingsForm.app_name,
+        app_logo: siteSettingsForm.app_logo,
+        hero_background_image: siteSettingsForm.hero_background_image,
+        homepage_hero_title: siteSettingsForm.homepage_hero_title,
+        homepage_hero_subtitle: siteSettingsForm.homepage_hero_subtitle,
+        tagline: siteSettingsForm.tagline,
+        footer_company_name: siteSettingsForm.footer_company_name,
+        footer_address: siteSettingsForm.footer_address,
+        footer_phone: siteSettingsForm.footer_phone,
+        footer_email: siteSettingsForm.footer_email,
+        footer_whatsapp: siteSettingsForm.footer_whatsapp,
+        footer_instagram: siteSettingsForm.footer_instagram,
+        footer_facebook: siteSettingsForm.footer_facebook,
+        footer_twitter: siteSettingsForm.footer_twitter,
+        privacy_policy: siteSettingsForm.privacy_policy,
+        terms_of_service: siteSettingsForm.terms_of_service,
+        about_content: siteSettingsForm.about_content
       }
       
       console.log('📤 Envoi des paramètres:', payload)

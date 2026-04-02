@@ -61,6 +61,7 @@ const DeveloperDashboard = () => {
   const [siteSettingsForm, setSiteSettingsForm] = useState({
     app_name: 'Chura Beauty',
     app_logo: '',
+    hero_background_image: '',
     homepage_hero_title: 'Bienvenue',
     homepage_hero_subtitle: 'Services de beauté premium',
     tagline: 'Excellence et élégance',
@@ -104,9 +105,11 @@ const DeveloperDashboard = () => {
 
   useEffect(() => {
     fetchAllData()
+    // Only refetch if not in edit mode
+    if (editingProfile || editingSiteSettings) return
     const interval = setInterval(fetchAllData, 5000)
     return () => clearInterval(interval)
-  }, [])
+  }, [editingProfile, editingSiteSettings])
 
   useEffect(() => {
     if (!maintenanceMode || !countdownTime) return
@@ -175,6 +178,7 @@ const DeveloperDashboard = () => {
           ...prev,
           app_name: settingsData.app_name || prev.app_name,
           app_logo: settingsData.app_logo || prev.app_logo,
+          hero_background_image: settingsData.hero_background_image || prev.hero_background_image,
           homepage_hero_title: settingsData.homepage_hero_title || prev.homepage_hero_title,
           homepage_hero_subtitle: settingsData.homepage_hero_subtitle || prev.homepage_hero_subtitle,
           tagline: settingsData.tagline || prev.tagline,
@@ -227,6 +231,7 @@ const DeveloperDashboard = () => {
       const payload = {
         app_name: siteSettingsForm.app_name,
         app_logo: siteSettingsForm.app_logo,
+        hero_background_image: siteSettingsForm.hero_background_image,
         homepage_hero_title: siteSettingsForm.homepage_hero_title,
         homepage_hero_subtitle: siteSettingsForm.homepage_hero_subtitle,
         tagline: siteSettingsForm.tagline,

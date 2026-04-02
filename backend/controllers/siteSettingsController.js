@@ -174,6 +174,20 @@ const siteSettingsController = {
   updateSiteSettings: async (req, res) => {
     try {
       const {
+        app_name,
+        app_logo,
+        hero_background_image,
+        homepage_hero_title,
+        homepage_hero_subtitle,
+        tagline,
+        footer_company_name,
+        footer_address,
+        footer_phone,
+        footer_email,
+        footer_whatsapp,
+        footer_instagram,
+        footer_facebook,
+        footer_twitter,
         privacy_policy,
         terms_of_service,
         about_content,
@@ -201,6 +215,20 @@ const siteSettingsController = {
       }
 
       const updateData = {
+        app_name,
+        app_logo,
+        hero_background_image,
+        homepage_hero_title,
+        homepage_hero_subtitle,
+        tagline,
+        footer_company_name,
+        footer_address,
+        footer_phone,
+        footer_email,
+        footer_whatsapp,
+        footer_instagram,
+        footer_facebook,
+        footer_twitter,
         privacy_policy,
         terms_of_service,
         about_content,
