@@ -1,14 +1,16 @@
-import { useState, useEffect, useContext } from 'react'
+import { useState, useEffect, useContext, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { AuthContext } from '../../context/AuthContext'
 import api from '../../services/api'
 import QRCodeConfig from '../../components/admin/QRCodeConfig'
+import QRCode from 'qrcode.react'
 
 const DeveloperDashboard = () => {
   const navigate = useNavigate()
   const { logout } = useContext(AuthContext)
   const [activeTab, setActiveTab] = useState('overview')
+  const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [appointments, setAppointments] = useState([])
   const [services, setServices] = useState([])
   const [stats, setStats] = useState({})
@@ -99,6 +101,21 @@ const DeveloperDashboard = () => {
     moov_code: '',
     is_payment_enabled: false
   })
+
+  // ──── CODING INTERFACE (FEATURE 13) ────
+  const [codeEditorContent, setCodeEditorContent] = useState('// Bienvenue dans l\'éditeur de code\n// Vous pouvez afficher et modifier les fichiers du projet ici')
+  const [selectedFile, setSelectedFile] = useState(null)
+  const [fileExplorer, setFileExplorer] = useState([])
+  const [codingStats, setCodingStats] = useState({
+    totalFiles: 0,
+    pythonFiles: 0,
+    jsFiles: 0,
+    otherFiles: 0,
+    totalLines: 0
+  })
+  const [showResetConfirm, setShowResetConfirm] = useState(false)
+  const [appointmentSearch, setAppointmentSearch] = useState('')
+  const [appointmentFilter, setAppointmentFilter] = useState('all')
 
   useEffect(() => {
     fetchAllData()
