@@ -8,18 +8,28 @@ export const QRCodeProvider = ({ children }) => {
     enabled: false,
     mode: 'service_info', // 'service_info' or 'ussd_call'
     ussdCode: '*241#',
-    phoneNumber: ''
+    phoneNumber: '',
+    airtelNumber: '',
+    moovNumber: ''
   })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  // Load QR config from API
+  // Load QR config from generic site-settings API
   const fetchQRConfig = async () => {
     try {
       setLoading(true)
-      const response = await api.get('/site-settings/qrcode')
-      if (response.data?.config) {
-        setQRConfig(response.data.config)
+      const response = await api.get('/site-settings')
+      if (response.data) {
+        // Map database fields to component config
+        setQRConfig({
+          enabled: response.data.qrcode_enabled || false,
+          mode: response.data.qrcode_mode || 'service_info',
+          ussdCode: response.data.qrcode_ussd_code || '*241#',
+          phoneNumber: response.data.qrcode_phone_number || '',
+          airtelNumber: response.data.qrcode_airtel_number || '',
+          moovNumber: response.data.qrcode_moov_number || ''
+        })
       }
     } catch (err) {
       console.warn('QR Code config not found, using defaults:', err.message)
@@ -29,11 +39,27 @@ export const QRCodeProvider = ({ children }) => {
     }
   }
 
-  // Update QR config
+  // Update QR config using generic site-settings endpoint
   const updateQRConfig = async (newConfig) => {
     try {
-      const response = await api.patch('/site-settings/qrcode', { config: newConfig })
-      setQRConfig(response.data.config || newConfig)
+      const response = await api.put('/site-settings', {
+        qrcodeEnabled: newConfig.enabled,
+        qrcodeMode: newConfig.mode,
+        qrcodeUssdCode: newConfig.ussdCode,
+        qrcodePhoneNumber: newConfig.phoneNumber,
+        qrcodeAirtelNumber: newConfig.airtelNumber,
+        qrcodeMoovNumber: newConfig.moovNumber
+      })
+      if (response.data?.data) {
+        setQRConfig({
+          enabled: response.data.data.qrcode_enabled || false,
+          mode: response.data.data.qrcode_mode || 'service_info',
+          ussdCode: response.data.data.qrcode_ussd_code || '*241#',
+          phoneNumber: response.data.data.qrcode_phone_number || '',
+          airtelNumber: response.data.data.qrcode_airtel_number || '',
+          moovNumber: response.data.data.qrcode_moov_number || ''
+        })
+      }
       return response.data
     } catch (err) {
       setError(err.message)

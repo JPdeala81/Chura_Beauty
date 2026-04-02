@@ -201,7 +201,15 @@ const siteSettingsController = {
         heroCta,
         heroCtaSecondary,
         navbarCta,
-        adminBtnText
+        adminBtnText,
+        qrcodeEnabled,
+        qrcodeMode,
+        qrcodeUssdCode,
+        qrcodePhoneNumber,
+        qrcodeAirtelNumber,
+        qrcodeMoovNumber,
+        paymentAirtelEnabled,
+        paymentMoovEnabled
       } = req.body
 
       // First, check if settings exist
@@ -243,6 +251,14 @@ const siteSettingsController = {
         hero_cta2_text: heroCtaSecondary,
         navbar_cta_text: navbarCta,
         admin_btn_text: adminBtnText,
+        qrcode_enabled: qrcodeEnabled !== undefined ? qrcodeEnabled : false,
+        qrcode_mode: qrcodeMode || 'service_info',
+        qrcode_ussd_code: qrcodeUssdCode || '*241#',
+        qrcode_phone_number: qrcodePhoneNumber || '',
+        qrcode_airtel_number: qrcodeAirtelNumber || '',
+        qrcode_moov_number: qrcodeMoovNumber || '',
+        payment_airtel_enabled: paymentAirtelEnabled !== undefined ? paymentAirtelEnabled : false,
+        payment_moov_enabled: paymentMoovEnabled !== undefined ? paymentMoovEnabled : false,
         updated_at: new Date().toISOString()
       }
 
