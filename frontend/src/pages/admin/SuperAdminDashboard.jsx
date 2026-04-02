@@ -102,6 +102,9 @@ const SuperAdminDashboard = () => {
   const [paymentFilter, setPaymentFilter] = useState('waiting_confirmation')
   const [processingPaymentId, setProcessingPaymentId] = useState(null)
 
+  // Mobile Menu
+  const [showMobileMenu, setShowMobileMenu] = useState(false)
+
   const { admin, logout } = useContext(AuthContext)
   const navigate = useNavigate()
 
@@ -512,8 +515,7 @@ const SuperAdminDashboard = () => {
         footer_facebook: siteSettingsForm.footer_facebook,
         footer_twitter: siteSettingsForm.footer_twitter,
         privacy_policy: siteSettingsForm.privacy_policy,
-        terms_of_service: siteSettingsForm.terms_of_service,
-        about_content: siteSettingsForm.about_content
+        terms_of_service: siteSettingsForm.terms_of_service
       }
 
       // Only include images if they are URLs, not base64
@@ -694,39 +696,130 @@ const SuperAdminDashboard = () => {
       minHeight: '100vh',
       fontFamily: 'var(--font-primary, sans-serif)'
     }}>
-      {/* Header */}
+      {/* Header - Responsive Navbar */}
       <header style={{
         background: 'var(--gradient-primary)',
-        padding: '2rem',
+        padding: '1rem',
         boxShadow: 'var(--shadow-luxury)',
         marginBottom: '2rem'
       }}>
         <div className="container-fluid">
-          <div className="d-flex justify-content-between align-items-center mb-3">
-            <h1 className="mb-0" style={{ fontSize: '2rem', fontWeight: 'bold' }}>💎 Tableau de Bord Admin</h1>
-            <div className="d-flex gap-2">
+          {/* Main Navbar Container */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            {/* Logo/Title */}
+            <h1 style={{ 
+              fontSize: 'clamp(1.2rem, 3vw, 2rem)', 
+              fontWeight: 'bold', 
+              margin: 0,
+              color: 'white'
+            }}>
+              💎 Tableau de Bord
+            </h1>
+
+            {/* Desktop Navigation (Hidden on Mobile) */}
+            <div style={{
+              display: 'none',
+              gap: '0.5rem',
+              '@media (min-width: 768px)': {
+                display: 'flex'
+              }
+            }} className="d-none d-md-flex">
               <button 
                 className="btn btn-outline-light"
                 onClick={() => navigate('/')}
-                style={{ borderColor: 'var(--surface)', color: 'white' }}
+                style={{ 
+                  borderColor: 'white', 
+                  color: 'white',
+                  fontSize: 'clamp(0.75rem, 2vw, 0.95rem)',
+                  padding: '0.4rem 0.8rem'
+                }}
               >
                 🏠 Accueil
               </button>
               <button 
                 className="btn btn-outline-light"
                 onClick={fetchAllData}
-                style={{ borderColor: 'var(--surface)', color: 'white' }}
+                style={{ 
+                  borderColor: 'white', 
+                  color: 'white',
+                  fontSize: 'clamp(0.75rem, 2vw, 0.95rem)',
+                  padding: '0.4rem 0.8rem'
+                }}
               >
                 🔄 Actualiser
               </button>
               <button 
                 className="btn btn-outline-danger"
                 onClick={handleLogout}
+                style={{
+                  fontSize: 'clamp(0.75rem, 2vw, 0.95rem)',
+                  padding: '0.4rem 0.8rem'
+                }}
               >
                 🚪 Déconnexion
               </button>
             </div>
+
+            {/* Mobile Hamburger Menu Button */}
+            <button
+              className="btn btn-outline-light d-md-none"
+              onClick={() => setShowMobileMenu(!showMobileMenu)}
+              style={{
+                borderColor: 'white',
+                color: 'white',
+                fontSize: '1.2rem',
+                padding: '0.25rem 0.5rem',
+                minWidth: 'auto'
+              }}
+            >
+              {showMobileMenu ? '✕' : '☰'}
+            </button>
           </div>
+
+          {/* Mobile Menu (Collapsible) */}
+          {showMobileMenu && (
+            <motion.div 
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              style={{
+                marginTop: '1rem',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.75rem'
+              }}
+            >
+              <button 
+                className="btn btn-outline-light w-100"
+                onClick={() => {
+                  navigate('/')
+                  setShowMobileMenu(false)
+                }}
+                style={{ borderColor: 'white', color: 'white' }}
+              >
+                🏠 Accueil
+              </button>
+              <button 
+                className="btn btn-outline-light w-100"
+                onClick={() => {
+                  fetchAllData()
+                  setShowMobileMenu(false)
+                }}
+                style={{ borderColor: 'white', color: 'white' }}
+              >
+                🔄 Actualiser
+              </button>
+              <button 
+                className="btn btn-outline-danger w-100"
+                onClick={() => {
+                  handleLogout()
+                  setShowMobileMenu(false)
+                }}
+              >
+                🚪 Déconnexion
+              </button>
+            </motion.div>
+          )}
         </div>
       </header>
 
@@ -754,15 +847,15 @@ const SuperAdminDashboard = () => {
           </motion.div>
         )}
 
-        {/* Navigation Tabs */}
+        {/* Navigation Tabs - Responsive */}
         <div className="mb-4" style={{ borderBottom: '2px solid var(--surface)' }}>
-          <div className="d-flex gap-2 flex-wrap">
+          {/* Desktop Tabs */}
+          <div className="d-none d-md-flex gap-2 flex-wrap" style={{ overflowX: 'auto' }}>
             {[
               { id: 'home', label: '🏠 Accueil' },
               { id: 'appointments', label: '📅 Rendez-vous' },
               { id: 'services', label: '💅 Services' },
               { id: 'statistics', label: '📊 Statistiques' },
-              { id: 'service-management', label: '⚙️ Gestion Services' },
               { id: 'site-management', label: '🌐 Paramètres Site' },
               { id: 'users', label: '👥 Utilisateurs' },
               { id: 'profile', label: '👤 Mon Profil' },
@@ -780,10 +873,10 @@ const SuperAdminDashboard = () => {
                   background: activeTab === tab.id ? 'var(--primary-color)' : 'transparent',
                   color: activeTab === tab.id ? 'white' : 'var(--text-color)',
                   border: 'none',
-                  padding: '0.75rem 1.5rem',
+                  padding: '0.75rem 1rem',
                   borderBottom: activeTab === tab.id ? '3px solid var(--primary-color)' : 'none',
                   transition: 'var(--transition-smooth)',
-                  fontSize: '0.95rem',
+                  fontSize: 'clamp(0.75rem, 1.5vw, 0.95rem)',
                   fontWeight: activeTab === tab.id ? 'bold' : 'normal',
                   whiteSpace: 'nowrap'
                 }}
@@ -792,6 +885,40 @@ const SuperAdminDashboard = () => {
                 {tab.label}
               </button>
             ))}
+          </div>
+
+          {/* Mobile Tabs Dropdown */}
+          <div className="d-md-none">
+            <select
+              className="form-select"
+              value={activeTab}
+              onChange={(e) => setActiveTab(e.target.value)}
+              style={{
+                background: 'var(--surface)',
+                color: 'var(--text-color)',
+                border: '1px solid var(--primary-color)',
+                borderRadius: 'var(--border-radius-md)',
+                padding: '0.5rem'
+              }}
+            >
+              {[
+                { id: 'home', label: '🏠 Accueil' },
+                { id: 'appointments', label: '📅 Rendez-vous' },
+                { id: 'services', label: '💅 Services' },
+                { id: 'statistics', label: '📊 Statistiques' },
+                { id: 'site-management', label: '🌐 Paramètres Site' },
+                { id: 'users', label: '👥 Utilisateurs' },
+                { id: 'profile', label: '👤 Mon Profil' },
+                { id: 'maintenance', label: '🔧 Maintenance' },
+                { id: 'app-closure', label: '🚪 Fermeture App' },
+                { id: 'security', label: '🔐 Sécurité' },
+                { id: 'qrcode', label: '📱 Code QR' },
+                { id: 'payments', label: '💳 Paiements' },
+                { id: 'settings', label: '⚙️ Paramètres' }
+              ].map(tab => (
+                <option key={tab.id} value={tab.id}>{tab.label}</option>
+              ))}
+            </select>
           </div>
         </div>
 
@@ -813,7 +940,7 @@ const SuperAdminDashboard = () => {
                   { icon: '⏳', title: 'En Attente', value: (appointments.filter(a => a.status === 'pending') || []).length, color: '#ffd700', bg: 'rgba(255, 215, 0, 0.1)' },
                   { icon: '❌', title: 'Refusés', value: (appointments.filter(a => a.status === 'rejected') || []).length, color: '#ff6b6b', bg: 'rgba(255, 107, 107, 0.1)' },
                   { icon: '💅', title: 'Services', value: services.length || 0, color: '#ff1493', bg: 'rgba(255, 20, 147, 0.1)' },
-                  { icon: '💰', title: 'Revenus', value: `${(appointments.filter(a => a.status === 'accepted').reduce((sum, a) => sum + (a.revenue || 0), 0) / 1000).toFixed(0)}K FCFA`, color: '#32cd32', bg: 'rgba(50, 205, 50, 0.1)' }
+                  { icon: '💰', title: 'Revenus Estimés', value: `${(services.reduce((sum, s) => sum + (s.price || 0), 0) / 1000).toFixed(1)}K FCFA`, color: '#32cd32', bg: 'rgba(50, 205, 50, 0.1)' }
                 ].map((kpi, idx) => (
                   <motion.div
                     key={idx}
