@@ -122,7 +122,13 @@ export default function ServiceDetail() {
       <Navbar />
 
       {/* Hero Section */}
-      <section style={{ background: 'var(--gradient-primary)', padding: '60px 0', minHeight: '40vh', display: 'flex', alignItems: 'center' }}>
+      <section style={{ 
+        background: 'var(--gradient-primary)', 
+        padding: 'clamp(40px, 10vw, 60px) 0', 
+        minHeight: 'clamp(30vh, 50vw, 40vh)', 
+        display: 'flex', 
+        alignItems: 'center' 
+      }}>
         <div className="container">
           <motion.div
             initial={{ opacity: 0, y: -30 }}
@@ -131,7 +137,7 @@ export default function ServiceDetail() {
           >
             <h1 style={{
               fontFamily: 'Playfair Display, serif',
-              fontSize: '3rem',
+              fontSize: 'clamp(1.8rem, 6vw, 3rem)',
               fontWeight: '700',
               color: 'white',
               textShadow: '0 4px 20px rgba(0,0,0,0.3)',
@@ -140,7 +146,7 @@ export default function ServiceDetail() {
               {service.title}
             </h1>
             <p style={{
-              fontSize: '1.1rem',
+              fontSize: 'clamp(0.9rem, 2.5vw, 1.1rem)',
               color: 'rgba(255,255,255,0.9)',
               display: 'flex',
               gap: '15px',
@@ -159,9 +165,19 @@ export default function ServiceDetail() {
       </section>
 
       {/* Detail Section */}
-      <section style={{ background: 'white', padding: '60px 0', minHeight: '80vh' }}>
+      <section style={{ 
+        background: 'white', 
+        padding: 'clamp(30px, 8vw, 60px) 0', 
+        minHeight: '80vh' 
+      }}>
         <div className="container">
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px', alignItems: 'start', marginTop: '30px' }}>
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            gap: 'clamp(20px, 5vw, 40px)', 
+            alignItems: 'start', 
+            marginTop: '30px' 
+          }}>
             {/* Images */}
             <motion.div
               initial={{ opacity: 0, x: -30 }}
@@ -181,7 +197,7 @@ export default function ServiceDetail() {
                       width: '100%',
                       borderRadius: '12px',
                       objectFit: 'contain',
-                      maxHeight: '500px',
+                      maxHeight: 'clamp(250px, 50vw, 500px)',
                       marginBottom: '20px',
                       boxShadow: 'var(--shadow-luxury)',
                       cursor: 'pointer',
@@ -259,12 +275,12 @@ export default function ServiceDetail() {
               transition={{ duration: 0.6 }}
             >
               <div style={{ marginBottom: '30px' }}>
-                <p style={{ color: 'rgba(0,0,0,0.6)', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: '600' }}>
+                <p style={{ color: 'rgba(0,0,0,0.6)', fontSize: 'clamp(11px, 2vw, 14px)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: '600' }}>
                   Service Premium
                 </p>
                 <h2 style={{
                   fontFamily: 'Playfair Display, serif',
-                  fontSize: '2.2rem',
+                  fontSize: 'clamp(1.5rem, 4vw, 2.2rem)',
                   fontWeight: '700',
                   color: '#1a0f08',
                   margin: '10px 0'
@@ -276,23 +292,23 @@ export default function ServiceDetail() {
               {/* Price & Duration */}
               <div style={{
                 background: 'var(--gradient-primary)',
-                padding: '20px',
+                padding: 'clamp(12px, 3vw, 20px)',
                 borderRadius: '12px',
                 color: 'white',
                 marginBottom: '30px',
                 display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: '20px'
+                gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+                gap: 'clamp(12px, 3vw, 20px)'
               }}>
                 <div>
-                  <p style={{ fontSize: '13px', opacity: 0.9, marginBottom: '5px' }}>TARIF</p>
-                  <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: '1.8rem', margin: 0 }}>
+                  <p style={{ fontSize: 'clamp(11px, 2vw, 13px)', opacity: 0.9, marginBottom: '5px' }}>TARIF</p>
+                  <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: 'clamp(1.2rem, 4vw, 1.8rem)', margin: 0 }}>
                     {service.price?.toLocaleString('fr-FR')} FCFA
                   </h3>
                 </div>
                 <div>
-                  <p style={{ fontSize: '13px', opacity: 0.9, marginBottom: '5px' }}>DURÉE</p>
-                  <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: '1.8rem', margin: 0 }}>
+                  <p style={{ fontSize: 'clamp(11px, 2vw, 13px)', opacity: 0.9, marginBottom: '5px' }}>DURÉE</p>
+                  <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: 'clamp(1.2rem, 4vw, 1.8rem)', margin: 0 }}>
                     {service.duration || '-'} min
                   </h3>
                 </div>
@@ -300,10 +316,10 @@ export default function ServiceDetail() {
 
               {/* Description */}
               <div style={{ marginBottom: '30px' }}>
-                <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: '1.3rem', color: '#1a0f08', marginBottom: '15px' }}>
+                <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: 'clamp(1.1rem, 3vw, 1.3rem)', color: '#1a0f08', marginBottom: '15px' }}>
                   À propos de ce service
                 </h3>
-                <p style={{ color: 'rgba(0,0,0,0.7)', lineHeight: '1.8', fontSize: '15px' }}>
+                <p style={{ color: 'rgba(0,0,0,0.7)', lineHeight: '1.8', fontSize: 'clamp(13px, 2vw, 15px)' }}>
                   {service.description}
                 </p>
               </div>
@@ -348,8 +364,8 @@ export default function ServiceDetail() {
                 whileTap={{ scale: 0.95 }}
                 style={{
                   width: '100%',
-                  padding: '16px',
-                  fontSize: '16px',
+                  padding: 'clamp(12px, 3vw, 16px)',
+                  fontSize: 'clamp(14px, 2vw, 16px)',
                   fontWeight: '600'
                 }}
               >
@@ -362,13 +378,13 @@ export default function ServiceDetail() {
                 whileTap={{ scale: 0.98 }}
                 style={{
                   width: '100%',
-                  padding: '14px',
+                  padding: 'clamp(12px, 3vw, 14px)',
                   marginTop: '12px',
                   border: '2px solid var(--primary-color)',
                   background: 'transparent',
                   color: 'var(--primary-color)',
                   borderRadius: '8px',
-                  fontSize: '15px',
+                  fontSize: 'clamp(13px, 2vw, 15px)',
                   fontWeight: '600',
                   cursor: 'pointer',
                   transition: 'all 0.3s'
