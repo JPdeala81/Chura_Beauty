@@ -171,7 +171,7 @@ const SuperAdminDashboard = () => {
           footer_twitter: settingsData.footer_twitter || prev.footer_twitter,
           privacy_policy: settingsData.privacy_policy || '',
           terms_of_service: settingsData.terms_of_service || '',
-          about_content: settingsData.about_content || ''
+          // about_content removed - column doesn't exist in database
         }))
         setFormData(settingsData)
       }
@@ -717,13 +717,9 @@ const SuperAdminDashboard = () => {
             </h1>
 
             {/* Desktop Navigation (Hidden on Mobile) */}
-            <div style={{
-              display: 'none',
-              gap: '0.5rem',
-              '@media (min-width: 768px)': {
-                display: 'flex'
-              }
-            }} className="d-none d-md-flex">
+            <div className="d-none d-md-flex" style={{
+              gap: '0.5rem'
+            }}>
               <button 
                 className="btn btn-outline-light"
                 onClick={() => navigate('/')}
@@ -940,7 +936,7 @@ const SuperAdminDashboard = () => {
                   { icon: '⏳', title: 'En Attente', value: (appointments.filter(a => a.status === 'pending') || []).length, color: '#ffd700', bg: 'rgba(255, 215, 0, 0.1)' },
                   { icon: '❌', title: 'Refusés', value: (appointments.filter(a => a.status === 'rejected') || []).length, color: '#ff6b6b', bg: 'rgba(255, 107, 107, 0.1)' },
                   { icon: '💅', title: 'Services', value: services.length || 0, color: '#ff1493', bg: 'rgba(255, 20, 147, 0.1)' },
-                  { icon: '💰', title: 'Revenus Estimés', value: `${(services.reduce((sum, s) => sum + (s.price || 0), 0) / 1000).toFixed(1)}K FCFA`, color: '#32cd32', bg: 'rgba(50, 205, 50, 0.1)' }
+                  { icon: '💰', title: 'Revenus Estimés', value: `${(calculateTotalRevenue() / 1000).toFixed(1)}K FCFA`, color: '#32cd32', bg: 'rgba(50, 205, 50, 0.1)' }
                 ].map((kpi, idx) => (
                   <motion.div
                     key={idx}
@@ -2807,18 +2803,7 @@ const SuperAdminDashboard = () => {
                       />
                     </div>
 
-                    <div className="col-12">
-                      <label className="form-label">À propos de nous</label>
-                      <textarea
-                        className="form-control"
-                        rows="5"
-                        name="about_content"
-                        value={siteSettingsForm.about_content}
-                        onChange={handleSiteSettingsChange}
-                        placeholder="Contenu de la page À propos..."
-                        style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
-                      />
-                    </div>
+                    {/* about_content field removed - column doesn't exist in database schema */}
 
                     <div className="col-12">
                       <button
