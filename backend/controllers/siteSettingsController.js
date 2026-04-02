@@ -209,7 +209,11 @@ const siteSettingsController = {
         qrcodeAirtelNumber,
         qrcodeMoovNumber,
         paymentAirtelEnabled,
-        paymentMoovEnabled
+        paymentMoovEnabled,
+        // Payment network config fields
+        airtel_code,
+        moov_code,
+        is_payment_enabled
       } = req.body
 
       // First, check if settings exist
@@ -259,8 +263,19 @@ const siteSettingsController = {
         qrcode_moov_number: qrcodeMoovNumber || '',
         payment_airtel_enabled: paymentAirtelEnabled !== undefined ? paymentAirtelEnabled : false,
         payment_moov_enabled: paymentMoovEnabled !== undefined ? paymentMoovEnabled : false,
+        // Payment network configuration fields
+        airtel_code: airtel_code !== undefined ? airtel_code : undefined,
+        moov_code: moov_code !== undefined ? moov_code : undefined,
+        is_payment_enabled: is_payment_enabled !== undefined ? is_payment_enabled : false,
         updated_at: new Date().toISOString()
       }
+
+      // Filter out undefined values to prevent errors
+      Object.keys(updateData).forEach(key => {
+        if (updateData[key] === undefined) {
+          delete updateData[key]
+        }
+      })
 
       let result
 
