@@ -68,7 +68,7 @@ CREATE INDEX IF NOT EXISTS idx_help_faqs_active ON help_faqs(active);
 INSERT INTO help_faqs (category, question, answer, order_index, active, created_by)
 SELECT 
   'générale' as category,
-  'Qu\'est-ce qu\'un code de session?' as question,
+  'Qu''est-ce qu''un code de session?' as question,
   'Un code de session est un numéro unique à 8 chiffres que vous recevez pour tracker votre paiement. Conservez-le pour retrouver votre session à tout moment.' as answer,
   1 as order_index,
   true as active,
@@ -81,7 +81,7 @@ UNION ALL
 SELECT 'paiement', 'Comment payer par QR Code?', 'Scannez le code QR avec votre téléphone, sélectionnez votre réseau (Airtel ou Moov), puis effectuez le paiement USSD selon les instructions.', 3, true, (SELECT id FROM admins LIMIT 1)
 WHERE NOT EXISTS (SELECT 1 FROM help_faqs WHERE question = 'Comment payer par QR Code?')
 UNION ALL
-SELECT 'paiement', 'Que faire si mon paiement n\'est pas confirmé?', 'Si vous avez fourni une preuve de paiement (capture d\'écran), attendez la confirmation de l\'administrateur. Vous pouvez retrouver votre session avec votre code de session.', 4, true, (SELECT id FROM admins LIMIT 1)
+SELECT 'paiement', 'Que faire si mon paiement n''est pas confirmé?', 'Si vous avez fourni une preuve de paiement (capture d''écran), attendez la confirmation de l''administrateur. Vous pouvez retrouver votre session avec votre code de session.', 4, true, (SELECT id FROM admins LIMIT 1)
 WHERE NOT EXISTS (SELECT 1 FROM help_faqs WHERE question = 'Que faire si mon paiement n''est pas confirmé?');
 
 -- ============= ENABLE RLS =============

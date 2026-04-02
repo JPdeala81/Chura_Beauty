@@ -9,6 +9,7 @@ import ThemeSwitcherFloating from './components/ThemeSwitcherFloating'
 import Home from './pages/Home'
 import Services from './pages/Services'
 import ServiceDetail from './pages/ServiceDetail'
+import HelpPage from './pages/HelpPage'
 import Login from './pages/Login'
 import ResetPassword from './pages/admin/ResetPassword'
 import DebugLogin from './pages/admin/DebugLogin'
@@ -69,6 +70,7 @@ function AppRoutes() {
         <Route path="/" element={<Home />} />
         <Route path="/services" element={<Services />} />
         <Route path="/service/:id" element={<ServiceDetail />} />
+        <Route path="/help" element={<HelpPage />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms-of-service" element={<TermsOfService />} />
         <Route path="/about-us" element={<AboutUs />} />

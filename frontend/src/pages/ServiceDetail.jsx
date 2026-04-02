@@ -5,6 +5,7 @@ import { Modal, Button } from 'react-bootstrap';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import BookingModal from '../components/public/BookingModal';
+import PaymentFlow from '../components/payments/PaymentFlow';
 import * as serviceService from '../services/serviceService';
 import * as appointmentService from '../services/appointmentService';
 
@@ -14,6 +15,7 @@ export default function ServiceDetail() {
   const [service, setService] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showBookingModal, setShowBookingModal] = useState(false);
+  const [showPaymentFlow, setShowPaymentFlow] = useState(false);
   const [availableSlots, setAvailableSlots] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedImage, setSelectedImage] = useState(0);
@@ -361,21 +363,43 @@ export default function ServiceDetail() {
                 </div>
               )}
 
-              {/* Booking Button */}
-              <motion.button
-                className="btn-luxury-primary"
-                onClick={() => setShowBookingModal(true)}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                style={{
-                  width: '100%',
-                  padding: 'clamp(12px, 3vw, 16px)',
-                  fontSize: 'clamp(14px, 2vw, 16px)',
-                  fontWeight: '600'
-                }}
-              >
-                Réserver ce service 📅
-              </motion.button>
+              {/* Action Buttons */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <motion.button
+                  className="btn-luxury-primary"
+                  onClick={() => setShowBookingModal(true)}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  style={{
+                    width: '100%',
+                    padding: 'clamp(12px, 3vw, 16px)',
+                    fontSize: 'clamp(13px, 1.8vw, 15px)',
+                    fontWeight: '600'
+                  }}
+                >
+                  Réserver 📅
+                </motion.button>
+
+                <motion.button
+                  onClick={() => setShowPaymentFlow(true)}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  style={{
+                    width: '100%',
+                    padding: 'clamp(12px, 3vw, 16px)',
+                    fontSize: 'clamp(13px, 1.8vw, 15px)',
+                    fontWeight: '600',
+                    background: 'var(--accent-color)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s'
+                  }}
+                >
+                  Payer 💳
+                </motion.button>
+              </div>
 
               <motion.button
                 onClick={() => navigate('/services')}
@@ -395,7 +419,7 @@ export default function ServiceDetail() {
                   transition: 'all 0.3s'
                 }}
               >
-                ← Retour aux services
+                ← Retour
               </motion.button>
             </motion.div>
           </div>
@@ -418,6 +442,38 @@ export default function ServiceDetail() {
           service={service}
           availableSlots={availableSlots}
         />
+      )}
+
+      {/* Payment Flow Modal */}
+      {showPaymentFlow && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: '1rem'
+        }}>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            style={{ maxHeight: '90vh', overflowY: 'auto', maxWidth: '600px', width: '100%' }}
+          >
+            <PaymentFlow
+              service={service}
+              onSuccess={() => {
+                setShowPaymentFlow(false)
+                alert('✅ Paiement créé! Référence: Vérifiez vos emails')
+              }}
+              onCancel={() => setShowPaymentFlow(false)}
+            />
+          </motion.div>
+        </div>
       )}
 
       {/* Image Modal */}

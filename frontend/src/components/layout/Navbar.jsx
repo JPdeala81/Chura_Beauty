@@ -67,7 +67,8 @@ const Navbar = () => {
           <ul className="navbar-nav mx-auto gap-1">
             {[
               { path: '/', label: 'Accueil' },
-              { path: '/services', label: 'Services' }
+              { path: '/services', label: 'Services' },
+              { path: '/help', label: 'Aide' }
             ].map(({ path, label }) => (
               <li key={path} className="nav-item">
                 <Link

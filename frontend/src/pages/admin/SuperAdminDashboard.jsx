@@ -97,6 +97,11 @@ const SuperAdminDashboard = () => {
     is_payment_enabled: false
   })
 
+  // Payment Sessions Management
+  const [paymentSessions, setPaymentSessions] = useState([])
+  const [paymentFilter, setPaymentFilter] = useState('waiting_confirmation')
+  const [processingPaymentId, setProcessingPaymentId] = useState(null)
+
   const { admin, logout } = useContext(AuthContext)
   const navigate = useNavigate()
 
@@ -114,12 +119,13 @@ const SuperAdminDashboard = () => {
   const fetchAllData = async () => {
     try {
       setLoading(true)
-      const [appoRes, servRes, statsRes, settingsRes, profileRes] = await Promise.allSettled([
+      const [appoRes, servRes, statsRes, settingsRes, profileRes, paymentsRes] = await Promise.allSettled([
         api.get('/appointments'),
         api.get('/services'),
         api.get('/revenue/stats'),
         api.get('/site-settings'),
-        api.get('/auth/profile')
+        api.get('/auth/profile'),
+        api.get('/payments/sessions?status=waiting_confirmation')
       ])
       
       // Extract correct data from responses
@@ -137,6 +143,12 @@ const SuperAdminDashboard = () => {
       if (settingsRes.status === 'fulfilled') {
         const settingsData = settingsRes.value.data || {}
         setSettings(settingsData)
+        // Load payment config from settings
+        setPaymentConfig({
+          airtel_code: settingsData.airtel_code || '',
+          moov_code: settingsData.moov_code || '',
+          is_payment_enabled: settingsData.is_payment_enabled || false
+        })
         // Pré-remplir le formulaire avec les données existantes
         setSiteSettingsForm(prev => ({
           ...prev,
@@ -171,6 +183,10 @@ const SuperAdminDashboard = () => {
           whatsapp: adminData.whatsapp || '',
           profile_photo: adminData.profile_photo || ''
         })
+      }
+      if (paymentsRes.status === 'fulfilled') {
+        const paymentData = paymentsRes.value.data
+        setPaymentSessions(paymentData.sessions || paymentData.data || [])
       }
     } catch (err) {
       console.error('Erreur fetch:', err)
@@ -272,6 +288,49 @@ const SuperAdminDashboard = () => {
   const handleLogout = () => {
     logout()
     navigate('/')
+  }
+
+  // Payment Management
+  const handleConfirmPayment = async (sessionId, notes = '') => {
+    try {
+      setProcessingPaymentId(sessionId)
+      const response = await api.post(`/payments/sessions/${sessionId}/confirm`, {
+        adminNotes: notes
+      })
+      
+      // Remove confirmed payment from list and show success
+      setPaymentSessions(paymentSessions.filter(p => p.id !== sessionId))
+      alert('Paiement confirmé avec succès')
+      
+      // Refetch data to update stats
+      await fetchAllData()
+    } catch (err) {
+      console.error('Erreur confirmation:', err)
+      alert('Erreur lors de la confirmation du paiement')
+    } finally {
+      setProcessingPaymentId(null)
+    }
+  }
+
+  const handleRejectPayment = async (sessionId, reason = '') => {
+    try {
+      setProcessingPaymentId(sessionId)
+      const response = await api.post(`/payments/sessions/${sessionId}/reject`, {
+        reason: reason
+      })
+      
+      // Remove rejected payment from list
+      setPaymentSessions(paymentSessions.filter(p => p.id !== sessionId))
+      alert('Paiement rejeté avec succès')
+      
+      // Refetch data
+      await fetchAllData()
+    } catch (err) {
+      console.error('Erreur rejection:', err)
+      alert('Erreur lors du rejet du paiement')
+    } finally {
+      setProcessingPaymentId(null)
+    }
   }
 
   const updateAppointmentStatus = async (id, newStatus) => {
@@ -697,6 +756,7 @@ const SuperAdminDashboard = () => {
               { id: 'app-closure', label: '🚪 Fermeture App' },
               { id: 'security', label: '🔐 Sécurité' },
               { id: 'qrcode', label: '📱 Code QR' },
+              { id: 'payments', label: '💳 Paiements' },
               { id: 'settings', label: '⚙️ Paramètres' }
             ].map(tab => (
               <button
@@ -2999,6 +3059,146 @@ const SuperAdminDashboard = () => {
                       <p style={{ fontSize: '0.9rem', marginBottom: 0 }}>
                         <strong>Moov:</strong> {paymentConfig.moov_code || '+241XX XXXX XX'}
                       </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* PAYMENTS TAB */}
+          {activeTab === 'payments' && (
+            <motion.div
+              key="payments"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+            >
+              <div className="card" style={{
+                background: 'var(--surface)',
+                border: '2px solid var(--primary-color)',
+                borderRadius: 'var(--border-radius-lg)',
+                padding: '2rem'
+              }}>
+                <h5 style={{ color: 'var(--primary-color)', marginBottom: '1.5rem' }}>💳 Gestion des Paiements</h5>
+                
+                {paymentSessions.length === 0 ? (
+                  <div className="alert alert-info">
+                    <strong>ℹ️ Aucun paiement en attente</strong>
+                    <p className="mb-0">Tous les paiements ont été traités.</p>
+                  </div>
+                ) : (
+                  <div className="table-responsive">
+                    <table className="table table-hover mb-0">
+                      <thead>
+                        <tr style={{ borderBottom: '2px solid var(--primary-color)' }}>
+                          <th style={{ color: 'var(--primary-color)' }}>Code Session</th>
+                          <th style={{ color: 'var(--primary-color)' }}>Client</th>
+                          <th style={{ color: 'var(--primary-color)' }}>Montant</th>
+                          <th style={{ color: 'var(--primary-color)' }}>Réseau</th>
+                          <th style={{ color: 'var(--primary-color)' }}>Statut</th>
+                          <th style={{ color: 'var(--primary-color)' }}>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {paymentSessions.map((payment, idx) => (
+                          <tr key={idx} style={{ borderBottom: '1px solid var(--bg-color)' }}>
+                            <td>
+                              <code style={{ background: 'var(--bg-color)', padding: '0.25rem 0.5rem', borderRadius: '4px' }}>
+                                {payment.session_code || 'N/A'}
+                              </code>
+                            </td>
+                            <td>
+                              <div>
+                                <strong>{payment.client_name || 'Anonyme'}</strong>
+                                <br />
+                                <small style={{ color: 'var(--text-secondary)' }}>
+                                  {payment.client_phone || 'N/A'}
+                                </small>
+                              </div>
+                            </td>
+                            <td>
+                              <strong style={{ color: 'var(--primary-color)', fontSize: '1.1rem' }}>
+                                {payment.amount || 0} FCFA
+                              </strong>
+                            </td>
+                            <td>
+                              <span className="badge" style={{
+                                background: payment.payment_network === 'moov' ? '#ff6b35' : '#004e89',
+                                color: 'white'
+                              }}>
+                                {payment.payment_network === 'moov' ? '🍊 Moov' : '🔵 Airtel'}
+                              </span>
+                            </td>
+                            <td>
+                              <span className="badge" style={{
+                                background: payment.status === 'waiting_confirmation' ? '#ffd700' : 
+                                          payment.status === 'completed' ? '#00d9ff' : '#ff6b6b',
+                                color: 'white'
+                              }}>
+                                {payment.status === 'waiting_confirmation' ? '⏳ En attente' :
+                                 payment.status === 'completed' ? '✅ Confirmé' : '❌ Rejeté'}
+                              </span>
+                            </td>
+                            <td>
+                              <div className="d-flex gap-2">
+                                <button
+                                  className="btn btn-sm btn-success"
+                                  onClick={() => {
+                                    const notes = prompt('Notes admin (optionnel):')
+                                    handleConfirmPayment(payment.id, notes || '')
+                                  }}
+                                  disabled={processingPaymentId === payment.id}
+                                >
+                                  {processingPaymentId === payment.id ? '⏳' : '✅'}
+                                </button>
+                                <button
+                                  className="btn btn-sm btn-danger"
+                                  onClick={() => {
+                                    const reason = prompt('Raison du rejet:')
+                                    if (reason !== null) {
+                                      handleRejectPayment(payment.id, reason)
+                                    }
+                                  }}
+                                  disabled={processingPaymentId === payment.id}
+                                >
+                                  {processingPaymentId === payment.id ? '⏳' : '❌'}
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                {/* Additional Info */}
+                <div className="mt-4 pt-3" style={{ borderTop: '1px solid var(--bg-color)' }}>
+                  <div className="row g-3">
+                    <div className="col-12 col-md-4">
+                      <div style={{ padding: '1rem', background: 'var(--bg-color)', borderRadius: 'var(--border-radius-md)' }}>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--primary-color)', marginBottom: '0.25rem' }}>Total en attente</p>
+                        <h5 style={{ margin: 0, color: '#ffd700' }}>
+                          {paymentSessions.reduce((sum, p) => sum + (p.amount || 0), 0)} FCFA
+                        </h5>
+                      </div>
+                    </div>
+                    <div className="col-12 col-md-4">
+                      <div style={{ padding: '1rem', background: 'var(--bg-color)', borderRadius: 'var(--border-radius-md)' }}>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--primary-color)', marginBottom: '0.25rem' }}>Nombre de sessions</p>
+                        <h5 style={{ margin: 0, color: '#ff6b35' }}>
+                          {paymentSessions.length}
+                        </h5>
+                      </div>
+                    </div>
+                    <div className="col-12 col-md-4">
+                      <div style={{ padding: '1rem', background: 'var(--bg-color)', borderRadius: 'var(--border-radius-md)' }}>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--primary-color)', marginBottom: '0.25rem' }}>Dernière mise à jour</p>
+                        <small style={{ color: 'var(--text-secondary)' }}>
+                          {new Date().toLocaleTimeString('fr-FR')}
+                        </small>
+                      </div>
                     </div>
                   </div>
                 </div>
