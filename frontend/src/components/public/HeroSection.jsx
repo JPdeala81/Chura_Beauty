@@ -41,9 +41,9 @@ const HeroSection = ({ onScrollToServices }) => {
 
   // Responsive padding based on screen size
   const getResponsivePadding = () => {
-    if (windowWidth < 576) return '40px'      // Mobile
-    if (windowWidth < 768) return '60px'      // Tablet
-    return '80px'                             // Desktop
+    if (windowWidth < 576) return '20px'      // Mobile - navbar accounts for most spacing
+    if (windowWidth < 768) return '30px'      // Tablet
+    return '40px'                             // Desktop
   }
 
   return (

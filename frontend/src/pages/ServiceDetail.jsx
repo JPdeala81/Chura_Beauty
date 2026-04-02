@@ -59,6 +59,11 @@ export default function ServiceDetail() {
     fetchService();
   }, [id]);
 
+  // Scroll to top when component mounts or id changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [id]);
+
   const handleDateSelect = async (date) => {
     setSelectedDate(date);
     try {

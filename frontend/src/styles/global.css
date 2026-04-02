@@ -2987,12 +2987,14 @@ img { max-width: 100%; height: auto; }
     backdrop-filter: blur(30px);
   }
   .navbar-nav { flex-direction: column; gap: 4px; }
-  .d-flex.align-items-center.gap-2 {
+  .d-flex.align-items-center.gap-2,
+  .d-flex.align-items-center.gap-3 {
     flex-direction: column; width: 100%; gap: 8px !important;
     margin-top: 8px; padding-top: 8px;
     border-top: 1px solid rgba(212,165,116,0.1);
   }
-  .d-flex.align-items-center.gap-2 > * { width: 100%; text-align: center; }
+  .d-flex.align-items-center.gap-2 > *,
+  .d-flex.align-items-center.gap-3 > * { width: auto; text-align: center; }
   .btn-admin-login, .btn-admin-logout, .btn-luxury-outline, .btn-luxury-appointment {
     display: inline-block !important;
     width: auto !important;

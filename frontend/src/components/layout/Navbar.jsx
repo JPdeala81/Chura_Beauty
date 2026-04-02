@@ -87,8 +87,9 @@ const Navbar = () => {
               animate={{ scale: [1, 1.05, 1] }}
               transition={{ duration: 2, repeat: Infinity }}
               className="navbar-time-badge"
+              style={{ fontSize: 'clamp(11px, 2vw, 16px)' }}
             >
-              <span style={{ fontSize: '16px' }}>🕐</span>
+              <span style={{ fontSize: '1em' }}>🕐</span>
               <span>{currentTime.toLocaleTimeString('fr-FR')}</span>
             </motion.div>
 
@@ -100,57 +101,75 @@ const Navbar = () => {
                 style={{
                   opacity: 0.5,
                   cursor: 'not-allowed',
-                  pointerEvents: 'none'
+                  pointerEvents: 'none',
+                  padding: 'clamp(8px, 2vw, 12px) clamp(12px, 3vw, 20px)',
+                  fontSize: 'clamp(12px, 1.8vw, 16px)'
                 }}
               >
-                <span style={{ fontSize: '18px' }}>🚫</span>
-                <span style={{ textDecoration: 'line-through' }}>Prendre RDV</span>
+                <span>🚫</span>
+                <span className="d-none d-sm-inline" style={{ textDecoration: 'line-through' }}>Prendre RDV</span>
               </motion.div>
             ) : (
               <Link 
                 to="/services" 
-                className="btn-luxury-appointment" 
+                className="btn-luxury-appointment"
                 onClick={() => setMenuOpen(false)}
+                style={{
+                  padding: 'clamp(8px, 2vw, 12px) clamp(12px, 3vw, 20px)',
+                  fontSize: 'clamp(12px, 1.8vw, 16px)'
+                }}
               >
-                <span style={{ fontSize: '18px' }}>📅</span>
-                <span>Prendre RDV</span>
+                <span>📅</span>
+                <span className="d-none d-sm-inline">Prendre RDV</span>
               </Link>
             )}
             {token ? (
               <>
                 <Link 
                   to="/admin/dashboard" 
-                  className="btn-luxury-gradient d-none d-lg-inline-block"
+                  className="btn-luxury-gradient"
                   onClick={() => setMenuOpen(false)}
                   style={{ 
-                    padding: '10px 24px',
-                    fontSize: '14px',
+                    padding: 'clamp(8px, 2vw, 10px) clamp(12px, 3vw, 24px)',
+                    fontSize: 'clamp(11px, 1.8vw, 14px)',
                     fontWeight: '600',
                     borderRadius: '8px',
                     background: 'var(--gradient-primary)',
                     color: 'white',
                     textDecoration: 'none',
-                    display: 'flex',
+                    display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '6px'
+                    gap: '4px',
+                    whiteSpace: 'nowrap'
                   }}
                 >
-                  👑 Dashboard
+                  <span>👑</span>
+                  <span className="d-none d-sm-inline">Dashboard</span>
                 </Link>
                 <button
-                  className="btn-admin-logout d-none d-lg-inline-block"
+                  className="btn-admin-logout"
                   onClick={handleLogout}
+                  style={{
+                    padding: 'clamp(8px, 2vw, 9px) clamp(12px, 3vw, 18px)',
+                    fontSize: 'clamp(11px, 1.8vw, 13px)',
+                    whiteSpace: 'nowrap'
+                  }}
                 >
-                  🚪 Déconnexion
+                  🚪 <span className="d-none d-sm-inline">Déconnexion</span>
                 </button>
               </>
             ) : (
               <Link 
                 to="/admin/login" 
-                className="btn-admin-login d-none d-lg-inline-block"
+                className="btn-admin-login"
                 onClick={() => setMenuOpen(false)}
+                style={{
+                  padding: 'clamp(8px, 2vw, 9px) clamp(12px, 3vw, 22px)',
+                  fontSize: 'clamp(11px, 1.8vw, 13px)',
+                  whiteSpace: 'nowrap'
+                }}
               >
-                🔐 Connexion
+                🔐 <span className="d-none d-sm-inline">Connexion</span>
               </Link>
             )}
           </div>
