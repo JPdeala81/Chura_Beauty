@@ -85,6 +85,10 @@ const SuperAdminDashboard = () => {
   const [logoFile, setLogoFile] = useState(null)
   const [logoPreview, setLogoPreview] = useState(null)
 
+  // Site Settings - Hero Background Image
+  const [heroImageFile, setHeroImageFile] = useState(null)
+  const [heroImagePreview, setHeroImagePreview] = useState(null)
+
   // Payment Networks Configuration
   const [paymentConfig, setPaymentConfig] = useState({
     airtel_code: '',
@@ -543,6 +547,20 @@ const SuperAdminDashboard = () => {
         setLogoFile(reader.result)
         setLogoPreview(reader.result)
         setSiteSettingsForm(prev => ({ ...prev, app_logo: reader.result }))
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  // ============ SITE SETTINGS - HERO BACKGROUND IMAGE ============
+  const handleHeroImageUpload = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setHeroImageFile(reader.result)
+        setHeroImagePreview(reader.result)
+        setSiteSettingsForm(prev => ({ ...prev, hero_background_image: reader.result }))
       }
       reader.readAsDataURL(file)
     }
@@ -2378,6 +2396,67 @@ const SuperAdminDashboard = () => {
                         value={siteSettingsForm.homepage_hero_subtitle}
                         onChange={handleSiteSettingsChange}
                         style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                      />
+                    </div>
+                    <div className="col-12">
+                      <label className="form-label">🖼️ Image de Fond Héros</label>
+                      <div style={{
+                        border: '2px dashed var(--primary-color)',
+                        borderRadius: 'var(--border-radius-md)',
+                        padding: '1.5rem',
+                        textAlign: 'center',
+                        cursor: 'pointer',
+                        background: 'var(--bg-color)',
+                        position: 'relative',
+                        transition: 'all 0.3s'
+                      }}>
+                        {heroImagePreview || siteSettingsForm.hero_background_image ? (
+                          <div>
+                            <img 
+                              src={heroImagePreview || siteSettingsForm.hero_background_image} 
+                              alt="Hero Background" 
+                              style={{
+                                maxWidth: '100%',
+                                maxHeight: '150px',
+                                marginBottom: '0.5rem',
+                                borderRadius: 'var(--border-radius-md)',
+                                objectFit: 'cover'
+                              }}
+                            />
+                            <p style={{ fontSize: '0.8rem', marginBottom: 0 }}>Cliquez pour changer</p>
+                          </div>
+                        ) : (
+                          <div>
+                            <p style={{ fontSize: '2rem', marginBottom: '0.3rem' }}>🌅</p>
+                            <p style={{ marginBottom: 0, fontSize: '0.9rem' }}>Cliquez pour ajouter une image de fond</p>
+                          </div>
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleHeroImageUpload}
+                          style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '100%',
+                            opacity: 0,
+                            cursor: 'pointer'
+                          }}
+                        />
+                      </div>
+                      <small style={{ color: 'var(--text-secondary)', display: 'block', marginTop: '0.5rem' }}>
+                        Ou entrez une URL:
+                      </small>
+                      <input
+                        type="text"
+                        className="form-control mt-2"
+                        name="hero_background_image"
+                        value={siteSettingsForm.hero_background_image}
+                        onChange={handleSiteSettingsChange}
+                        placeholder="https://..."
+                        style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)', fontSize: '0.85rem' }}
                       />
                     </div>
                     <div className="col-12">

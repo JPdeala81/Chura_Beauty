@@ -15,6 +15,7 @@ const HeroSection = ({ onScrollToServices }) => {
     heroTitle: 'Révélez Votre Beauté Naturelle',
     heroSubtitle: 'Des soins d\'exception pour sublimer votre beauté'
   })
+  const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1024)
   
   // Check if user is admin or developer
   const isAdminOrDeveloper = token && admin && (admin.role === 'admin' || admin.role === 'developer')
@@ -31,6 +32,20 @@ const HeroSection = ({ onScrollToServices }) => {
     fetchAdmin()
   }, [])
 
+  // Handle window resize for responsive padding
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth)
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
+  // Responsive padding based on screen size
+  const getResponsivePadding = () => {
+    if (windowWidth < 576) return '40px'      // Mobile
+    if (windowWidth < 768) return '60px'      // Tablet
+    return '80px'                             // Desktop
+  }
+
   return (
     <section
       className="hero-section"
@@ -39,7 +54,7 @@ const HeroSection = ({ onScrollToServices }) => {
           ? `linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.4)), url(${adminInfo.coverPicture}) center/cover no-repeat`
           : 'var(--gradient-primary)',
         minHeight: '100vh',
-        paddingTop: '80px'
+        paddingTop: getResponsivePadding()
       }}
     >
       {/* Particules flottantes */}
