@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import QRCode from 'qrcode.react'
 import api from '../../services/api'
 
 const PaymentFlow = ({ service, onSuccess, onCancel }) => {
@@ -332,45 +333,113 @@ const PaymentFlow = ({ service, onSuccess, onCancel }) => {
               </p>
             </div>
 
-            {/* USSD Code */}
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ fontSize: '12px', fontWeight: '600', color: 'var(--primary-color)' }}>
-                Code USSD {paymentNetwork === 'moov' ? '(Moov Money)' : '(Airtel Money)'}
-              </label>
+            {/* QR Code Display for QR Scan Method */}
+            {formData.paymentMethod === 'qr_scan' && (
               <div style={{
-                display: 'flex',
-                gap: '8px',
-                marginTop: '8px'
+                background: 'white',
+                border: '2px solid var(--primary-color)',
+                borderRadius: '8px',
+                padding: '1.5rem',
+                marginBottom: '1.5rem',
+                textAlign: 'center'
               }}>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={generateUSSDCode()}
-                  readOnly
-                  style={{
-                    fontFamily: 'monospace',
-                    fontSize: '14px',
-                    fontWeight: 'bold',
-                    background: '#f5f5f5',
-                    borderColor: 'var(--primary-color)'
-                  }}
-                />
-                <button
-                  className="btn"
-                  style={{
-                    background: 'var(--primary-color)',
-                    color: 'white',
-                    border: 'none',
-                    whiteSpace: 'nowrap'
-                  }}
-                  onClick={() => copyToClipboard(generateUSSDCode())}
-                >
-                  📋 Copier
-                </button>
+                <p style={{
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  color: 'var(--primary-color)',
+                  marginBottom: '1rem'
+                }}>
+                  📱 Scannez ce code QR
+                </p>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  marginBottom: '1rem'
+                }}>
+                  <QRCode
+                    value={`SESSION:${session.session_code}|AMOUNT:${service.price}|NETWORK:${paymentNetwork}`}
+                    size={256}
+                    level="H"
+                    includeMargin
+                    style={{
+                      border: '8px solid white',
+                      borderRadius: '8px',
+                      padding: '8px',
+                      background: 'white'
+                    }}
+                  />
+                </div>
+                <p style={{
+                  fontSize: '13px',
+                  color: 'var(--text-muted)',
+                  margin: '1rem 0 0 0'
+                }}>
+                  Utilisez l'application de paiement de {paymentNetwork === 'moov' ? 'Moov Money' : 'Airtel Money'} pour scanner
+                </p>
               </div>
-            </div>
+            )}
+
+            {/* USSD Code for Manual/Phone Methods */}
+            {formData.paymentMethod !== 'qr_scan' && (
+              <div style={{ marginBottom: '1.5rem' }}>
+                <label style={{ fontSize: '12px', fontWeight: '600', color: 'var(--primary-color)' }}>
+                  Code USSD {paymentNetwork === 'moov' ? '(Moov Money)' : '(Airtel Money)'}
+                </label>
+                <div style={{
+                  display: 'flex',
+                  gap: '8px',
+                  marginTop: '8px'
+                }}>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={generateUSSDCode()}
+                    readOnly
+                    style={{
+                      fontFamily: 'monospace',
+                      fontSize: '14px',
+                      fontWeight: 'bold',
+                      background: '#f5f5f5',
+                      borderColor: 'var(--primary-color)'
+                    }}
+                  />
+                  <button
+                    className="btn"
+                    style={{
+                      background: 'var(--primary-color)',
+                      color: 'white',
+                      border: 'none',
+                      whiteSpace: 'nowrap'
+                    }}
+                    onClick={() => copyToClipboard(generateUSSDCode())}
+                  >
+                    📋 Copier
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Instructions based on payment method */}
+            {formData.paymentMethod === 'qr_scan' && (
+              <div style={{
+                background: '#e8f5e9',
+                border: '1px solid #4caf50',
+                borderRadius: '8px',
+                padding: '1rem',
+                marginBottom: '1.5rem'
+              }}>
+                <p style={{ color: '#2e7d32', fontWeight: 'bold', margin: '0 0 0.5rem 0' }}>
+                  📱 Paiement par QR Code
+                </p>
+                <ol style={{ color: '#2e7d32', fontSize: '13px', margin: '0.5rem 0', paddingLeft: '20px' }}>
+                  <li>Ouvrez l'application {paymentNetwork === 'moov' ? 'Moov Money' : 'Airtel Money'}</li>
+                  <li>Utilisez la fonction de paiement par QR Code</li>
+                  <li>Scannez le code QR ci-dessus</li>
+                  <li>Confirmez le paiement sur votre téléphone</li>
+                </ol>
+              </div>
+            )}
+
             {formData.paymentMethod === 'phone_call' && (
               <div style={{
                 background: '#e8f5e9',
@@ -440,7 +509,7 @@ const PaymentFlow = ({ service, onSuccess, onCancel }) => {
                   }}
                   onClick={() => setStep(5)}
                 >
-                  ✅ Paiement Effectué →
+                  {formData.paymentMethod === 'qr_scan' ? '✅ Paiement Effectué →' : '✅ Paiement Effectué →'}
                 </button>
               )}
             </div>
