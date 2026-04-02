@@ -36,6 +36,8 @@ const DeveloperDashboard = () => {
   const [newServiceForm, setNewServiceForm] = useState({
     name: '', title: '', category: '', price: 0, duration: 30, description: '', active: true
   })
+  const [newServiceImage, setNewServiceImage] = useState(null)
+  const [newServiceImagePreview, setNewServiceImagePreview] = useState(null)
   const [showNewServiceForm, setShowNewServiceForm] = useState(false)
   
   // ──── MAINTENANCE ADVANCED ────
@@ -231,8 +233,8 @@ const DeveloperDashboard = () => {
     try {
       const payload = {
         app_name: siteSettingsForm.app_name,
-        app_logo: siteSettingsForm.app_logo,
-        hero_background_image: siteSettingsForm.hero_background_image,
+        app_logo: logoPreview ? logoPreview : siteSettingsForm.app_logo,
+        hero_background_image: heroImagePreview ? heroImagePreview : siteSettingsForm.hero_background_image,
         homepage_hero_title: siteSettingsForm.homepage_hero_title,
         homepage_hero_subtitle: siteSettingsForm.homepage_hero_subtitle,
         tagline: siteSettingsForm.tagline,
@@ -247,6 +249,14 @@ const DeveloperDashboard = () => {
         privacy_policy: siteSettingsForm.privacy_policy,
         terms_of_service: siteSettingsForm.terms_of_service,
         about_content: siteSettingsForm.about_content
+      }
+
+      // Only include images if they are URLs, not base64
+      if (payload.app_logo && payload.app_logo.startsWith('data:')) {
+        delete payload.app_logo
+      }
+      if (payload.hero_background_image && payload.hero_background_image.startsWith('data:')) {
+        delete payload.hero_background_image
       }
       
       await api.put('/site-settings', payload)
@@ -312,6 +322,58 @@ const DeveloperDashboard = () => {
   const handleLogout = () => {
     logout()
     navigate('/')
+  }
+
+  // ============ SERVICE MANAGEMENT ============
+  const handleNewServiceImageUpload = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setNewServiceImage(reader.result)
+        setNewServiceImagePreview(reader.result)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const createNewService = async () => {
+    try {
+      if (!newServiceForm.name || !newServiceForm.category || !newServiceForm.price) {
+        alert('❌ Nom, catégorie et prix sont obligatoires')
+        return
+      }
+
+      if (!newServiceImage) {
+        alert('❌ Vous DEVEZ ajouter une image pour le service')
+        return
+      }
+
+      const payload = {
+        title: newServiceForm.name,
+        category: newServiceForm.category,
+        price: newServiceForm.price,
+        duration_minutes: newServiceForm.duration || 30,
+        description: newServiceForm.description,
+        active: newServiceForm.active,
+        image_url: newServiceImage
+      }
+
+      await api.post('/services', payload)
+      alert('✅ Service créé avec succès')
+      
+      // Reset form
+      setShowNewServiceForm(false)
+      setNewServiceForm({ name: '', title: '', category: '', price: 0, duration: 30, description: '', active: true })
+      setNewServiceImage(null)
+      setNewServiceImagePreview(null)
+      
+      // Refetch data
+      await fetchAllData()
+    } catch (err) {
+      console.error('Erreur:', err)
+      alert('❌ Erreur lors de la création: ' + err.message)
+    }
   }
 
   const handleAvatarUpload = (e) => {
@@ -1027,6 +1089,53 @@ const DeveloperDashboard = () => {
                   >
                     <h6 style={{ color: 'var(--primary-color)', marginBottom: '1rem' }}>➕ Nouveau Service</h6>
                     <div className="row g-2">
+                      {/* Image Upload */}
+                      <div className="col-12">
+                        <label className="form-label" style={{ color: 'var(--primary-color)', fontWeight: 'bold' }}>📷 Image du Service (Obligatoire)</label>
+                        <div style={{
+                          border: '2px dashed var(--primary-color)',
+                          borderRadius: 'var(--border-radius-md)',
+                          padding: '1.5rem',
+                          textAlign: 'center',
+                          cursor: 'pointer',
+                          background: 'var(--bg-color)',
+                          transition: 'all 0.3s',
+                          position: 'relative'
+                        }}>
+                          {newServiceImagePreview ? (
+                            <div>
+                              <img src={newServiceImagePreview} alt="Preview" style={{
+                                maxWidth: '100%',
+                                maxHeight: '120px',
+                                marginBottom: '0.5rem',
+                                borderRadius: 'var(--border-radius-md)'
+                              }} />
+                              <p style={{ fontSize: '0.85rem', marginBottom: 0, color: 'var(--text-secondary)' }}>Cliquez pour changer</p>
+                            </div>
+                          ) : (
+                            <div>
+                              <p style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🖼️</p>
+                              <p style={{ marginBottom: 0, fontSize: '0.9rem' }}>Cliquez pour ajouter une image</p>
+                              <small style={{ color: 'var(--text-secondary)' }}>L'image est OBLIGATOIRE</small>
+                            </div>
+                          )}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleNewServiceImageUpload}
+                            style={{
+                              position: 'absolute',
+                              top: 0,
+                              left: 0,
+                              width: '100%',
+                              height: '100%',
+                              opacity: 0,
+                              cursor: 'pointer'
+                            }}
+                          />
+                        </div>
+                      </div>
+
                       <div className="col-12 col-md-6">
                         <input
                           type="text"
@@ -1088,16 +1197,23 @@ const DeveloperDashboard = () => {
                           <span className="form-check-label">Actif</span>
                         </label>
                       </div>
-                      <div className="col-12">
+                      <div className="col-12 d-flex gap-2">
                         <button
-                          className="btn btn-success w-100"
+                          className="btn btn-success flex-grow-1"
+                          onClick={createNewService}
+                        >
+                          ✓ Créer le service
+                        </button>
+                        <button
+                          className="btn btn-secondary"
                           onClick={() => {
-                            alert('Service créé: ' + newServiceForm.name);
-                            setShowNewServiceForm(false);
+                            setShowNewServiceForm(false)
+                            setNewServiceImage(null)
+                            setNewServiceImagePreview(null)
                             setNewServiceForm({name: '', title: '', category: '', price: 0, duration: 30, description: '', active: true})
                           }}
                         >
-                          ✓ Créer le service
+                          ✗ Annuler
                         </button>
                       </div>
                     </div>

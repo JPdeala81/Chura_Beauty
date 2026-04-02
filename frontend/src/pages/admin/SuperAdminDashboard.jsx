@@ -495,10 +495,11 @@ const SuperAdminDashboard = () => {
 
   const saveSiteSettings = async () => {
     try {
+      // Prepare payload WITHOUT base64 images to avoid 413 Payload Too Large
       const payload = {
         app_name: siteSettingsForm.app_name,
-        app_logo: siteSettingsForm.app_logo,
-        hero_background_image: siteSettingsForm.hero_background_image,
+        app_logo: logoPreview ? logoPreview : siteSettingsForm.app_logo,
+        hero_background_image: heroImagePreview ? heroImagePreview : siteSettingsForm.hero_background_image,
         homepage_hero_title: siteSettingsForm.homepage_hero_title,
         homepage_hero_subtitle: siteSettingsForm.homepage_hero_subtitle,
         tagline: siteSettingsForm.tagline,
@@ -513,6 +514,14 @@ const SuperAdminDashboard = () => {
         privacy_policy: siteSettingsForm.privacy_policy,
         terms_of_service: siteSettingsForm.terms_of_service,
         about_content: siteSettingsForm.about_content
+      }
+
+      // Only include images if they are URLs, not base64
+      if (payload.app_logo && payload.app_logo.startsWith('data:')) {
+        delete payload.app_logo
+      }
+      if (payload.hero_background_image && payload.hero_background_image.startsWith('data:')) {
+        delete payload.hero_background_image
       }
       
       console.log('📤 Envoi des paramètres:', payload)
@@ -555,6 +564,11 @@ const SuperAdminDashboard = () => {
     try {
       if (!serviceForm.title || !serviceForm.category || !serviceForm.price) {
         alert('❌ Titre, catégorie et prix sont obligatoires')
+        return
+      }
+
+      if (!serviceImage && !serviceForm.image_url) {
+        alert('❌ Vous DEVEZ ajouter une image pour le service')
         return
       }
 
