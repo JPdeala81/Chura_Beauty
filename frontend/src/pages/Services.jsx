@@ -84,7 +84,13 @@ export default function Services() {
       <Navbar />
 
       {/* Hero Section */}
-      <section style={{ background: 'var(--gradient-primary)', padding: '100px 0 60px', minHeight: '50vh', display: 'flex', alignItems: 'center' }}>
+      <section style={{ 
+        background: 'var(--gradient-primary)', 
+        padding: 'clamp(60px, 12vw, 100px) 0 clamp(40px, 8vw, 60px)', 
+        minHeight: 'clamp(35vh, 50vw, 50vh)', 
+        display: 'flex', 
+        alignItems: 'center' 
+      }}>
         <div className="container">
           <motion.div
             initial={{ opacity: 0, y: -30 }}
@@ -94,7 +100,7 @@ export default function Services() {
           >
             <h1 style={{
               fontFamily: 'Playfair Display, serif',
-              fontSize: '3.5rem',
+              fontSize: 'clamp(2rem, 6vw, 3.5rem)',
               fontWeight: '700',
               color: 'white',
               marginBottom: '20px',
@@ -103,7 +109,7 @@ export default function Services() {
               Nos Services
             </h1>
             <p style={{
-              fontSize: '1.2rem',
+              fontSize: 'clamp(0.9rem, 2.5vw, 1.2rem)',
               color: 'rgba(255,255,255,0.9)',
               maxWidth: '600px',
               margin: '0 auto',
@@ -116,7 +122,11 @@ export default function Services() {
       </section>
 
       {/* Services Section */}
-      <section style={{ background: 'var(--light-color)', padding: '60px 0', minHeight: '70vh' }}>
+      <section style={{ 
+        background: 'var(--light-color)', 
+        padding: 'clamp(40px, 8vw, 60px) 0', 
+        minHeight: '70vh' 
+      }}>
         <div className="container">
           <motion.div
             initial={{ opacity: 0, y: 30 }}

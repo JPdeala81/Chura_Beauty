@@ -105,8 +105,8 @@ const Home = () => {
         style={{ 
           background: 'linear-gradient(135deg, var(--light-color) 0%, var(--light-medium) 100%)',
           minHeight: '70vh',
-          paddingTop: '80px',
-          paddingBottom: '100px',
+          paddingTop: 'clamp(40px, 8vw, 80px)',
+          paddingBottom: 'clamp(40px, 10vw, 100px)',
           position: 'relative',
           overflow: 'hidden'
         }}
@@ -151,7 +151,12 @@ const Home = () => {
             <h2 className="section-title centered" style={{ display: 'block', marginBottom: '12px' }}>
               Découvrez Nos Services
             </h2>
-            <p className="text-muted mt-3" style={{ maxWidth: '520px', margin: '16px auto 0', lineHeight: '1.8', fontSize: '16px' }}>
+            <p className="text-muted mt-3" style={{ 
+              maxWidth: '520px', 
+              margin: '16px auto 0', 
+              lineHeight: '1.8', 
+              fontSize: 'clamp(14px, 2.5vw, 16px)' 
+            }}>
               Des soins de beauté personnalisés pour révéler votre éclat naturel avec nos expertes qualifiées
             </p>
           </motion.div>
