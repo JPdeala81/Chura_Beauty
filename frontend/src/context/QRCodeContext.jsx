@@ -50,18 +50,23 @@ export const QRCodeProvider = ({ children }) => {
         qrcodeAirtelNumber: newConfig.airtelNumber,
         qrcodeMoovNumber: newConfig.moovNumber
       })
-      if (response.data?.data) {
+      
+      // Handle response - backend returns the updated record
+      const updatedData = Array.isArray(response.data) ? response.data[0] : response.data
+      
+      if (updatedData) {
         setQRConfig({
-          enabled: response.data.data.qrcode_enabled || false,
-          mode: response.data.data.qrcode_mode || 'service_info',
-          ussdCode: response.data.data.qrcode_ussd_code || '*241#',
-          phoneNumber: response.data.data.qrcode_phone_number || '',
-          airtelNumber: response.data.data.qrcode_airtel_number || '',
-          moovNumber: response.data.data.qrcode_moov_number || ''
+          enabled: updatedData.qrcode_enabled || false,
+          mode: updatedData.qrcode_mode || 'service_info',
+          ussdCode: updatedData.qrcode_ussd_code || '*241#',
+          phoneNumber: updatedData.qrcode_phone_number || '',
+          airtelNumber: updatedData.qrcode_airtel_number || '',
+          moovNumber: updatedData.qrcode_moov_number || ''
         })
       }
       return response.data
     } catch (err) {
+      console.error('QR Config update error:', err)
       setError(err.message)
       throw err
     }
