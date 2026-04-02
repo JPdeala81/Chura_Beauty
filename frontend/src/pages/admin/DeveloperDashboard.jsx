@@ -1,11 +1,13 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useContext } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
+import { AuthContext } from '../../context/AuthContext'
 import api from '../../services/api'
 import QRCodeConfig from '../../components/admin/QRCodeConfig'
 
 const DeveloperDashboard = () => {
   const navigate = useNavigate()
+  const { logout } = useContext(AuthContext)
   const [activeTab, setActiveTab] = useState('overview')
   const [appointments, setAppointments] = useState([])
   const [services, setServices] = useState([])
@@ -89,6 +91,13 @@ const DeveloperDashboard = () => {
     confirmPassword: ''
   })
 
+  // Payment Networks Configuration
+  const [paymentConfig, setPaymentConfig] = useState({
+    airtel_code: '',
+    moov_code: '',
+    is_payment_enabled: false
+  })
+
   useEffect(() => {
     fetchAllData()
     // Only refetch if not in edit mode
@@ -159,6 +168,12 @@ const DeveloperDashboard = () => {
         const settingsRes = await api.get('/site-settings')
         const settingsData = settingsRes.data || {}
         console.log('✅ Site settings chargés:', settingsData)
+        // Load payment config from settings
+        setPaymentConfig({
+          airtel_code: settingsData.airtel_code || '',
+          moov_code: settingsData.moov_code || '',
+          is_payment_enabled: settingsData.is_payment_enabled || false
+        })
         // Pré-remplir le formulaire avec les données existantes
         setSiteSettingsForm(prev => ({
           ...prev,
@@ -244,6 +259,22 @@ const DeveloperDashboard = () => {
     }
   }
 
+  // ============ PAYMENT NETWORKS ============
+  const savePaymentConfig = async () => {
+    try {
+      await api.put('/site-settings', {
+        airtel_code: paymentConfig.airtel_code,
+        moov_code: paymentConfig.moov_code,
+        is_payment_enabled: paymentConfig.is_payment_enabled
+      })
+      alert('✅ Configuration des réseaux de paiement mise à jour')
+      await fetchAllData()
+    } catch (err) {
+      console.error('Erreur save payment config:', err)
+      alert('❌ Erreur: ' + err.message)
+    }
+  }
+
   // ============ SITE SETTINGS - LOGO ============
   const handleLogoUpload = (e) => {
     const file = e.target.files[0]
@@ -276,6 +307,11 @@ const DeveloperDashboard = () => {
   const handleProfileChange = (e) => {
     const { name, value } = e.target
     setProfileForm(prev => ({ ...prev, [name]: value }))
+  }
+
+  const handleLogout = () => {
+    logout()
+    navigate('/')
   }
 
   const handleAvatarUpload = (e) => {
@@ -509,6 +545,13 @@ const DeveloperDashboard = () => {
                 style={{ borderColor: 'var(--surface)', color: 'white' }}
               >
                 🔄 Actualiser
+              </button>
+              <button 
+                className="btn btn-outline-danger"
+                onClick={handleLogout}
+                style={{ borderColor: '#ff6b6b', color: '#ff6b6b' }}
+              >
+                🚪 Déconnexion
               </button>
             </div>
           </div>
@@ -2271,7 +2314,192 @@ const DeveloperDashboard = () => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
             >
-              <QRCodeConfig showTitle={true} />
+              {/* QR Code Configuration */}
+              <div className="card" style={{
+                background: 'var(--surface)',
+                border: '2px solid var(--primary-color)',
+                borderRadius: 'var(--border-radius-lg)',
+                padding: '2rem',
+                marginBottom: '2rem',
+                boxShadow: 'var(--shadow-card)'
+              }}>
+                <QRCodeConfig showTitle={true} />
+              </div>
+
+              {/* Payment Networks Configuration */}
+              <div className="card" style={{
+                background: 'var(--surface)',
+                border: '2px solid #00d9ff',
+                borderRadius: 'var(--border-radius-lg)',
+                padding: '2rem',
+                marginBottom: '2rem',
+                boxShadow: 'var(--shadow-card)'
+              }}>
+                <h5 style={{ color: '#00d9ff', marginBottom: '1.5rem', fontSize: '1.3rem', fontWeight: 'bold' }}>💳 Configuration Réseaux de Paiement - Gabon</h5>
+                
+                <div className="row g-3">
+                  <div className="col-12">
+                    <div className="alert" style={{
+                      background: 'rgba(0, 217, 255, 0.1)',
+                      border: '1px solid #00d9ff',
+                      borderRadius: 'var(--border-radius-md)',
+                      color: 'var(--text-color)',
+                      marginBottom: 0
+                    }}>
+                      <strong>ℹ️ Configuration Critique:</strong> Lorsqu'un utilisateur scanne le QR code, il lui sera demandé de choisir son réseau de paiement (Airtel ou Moov). Les coordonnées ci-dessous détermineront où les utilisateurs envoient leur paiement.
+                    </div>
+                  </div>
+
+                  <div className="col-12 col-md-6">
+                    <label className="form-label" style={{ color: 'var(--primary-color)', fontWeight: 'bold' }}>📱 Code Airtel Money (Gabon)</label>
+                    <input
+                      type="tel"
+                      className="form-control form-control-lg"
+                      value={paymentConfig.airtel_code}
+                      onChange={(e) => setPaymentConfig(prev => ({ ...prev, airtel_code: e.target.value }))}
+                      placeholder="+241 61 23 45 67 ou +24161234567"
+                      style={{ 
+                        borderColor: '#004e89', 
+                        background: 'var(--bg-color)', 
+                        color: 'var(--text-color)',
+                        borderWidth: '2px',
+                        padding: '0.75rem'
+                      }}
+                    />
+                    <small style={{ color: 'var(--text-secondary)', display: 'block', marginTop: '0.5rem' }}>Format: +241XXXXXXXXX (numéro complet du compte Airtel Money)</small>
+                  </div>
+
+                  <div className="col-12 col-md-6">
+                    <label className="form-label" style={{ color: 'var(--primary-color)', fontWeight: 'bold' }}>📱 Code Moov Money (Gabon)</label>
+                    <input
+                      type="tel"
+                      className="form-control form-control-lg"
+                      value={paymentConfig.moov_code}
+                      onChange={(e) => setPaymentConfig(prev => ({ ...prev, moov_code: e.target.value }))}
+                      placeholder="+241 66 23 45 67 ou +24166234567"
+                      style={{ 
+                        borderColor: '#ff6b35', 
+                        background: 'var(--bg-color)', 
+                        color: 'var(--text-color)',
+                        borderWidth: '2px',
+                        padding: '0.75rem'
+                      }}
+                    />
+                    <small style={{ color: 'var(--text-secondary)', display: 'block', marginTop: '0.5rem' }}>Format: +241XXXXXXXXX (numéro complet du compte Moov Money)</small>
+                  </div>
+
+                  <div className="col-12">
+                    <div className="form-check" style={{ padding: '1rem', background: 'var(--bg-color)', borderRadius: 'var(--border-radius-md)', border: '1px solid var(--primary-color)' }}>
+                      <input
+                        className="form-check-input"
+                        type="checkbox"
+                        id="paymentEnabled"
+                        checked={paymentConfig.is_payment_enabled}
+                        onChange={(e) => setPaymentConfig(prev => ({ ...prev, is_payment_enabled: e.target.checked }))}
+                        style={{ width: '1.3rem', height: '1.3rem', cursor: 'pointer' }}
+                      />
+                      <label className="form-check-label" htmlFor="paymentEnabled" style={{ cursor: 'pointer', marginLeft: '0.5rem', marginTop: '0.2rem' }}>
+                        <strong>✅ Activer les paiements via QR Code</strong>
+                        <small style={{ display: 'block', color: 'var(--text-secondary)', marginTop: '0.3rem' }}>Les utilisateurs pourront scanner le QR code et effectuer des paiements</small>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="col-12 d-flex gap-2 pt-2">
+                    <button
+                      className="btn btn-success btn-lg"
+                      onClick={savePaymentConfig}
+                      style={{ flex: 1 }}
+                    >
+                      💾 Sauvegarder Configuration
+                    </button>
+                    <button
+                      className="btn btn-outline-secondary btn-lg"
+                      onClick={fetchAllData}
+                    >
+                      🔄 Réinitialiser
+                    </button>
+                  </div>
+
+                  {/* Preview Section */}
+                  <div className="col-12">
+                    <div style={{
+                      background: 'linear-gradient(135deg, rgba(0, 217, 255, 0.05) 0%, rgba(255, 107, 53, 0.05) 100%)',
+                      border: '1px solid var(--primary-color)',
+                      borderRadius: 'var(--border-radius-lg)',
+                      padding: '1.5rem',
+                      marginTop: '1rem'
+                    }}>
+                      <h6 style={{ color: 'var(--primary-color)', marginBottom: '1rem', fontWeight: 'bold' }}>📋 Aperçu de la Configuration Actuelle</h6>
+                      
+                      <div className="row g-3">
+                        <div className="col-12 col-md-4">
+                          <div style={{ 
+                            padding: '1rem', 
+                            background: 'var(--bg-color)', 
+                            borderRadius: 'var(--border-radius-md)',
+                            border: '1px solid #004e89'
+                          }}>
+                            <small style={{ color: 'var(--text-secondary)' }}>Airtel Money</small>
+                            <p style={{ margin: '0.5rem 0 0 0', fontSize: '1rem', fontWeight: 'bold', color: '#004e89' }}>
+                              {paymentConfig.airtel_code || '❌ Non configuré'}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="col-12 col-md-4">
+                          <div style={{ 
+                            padding: '1rem', 
+                            background: 'var(--bg-color)', 
+                            borderRadius: 'var(--border-radius-md)',
+                            border: '1px solid #ff6b35'
+                          }}>
+                            <small style={{ color: 'var(--text-secondary)' }}>Moov Money</small>
+                            <p style={{ margin: '0.5rem 0 0 0', fontSize: '1rem', fontWeight: 'bold', color: '#ff6b35' }}>
+                              {paymentConfig.moov_code || '❌ Non configuré'}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="col-12 col-md-4">
+                          <div style={{ 
+                            padding: '1rem', 
+                            background: 'var(--bg-color)', 
+                            borderRadius: 'var(--border-radius-md)',
+                            border: '1px solid var(--primary-color)'
+                          }}>
+                            <small style={{ color: 'var(--text-secondary)' }}>Statut</small>
+                            <p style={{ 
+                              margin: '0.5rem 0 0 0', 
+                              fontSize: '1rem', 
+                              fontWeight: 'bold',
+                              color: paymentConfig.is_payment_enabled ? '#32cd32' : '#ff6b6b'
+                            }}>
+                              {paymentConfig.is_payment_enabled ? '✅ Actif' : '❌ Inactif'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Security Notice */}
+              <div className="alert alert-warning" style={{
+                background: 'rgba(255, 193, 7, 0.1)',
+                border: '1px solid #ffc107',
+                borderRadius: 'var(--border-radius-lg)',
+                padding: '1.5rem'
+              }}>
+                <h6 style={{ color: '#ffc107', marginBottom: '0.5rem', fontWeight: 'bold' }}>⚠️ Importante Notice de Sécurité</h6>
+                <ul style={{ marginBottom: 0, paddingLeft: '1.5rem', color: 'var(--text-color)' }}>
+                  <li>Assurez-vous que les numéros saisis appartiennent au propriétaire du salon</li>
+                  <li>Vérifiez les numéros avant de sauvegarder pour éviter les erreurs</li>
+                  <li>Les transactions seront traitées en temps réel</li>
+                  <li>Les modifications prennent effet immédiatement après la sauvegarde</li>
+                </ul>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
