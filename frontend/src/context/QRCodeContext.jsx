@@ -5,7 +5,7 @@ const QRCodeContext = createContext()
 
 export const QRCodeProvider = ({ children }) => {
   const [qrConfig, setQRConfig] = useState({
-    enabled: false,
+    enabled: true,
     mode: 'service_info', // 'service_info' or 'ussd_call'
     ussdCode: '*241#',
     phoneNumber: '',

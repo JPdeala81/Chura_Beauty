@@ -21,6 +21,9 @@ const Home = () => {
   const [priceRange, setPriceRange] = useState([0, 100000])
   const [errorMessage, setErrorMessage] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
+  const [maintenanceMode, setMaintenanceMode] = useState(false)
+  const [maintenanceInfo, setMaintenanceInfo] = useState(null)
+  const [timeRemaining, setTimeRemaining] = useState('')
   const ITEMS_PER_PAGE = 6
   const servicesRef = useRef(null)
 
@@ -32,12 +35,64 @@ const Home = () => {
     }
   }, [location.state])
 
-  useEffect(() => { fetchServices() }, [])
+  useEffect(() => { 
+    // Check maintenance mode on mount
+    checkMaintenanceMode()
+    fetchServices() 
+  }, [])
 
   useEffect(() => { 
     filterServices()
     setCurrentPage(1)
   }, [services, activeCategory, searchQuery, priceRange])
+
+  // Check if maintenance mode is active
+  const checkMaintenanceMode = async () => {
+    try {
+      const response = await api.get('/site-settings')
+      if (response.data && response.data.app_closure_enabled) {
+        setMaintenanceMode(true)
+        setMaintenanceInfo({
+          reason: response.data.app_closure_reason || 'Maintenance en cours',
+          reopenDate: response.data.app_closure_reopen_date || '',
+          reopenTime: response.data.app_closure_reopen_time || '09:00'
+        })
+      } else {
+        setMaintenanceMode(false)
+      }
+    } catch (err) {
+      console.warn('Maintenance check failed:', err)
+      setMaintenanceMode(false)
+    }
+  }
+
+  // Update countdown timer for maintenance
+  useEffect(() => {
+    if (!maintenanceMode || !maintenanceInfo?.reopenDate) return
+
+    const updateTimer = () => {
+      const reopenDateTime = new Date(`${maintenanceInfo.reopenDate}T${maintenanceInfo.reopenTime}`)
+      const now = new Date()
+      const diff = reopenDateTime - now
+
+      if (diff <= 0) {
+        setTimeRemaining('Prochainement...')
+        checkMaintenanceMode() // Re-check if maintenance is over
+        return
+      }
+
+      const hours = Math.floor(diff / (1000 * 60 * 60))
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000)
+
+      setTimeRemaining(`${hours}h ${minutes}m ${seconds}s`)
+    }
+
+    updateTimer()
+    const interval = setInterval(updateTimer, 1000)
+
+    return () => clearInterval(interval)
+  }, [maintenanceMode, maintenanceInfo])
 
   const fetchServices = async () => {
     try {
@@ -94,10 +149,136 @@ const Home = () => {
 
   return (
     <>
-      <Navbar />
-      <ErrorToast message={errorMessage} onClose={() => setErrorMessage('')} />
-      
-      <HeroSection onScrollToServices={scrollToServices} />
+      {/* Maintenance Mode Display */}
+      {maintenanceMode && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          style={{
+            minHeight: '100vh',
+            background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '2rem',
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 9999
+          }}
+        >
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            style={{
+              textAlign: 'center',
+              maxWidth: '600px',
+              color: 'white'
+            }}
+          >
+            {/* Main Icon */}
+            <motion.div
+              animate={{ scale: [1, 1.1, 1] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              style={{ fontSize: '120px', marginBottom: '2rem' }}
+            >
+              🔧
+            </motion.div>
+
+            {/* Title */}
+            <h1 style={{
+              fontSize: 'clamp(2rem, 5vw, 3.5rem)',
+              fontWeight: 'bold',
+              marginBottom: '1rem',
+              background: 'linear-gradient(135deg, #ffc107, #ff9800)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text'
+            }}>
+              Maintenance en Cours
+            </h1>
+
+            {/* Reason */}
+            <p style={{
+              fontSize: '1.2rem',
+              marginBottom: '2rem',
+              color: '#e0e0e0',
+              lineHeight: '1.6'
+            }}>
+              {maintenanceInfo?.reason || 'Nous effectuons une maintenance programmée pour améliorer votre expérience.'}
+            </p>
+
+            {/* Countdown */}
+            {timeRemaining && (
+              <motion.div
+                initial={{ y: -20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                style={{
+                  background: 'rgba(255, 193, 7, 0.15)',
+                  border: '2px solid #ffc107',
+                  borderRadius: '12px',
+                  padding: '2rem',
+                  marginBottom: '2rem'
+                }}
+              >
+                <p style={{ margin: 0, color: '#ffc107', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
+                  Temps avant la réouverture
+                </p>
+                <h2 style={{
+                  margin: 0,
+                  fontSize: '2.5rem',
+                  fontWeight: 'bold',
+                  fontFamily: 'monospace',
+                  color: '#ffc107'
+                }}>
+                  {timeRemaining}
+                </h2>
+              </motion.div>
+            )}
+
+            {/* Additional Info */}
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              borderRadius: '12px',
+              padding: '2rem',
+              marginBottom: '2rem'
+            }}>
+              <h3 style={{ marginTop: 0, marginBottom: '1rem', color: '#e0e0e0' }}>
+                Pendant la maintenance
+              </h3>
+              <ul style={{
+                listStyle: 'none',
+                padding: 0,
+                margin: 0,
+                textAlign: 'left'
+              }}>
+                <li style={{ marginBottom: '0.5rem' }}>✓ Les réservations seront rouvertes après la maintenance</li>
+                <li style={{ marginBottom: '0.5rem' }}>✓ Nous améliorons continuellement notre plateforme</li>
+                <li>✓ Veuillez nous remercier de votre patience</li>
+              </ul>
+            </div>
+
+            {/* Contact Info */}
+            <p style={{ color: '#999', fontSize: '0.9rem' }}>
+              Besoin d'aide? Contactez-nous à{' '}
+              <a href="mailto:support@chura.com" style={{ color: '#ffc107', textDecoration: 'none' }}>
+                support@chura.com
+              </a>
+            </p>
+          </motion.div>
+        </motion.div>
+      )}
+
+      {/* Normal Page Content - Hidden during maintenance */}
+      {!maintenanceMode && (
+        <>
+          <Navbar />
+          <ErrorToast message={errorMessage} onClose={() => setErrorMessage('')} />
+          
+          <HeroSection onScrollToServices={scrollToServices} />
 
       {/* Services Section */}
       <section
@@ -449,6 +630,8 @@ const Home = () => {
           to { transform: rotate(360deg); }
         }
       `}</style>
+        </>
+      )}
     </>
   )
 }
