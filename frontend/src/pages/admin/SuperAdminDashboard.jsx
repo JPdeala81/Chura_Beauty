@@ -367,13 +367,33 @@ const SuperAdminDashboard = () => {
 
   const saveSettings = async () => {
     try {
-      await api.put('/site-settings', formData)
-      setSettings(formData)
+      // Only send valid fields that exist in the database
+      const validPayload = {
+        salon_name: formData.salon_name || '',
+        email: formData.email || '',
+        phone: formData.phone || '',
+        address: formData.address || '',
+        description: formData.description || ''
+      }
+      
+      // Remove empty fields to allow partial updates
+      const payload = Object.entries(validPayload).reduce((acc, [key, value]) => {
+        if (value !== undefined && value !== null) {
+          acc[key] = value
+        }
+        return acc
+      }, {})
+      
+      await api.put('/site-settings', payload)
+      setSettings(payload)
       setEditingSettings(false)
-      alert('Paramètres sauvegardés avec succès')
+      alert('✅ Paramètres du salon sauvegardés avec succès')
+      await fetchAllData()
     } catch (err) {
       console.error('Erreur save:', err)
-      alert('Erreur lors de la sauvegarde')
+      alert(`❌ Erreur lors de la sauvegarde: ${err.response?.data?.message || err.message}`)
+    }
+  }
     }
   }
 
@@ -693,10 +713,24 @@ const SuperAdminDashboard = () => {
   // ============ PAYMENT NETWORKS ============
   const savePaymentConfig = async () => {
     try {
-      await api.put('/auth/admin/payment-config', paymentConfig)
-      alert('✅ Configuration des réseaux mise à jour')
+      // Try to save through site-settings endpoint (more reliable)
+      const payload = {
+        airtel_code: paymentConfig.airtel_code,
+        moov_code: paymentConfig.moov_code,
+        is_payment_enabled: paymentConfig.is_payment_enabled
+      }
+      
+      await api.put('/site-settings', payload)
+      alert('✅ Configuration des réseaux de paiement mise à jour avec succès')
     } catch (err) {
-      alert('❌ Erreur: ' + err.message)
+      console.error('Erreur savePaymentConfig:', err)
+      // Fallback: try the alternative endpoint
+      try {
+        await api.put('/auth/admin/payment-config', paymentConfig)
+        alert('✅ Configuration des réseaux mise à jour')
+      } catch (fallbackErr) {
+        alert(`❌ Erreur: ${fallbackErr.response?.data?.message || fallbackErr.message}`)
+      }
     }
   }
 
