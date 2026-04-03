@@ -48,15 +48,6 @@ const SuperAdminDashboard = () => {
     footer_twitter: ''
   })
 
-  // App Closure / Maintenance
-  const [appClosureMode, setAppClosureMode] = useState(false)
-  const [closureForm, setClosureForm] = useState({
-    enabled: false,
-    reason: 'Maintenance en cours',
-    reopenDate: '',
-    reopenTime: '09:00'
-  })
-
   // Profile Management
   const [editingProfile, setEditingProfile] = useState(false)
   const [profileForm, setProfileForm] = useState({
@@ -116,6 +107,21 @@ const SuperAdminDashboard = () => {
   const [serviceFilterDurationMax, setServiceFilterDurationMax] = useState('')
   const [showServiceImageModal, setShowServiceImageModal] = useState(false)
   const [selectedServiceImage, setSelectedServiceImage] = useState(null)
+
+  // Closure/Maintenance Mode
+  const [appClosureMode, setAppClosureMode] = useState(false)
+  const [closureForm, setClosureForm] = useState({
+    reason: '',
+    reopenDate: new Date().toISOString().split('T')[0],
+    reopenTime: '09:00',
+    duration: 60,
+    message: ''
+  })
+
+  // QR Code Modal
+  const [showQRModal, setShowQRModal] = useState(false)
+  const [selectedQRUser, setSelectedQRUser] = useState(null)
+  const [generatedQRValue, setGeneratedQRValue] = useState('')
 
   const { admin, logout } = useContext(AuthContext)
   const navigate = useNavigate()
@@ -392,8 +398,6 @@ const SuperAdminDashboard = () => {
     } catch (err) {
       console.error('Erreur save:', err)
       alert(`❌ Erreur lors de la sauvegarde: ${err.response?.data?.message || err.message}`)
-    }
-  }
     }
   }
 
@@ -757,6 +761,55 @@ const SuperAdminDashboard = () => {
     } catch (err) {
       console.error('Erreur:', err)
       alert('Erreur lors du changement')
+    }
+  }
+
+  const sendQRCodeToDeveloper = async () => {
+    try {
+      // Generate a unique QR code for this maintenance session
+      const qrData = {
+        type: 'maintenance',
+        timestamp: new Date().toISOString(),
+        adminId: admin?.id,
+        sessionId: Math.random().toString(36).substring(7)
+      }
+      
+      await api.post('/notifications/send-qr', {
+        recipient: 'developer',
+        qrData: qrData,
+        maintenanceInfo: {
+          reason: closureForm.reason,
+          reopenDate: closureForm.reopenDate,
+          reopenTime: closureForm.reopenTime
+        }
+      })
+      alert('✅ Code QR envoyé au développeur avec succès!')
+    } catch (err) {
+      console.error('Erreur lors de l\'envoi du QR code:', err)
+      alert('⚠️ Erreur: ' + (err.response?.data?.message || err.message))
+    }
+  }
+
+  const openUserQRCode = (userType) => {
+    const qrData = {
+      type: userType === 'developer' ? 'developer_access' : 'admin_access',
+      email: userType === 'developer' ? 'developer@chura.com' : (adminInfo.email || 'admin@chura.com'),
+      role: userType === 'developer' ? 'developer' : 'admin',
+      generatedAt: new Date().toISOString(),
+      sessionId: Math.random().toString(36).substring(7)
+    }
+    setGeneratedQRValue(JSON.stringify(qrData))
+    setSelectedQRUser(userType)
+    setShowQRModal(true)
+  }
+
+  const downloadQRCode = () => {
+    const qrCanvas = document.querySelector('#qr-code-canvas canvas')
+    if (qrCanvas) {
+      const link = document.createElement('a')
+      link.href = qrCanvas.toDataURL('image/png')
+      link.download = `QR_${selectedQRUser}_${new Date().getTime()}.png`
+      link.click()
     }
   }
 
@@ -2257,7 +2310,7 @@ const SuperAdminDashboard = () => {
                 boxShadow: 'var(--shadow-card)',
                 padding: '2rem'
               }}>
-                <h6 style={{ color: 'var(--primary-color)', marginBottom: '1rem' }}>Administrateurs actuels</h6>
+                <h6 style={{ color: 'var(--primary-color)', marginBottom: '1rem' }}>🔐 Utilisateurs Système (Protégés)</h6>
                 <div className="alert" style={{
                   background: 'rgba(0, 217, 255, 0.1)',
                   border: '1px solid #00d9ff',
@@ -2266,7 +2319,101 @@ const SuperAdminDashboard = () => {
                   marginBottom: '1rem'
                 }}>
                   <small>
-                    <strong>ℹ️ Nota:</strong> Le super administrateur ne peut pas supprimer le développeur ou son propre compte pour assurer la sécurité du système.
+                    <strong>ℹ️ Nota:</strong> Le développeur et le super administrateur sont protégés. Cliquez sur le code QR pour afficher et télécharger le code d'accès unique.
+                  </small>
+                </div>
+                <div className="table-responsive">
+                  <table className="table table-hover" style={{ marginBottom: 0 }}>
+                    <thead style={{ background: 'var(--bg-color)' }}>
+                      <tr>
+                        <th style={{ color: 'var(--primary-color)' }}>👤 Utilisateur</th>
+                        <th style={{ color: 'var(--primary-color)' }}>📧 Email</th>
+                        <th style={{ color: 'var(--primary-color)' }}>👑 Rôle</th>
+                        <th style={{ color: 'var(--primary-color)' }}>📊 Statut</th>
+                        <th style={{ color: 'var(--primary-color)' }}>📱 QR Code</th>
+                        <th style={{ color: 'var(--primary-color)' }}>⚙️ Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {/* Développeur */}
+                      <tr style={{ borderLeft: '4px solid #00ff96' }}>
+                        <td style={{ fontWeight: 'bold' }}>🧑‍💻 Développeur</td>
+                        <td style={{ color: '#00ff96', fontWeight: 'bold' }}>developer@chura.com</td>
+                        <td><span className="badge" style={{ background: '#00ff96', color: '#000' }}>Développeur</span></td>
+                        <td><span style={{ color: '#00ff96', fontWeight: 'bold' }}>✓ Actif</span></td>
+                        <td>
+                          <button
+                            className="btn btn-sm"
+                            style={{
+                              background: '#00ff96',
+                              color: '#000',
+                              border: 'none',
+                              fontWeight: 'bold',
+                              padding: '0.25rem 0.75rem',
+                              cursor: 'pointer'
+                            }}
+                            title="Cliquez pour voir le QR code"
+                            onClick={() => openUserQRCode('developer')}
+                          >
+                            🔲 QR
+                          </button>
+                        </td>
+                        <td>
+                          <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Protégé</span>
+                        </td>
+                      </tr>
+
+                      {/* Super Admin (Utilisateur Actuel) */}
+                      <tr style={{ borderLeft: '4px solid var(--primary-color)' }}>
+                        <td style={{ fontWeight: 'bold' }}>👔 Super Admin</td>
+                        <td style={{ color: 'var(--primary-color)', fontWeight: 'bold' }}>{adminInfo.email || 'superadmin@chura.com'}</td>
+                        <td><span className="badge" style={{ background: 'var(--primary-color)' }}>Super Admin</span></td>
+                        <td><span style={{ color: '#00d9ff', fontWeight: 'bold' }}>✓ Actif (Vous)</span></td>
+                        <td>
+                          <button
+                            className="btn btn-sm"
+                            style={{
+                              background: 'var(--primary-color)',
+                              color: '#fff',
+                              border: 'none',
+                              fontWeight: 'bold',
+                              padding: '0.25rem 0.75rem',
+                              cursor: 'pointer'
+                            }}
+                            title="Cliquez pour voir votre QR code personnel"
+                            onClick={() => openUserQRCode('admin')}
+                          >
+                            🔲 QR
+                          </button>
+                        </td>
+                        <td>
+                          <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Votre Compte</span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Admin Management Section */}
+              <div className="card" style={{
+                background: 'var(--surface)',
+                border: '1px solid #ffc107',
+                borderRadius: 'var(--border-radius-lg)',
+                boxShadow: 'var(--shadow-card)',
+                padding: '2rem',
+                marginTop: '2rem'
+              }}>
+                <h6 style={{ color: '#ffc107', marginBottom: '1rem' }}>⚙️ Gestion des Autres Administrateurs</h6>
+                <div className="alert" style={{
+                  background: 'rgba(255, 193, 7, 0.1)',
+                  border: '1px solid #ffc107',
+                  borderRadius: 'var(--border-radius-md)',
+                  color: 'var(--text-color)',
+                  marginBottom: '1rem'
+                }}>
+                  <small>
+                    <strong>⚠️ Attention:</strong> Les administrateurs supplémentaires peuvent gérer les rendez-vous et services, mais ne peuvent pas accéder aux paramètres de sécurité.
                   </small>
                 </div>
                 <div className="table-responsive">
@@ -2274,20 +2421,17 @@ const SuperAdminDashboard = () => {
                     <thead style={{ background: 'var(--bg-color)' }}>
                       <tr>
                         <th style={{ color: 'var(--primary-color)' }}>Email</th>
-                        <th style={{ color: 'var(--primary-color)' }}>Rôle</th>
                         <th style={{ color: 'var(--primary-color)' }}>Statut</th>
+                        <th style={{ color: 'var(--primary-color)' }}>Créé</th>
                         <th style={{ color: 'var(--primary-color)' }}>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {adminInfo.email && (
-                        <tr>
-                          <td>{adminInfo.email}</td>
-                          <td><span className="badge" style={{ background: 'var(--primary-color)' }}>Admin Principal</span></td>
-                          <td><span style={{ color: '#00d9ff', fontWeight: 'bold' }}>✓ Actif</span></td>
-                          <td>-</td>
-                        </tr>
-                      )}
+                      <tr>
+                        <td style={{ color: 'var(--text-muted)' }} colSpan="4" className="text-center">
+                          Aucun administrateur supplémentaire configuré
+                        </td>
+                      </tr>
                     </tbody>
                   </table>
                 </div>
@@ -2573,101 +2717,179 @@ const SuperAdminDashboard = () => {
             >
               <div className="card" style={{
                 background: 'var(--surface)',
-                border: '1px solid var(--primary-color)',
+                border: '2px solid #ffc107',
                 borderRadius: 'var(--border-radius-lg)',
                 boxShadow: 'var(--shadow-card)',
                 padding: '2rem'
               }}>
-                <h5 style={{ marginBottom: '1.5rem' }}>🔧 Configuration Maintenance</h5>
-                
+                <h4 style={{ marginBottom: '0.5rem', color: '#ffc107' }}>🔧 Configuration Mode Maintenance</h4>
+                <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
+                  Activeז une période de maintenance pour effectuer des travaux sur le système. Pendant ce temps, les utilisateurs verront une page d'information.
+                </p>
+
+                {/* Current Status */}
                 <div className="row g-3 mb-4">
-                  <div className="col-12">
-                    <label className="form-label" style={{ color: 'var(--primary-color)' }}>Mode Maintenance</label>
-                    <div className="form-check form-switch" style={{ marginTop: '0.5rem' }}>
-                      <input
-                        className="form-check-input"
-                        type="checkbox"
-                        id="maintenanceSwitch"
-                        style={{ width: '3em', height: '1.5em' }}
-                      />
-                      <label className="form-check-label" htmlFor="maintenanceSwitch">
-                        Activer mode maintenance
-                      </label>
+                  <div className="col-12 col-md-4">
+                    <div style={{
+                      background: 'var(--bg-color)',
+                      border: '2px solid ' + (appClosureMode ? '#ffc107' : '#00ff96'),
+                      borderRadius: 'var(--border-radius-lg)',
+                      padding: '1.5rem',
+                      textAlign: 'center'
+                    }}>
+                      <p style={{ fontSize: '2rem', margin: 0, marginBottom: '0.5rem' }}>
+                        {appClosureMode ? '⚠️' : '✅'}
+                      </p>
+                      <h6 style={{ color: appClosureMode ? '#ffc107' : '#00ff96', margin: 0, marginBottom: '0.5rem' }}>
+                        Statut Mode Maintenance
+                      </h6>
+                      <p style={{ margin: 0, fontWeight: 'bold', fontSize: '1.1rem' }}>
+                        {appClosureMode ? 'ACTIVÉ' : 'INACTIF'}
+                      </p>
                     </div>
                   </div>
                 </div>
 
+                {/* Configuration Form */}
                 <div className="row g-3 mb-4">
-                  <div className="col-12">
-                    <label className="form-label" style={{ color: 'var(--primary-color)' }}>Raison de Maintenance</label>
-                    <textarea
-                      className="form-control"
-                      placeholder="Ex: Mise à jour serveur, migration BD, correction sécurité..."
-                      rows="4"
+                  {/* Maintenance Type */}
+                  <div className="col-12 col-md-6">
+                    <label className="form-label" style={{ color: 'var(--primary-color)', fontWeight: 'bold' }}>📋 Type de Maintenance</label>
+                    <select
+                      className="form-select"
+                      value={closureForm.reason || ''}
+                      onChange={(e) => setClosureForm(prev => ({ ...prev, reason: e.target.value }))}
                       style={{
-                        borderColor: 'var(--primary-color)',
+                        borderColor: '#ffc107',
+                        background: 'var(--bg-color)',
+                        color: 'var(--text-color)',
+                        fontWeight: '500'
+                      }}
+                    >
+                      <option value="">— Sélectionner un type —</option>
+                      <option value="Maintenance Programmée">🔧 Maintenance Programmée</option>
+                      <option value="Maintenance d'Urgence">🚨 Maintenance d'Urgence</option>
+                      <option value="Patch Sécurité">🔐 Patch Sécurité</option>
+                      <option value="Mise à jour Système">⬆️ Mise à jour Système</option>
+                      <option value="Migration Base de Données">🔄 Migration Base de Données</option>
+                    </select>
+                  </div>
+
+                  {/* Period Start */}
+                  <div className="col-12 col-md-6">
+                    <label className="form-label" style={{ color: 'var(--primary-color)', fontWeight: 'bold' }}>📅 Date de Maintenance</label>
+                    <input
+                      type="date"
+                      className="form-control"
+                      value={closureForm.reopenDate || new Date().toISOString().split('T')[0]}
+                      onChange={(e) => setClosureForm(prev => ({ ...prev, reopenDate: e.target.value }))}
+                      style={{
+                        borderColor: '#ffc107',
                         background: 'var(--bg-color)',
                         color: 'var(--text-color)'
                       }}
                     />
                   </div>
-                  
+
+                  {/* Period Duration */}
                   <div className="col-12 col-md-6">
-                    <label className="form-label" style={{ color: 'var(--primary-color)' }}>Durée (minutes)</label>
+                    <label className="form-label" style={{ color: 'var(--primary-color)', fontWeight: 'bold' }}>⏱️ Durée Estimée (minutes)</label>
                     <input
                       type="number"
                       className="form-control"
-                      value="60"
                       min="5"
                       max="1440"
+                      step="15"
+                      value="60"
+                      placeholder="60"
                       style={{
-                        borderColor: 'var(--primary-color)',
+                        borderColor: '#ffc107',
+                        background: 'var(--bg-color)',
+                        color: 'var(--text-color)'
+                      }}
+                    />
+                    <small style={{ color: 'var(--text-muted)' }}>Entre 5 minutes et 24 heures</small>
+                  </div>
+
+                  {/* Time Start */}
+                  <div className="col-12 col-md-6">
+                    <label className="form-label" style={{ color: 'var(--primary-color)', fontWeight: 'bold' }}>🕐 Heure de Début</label>
+                    <input
+                      type="time"
+                      className="form-control"
+                      value={closureForm.reopenTime || '09:00'}
+                      onChange={(e) => setClosureForm(prev => ({ ...prev, reopenTime: e.target.value }))}
+                      style={{
+                        borderColor: '#ffc107',
                         background: 'var(--bg-color)',
                         color: 'var(--text-color)'
                       }}
                     />
                   </div>
 
-                  <div className="col-12 col-md-6">
-                    <label className="form-label" style={{ color: 'var(--primary-color)' }}>Type de Maintenance</label>
-                    <select
-                      className="form-select"
+                  {/* Detailed Reason */}
+                  <div className="col-12">
+                    <label className="form-label" style={{ color: 'var(--primary-color)', fontWeight: 'bold' }}>📝 Raison Détaillée (visible aux utilisateurs)</label>
+                    <textarea
+                      className="form-control"
+                      rows="4"
+                      placeholder="Ex: Nous effectuons une maintenance programmée pour améliorer les performances et la sécurité du système. Merci de votre patience..."
                       style={{
-                        borderColor: 'var(--primary-color)',
+                        borderColor: '#ffc107',
                         background: 'var(--bg-color)',
-                        color: 'var(--text-color)'
+                        color: 'var(--text-color)',
+                        minHeight: '100px'
                       }}
+                    />
+                    <small style={{ color: 'var(--text-muted)' }}>Ce message sera affiché aux utilisateurs pendant la maintenance</small>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="row g-3 mb-4">
+                  <div className="col-12 col-md-6">
+                    <button
+                      className="btn w-100"
+                      style={{
+                        background: '#ffc107',
+                        color: '#000',
+                        border: 'none',
+                        fontWeight: 'bold',
+                        padding: '0.75rem',
+                        fontSize: '1rem'
+                      }}
+                      onClick={toggleAppClosure}
                     >
-                      <option value="scheduled">Maintenance Programmée</option>
-                      <option value="emergency">Maintenance d'Urgence</option>
-                      <option value="security">Patch Sécurité</option>
-                      <option value="upgrade">Mise à jour Système</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="row g-2">
-                  <div className="col-6">
-                    <button className="btn btn-warning w-100" style={{ fontWeight: 'bold' }}>
-                      ⚠️ Activer Maintenance
+                      ⚠️ {appClosureMode ? 'Arrêter Maintenance' : 'Activer Maintenance'}
                     </button>
                   </div>
-                  <div className="col-6">
-                    <button className="btn btn-secondary w-100" style={{ fontWeight: 'bold' }}>
-                      ❌ Désactiver
+                  <div className="col-12 col-md-6">
+                    <button
+                      className="btn btn-outline-secondary w-100"
+                      style={{ fontWeight: 'bold', padding: '0.75rem' }}
+                      onClick={sendQRCodeToDeveloper}
+                    >
+                      📨 Envoyer QR Code Développeur
                     </button>
                   </div>
                 </div>
 
+                {/* Information Box */}
                 <div className="alert" style={{
-                  background: 'rgba(255, 107, 107, 0.1)',
-                  border: '1px solid rgba(255, 107, 107, 0.3)',
+                  background: 'rgba(255, 193, 7, 0.15)',
+                  border: '2px solid #ffc107',
                   borderRadius: 'var(--border-radius-lg)',
                   color: 'var(--text-color)',
-                  marginTop: '1.5rem',
-                  padding: '1rem'
+                  padding: '1.5rem'
                 }}>
-                  <strong style={{ color: '#ff6b6b' }}>ℹ️ Note:</strong> Quand la maintenance est activée, tous les utilisateurs reçoivent une page informative. Les rendez-vous et services sont temporairement indisponibles.
+                  <h6 style={{ color: '#ffc107', marginBottom: '1rem', marginTop: 0 }}>ℹ️ À Propos du Mode Maintenance</h6>
+                  <ul style={{ marginBottom: 0, paddingLeft: '1.5rem' }}>
+                    <li>Les utilisateurs verront une <strong>page de maintenance</strong> avec le message que vous renseignez ci-dessus</li>
+                    <li>Un <strong>décompte en direct</strong> affichera le temps restant avant la fin de la maintenance</li>
+                    <li>Les <strong>administrateurs ne seront pas affectés</strong> et pourront se connecter normalement</li>
+                    <li>Un <strong>code QR unique</strong> sera généré et envoyé au développeur</li>
+                    <li>Les <strong>rendez-vous et services</strong> sont temporairement indisponibles</li>
+                  </ul>
                 </div>
               </div>
             </motion.div>
@@ -3623,6 +3845,142 @@ const SuperAdminDashboard = () => {
           )}
         </AnimatePresence>
       </div>
+
+      {/* QR Code Display Modal */}
+      {showQRModal && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.7)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            backdropFilter: 'blur(4px)'
+          }}
+          onClick={() => setShowQRModal(false)}
+        >
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: 'var(--surface)',
+              borderRadius: 'var(--border-radius-lg)',
+              padding: '2.5rem',
+              maxWidth: '600px',
+              width: '90%',
+              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+              border: '2px solid var(--primary-color)'
+            }}
+          >
+            <div style={{ textAlign: 'center' }}>
+              {/* Title */}
+              <h4 style={{ color: 'var(--primary-color)', marginBottom: '0.5rem' }}>
+                {selectedQRUser === 'developer' ? '🧑‍💻 Code QR Développeur' : '👔 Code QR Super Admin'}
+              </h4>
+              <p style={{ color: 'var(--text-muted)', marginBottom: '2rem', fontSize: '0.95rem' }}>
+                {selectedQRUser === 'developer' 
+                  ? 'Scannez ce code pour accéder au tableau de bord développeur'
+                  : 'Votre code d\'accès personnel au tableau de bord'
+                }
+              </p>
+
+              {/* QR Code */}
+              <div
+                id="qr-code-canvas"
+                style={{
+                  background: 'white',
+                  padding: '1.5rem',
+                  borderRadius: 'var(--border-radius-md)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '2rem',
+                  marginLeft: 'auto',
+                  marginRight: 'auto'
+                }}
+              >
+                {typeof QRCode !== 'undefined' && generatedQRValue && (
+                  <QRCode
+                    value={generatedQRValue}
+                    size={256}
+                    level="H"
+                    includeMargin={true}
+                    renderAs="canvas"
+                  />
+                )}
+              </div>
+
+              {/* User Info */}
+              <div style={{
+                background: 'var(--bg-color)',
+                borderRadius: 'var(--border-radius-md)',
+                padding: '1rem',
+                marginBottom: '1.5rem',
+                textAlign: 'left',
+                border: '1px solid #00d9ff'
+              }}>
+                <p style={{ marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                  <strong>📧 Email:</strong>
+                </p>
+                <p style={{ margin: 0, marginBottom: '1rem', color: 'var(--text-color)', fontWeight: 'bold' }}>
+                  {selectedQRUser === 'developer' ? 'developer@chura.com' : adminInfo.email}
+                </p>
+                
+                <p style={{ marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                  <strong>👑 Rôle:</strong>
+                </p>
+                <p style={{ margin: 0, marginBottom: '1rem', color: 'var(--text-color)', fontWeight: 'bold' }}>
+                  {selectedQRUser === 'developer' ? '🧑‍💻 Développeur Système' : '👔 Super Administrateur'}
+                </p>
+
+                <p style={{ marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                  <strong>🕐 Généré le:</strong>
+                </p>
+                <p style={{ margin: 0, color: 'var(--text-color)', fontSize: '0.85rem' }}>
+                  {new Date().toLocaleString('fr-FR')}
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="row g-3">
+                <div className="col-12 col-sm-6">
+                  <button
+                    className="btn w-100"
+                    style={{
+                      background: 'var(--primary-color)',
+                      color: 'white',
+                      border: 'none',
+                      fontWeight: 'bold',
+                      padding: '0.75rem'
+                    }}
+                    onClick={downloadQRCode}
+                  >
+                    ⬇️ Télécharger PNG
+                  </button>
+                </div>
+                <div className="col-12 col-sm-6">
+                  <button
+                    className="btn btn-outline-secondary w-100"
+                    style={{ fontWeight: 'bold', padding: '0.75rem' }}
+                    onClick={() => setShowQRModal(false)}
+                  >
+                    ✖️ Fermer
+                  </button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
 
       <div style={{ height: '2rem' }} />
     </div>
