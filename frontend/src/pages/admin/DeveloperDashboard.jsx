@@ -5,6 +5,7 @@ import { AuthContext } from '../../context/AuthContext'
 import api from '../../services/api'
 import QRCodeConfig from '../../components/admin/QRCodeConfig'
 import QRCode from 'qrcode.react'
+import DashboardModal from '../../components/admin/DashboardModal'
 
 const DeveloperDashboard = () => {
   const navigate = useNavigate()
@@ -28,6 +29,7 @@ const DeveloperDashboard = () => {
   const [servicePage, setServicePage] = useState(1)
   const [serviceSearch, setServiceSearch] = useState('')
   const [serviceSort, setServiceSort] = useState('date') // date, price, name, status
+  const [serviceCategoryFilter, setServiceCategoryFilter] = useState('all') // Filter by category
   const SERVICES_PER_PAGE = 10
   
   const [appointmentPage, setAppointmentPage] = useState(1)
@@ -515,8 +517,10 @@ const DeveloperDashboard = () => {
   const getFilteredServices = () => {
     let filtered = services.filter(s => {
       const searchLower = serviceSearch.toLowerCase()
-      return s.name?.toLowerCase().includes(searchLower) || 
+      const matchSearch = s.name?.toLowerCase().includes(searchLower) || 
              s.description?.toLowerCase().includes(searchLower)
+      const matchCategory = serviceCategoryFilter === 'all' || s.category === serviceCategoryFilter
+      return matchSearch && matchCategory
     })
 
     // Apply sorting
@@ -562,13 +566,31 @@ const DeveloperDashboard = () => {
       })
       setMaintenanceMode(!maintenanceMode)
       if (!maintenanceMode) setCountdownTime(maintenanceDuration * 60)
-      alert(maintenanceMode ? 'Maintenance désactivée' : 'Maintenance activée')
+      setModal({ 
+        show: true, 
+        type: 'success', 
+        title: '✅ Maintenance', 
+        message: maintenanceMode ? 'Maintenance désactivée' : 'Maintenance activée',
+        onConfirm: () => setModal({show: false})
+      })
     } catch (err) {
       setModal({ show: true, type: 'error', title: '❌ Erreur', message: 'Erreur lors du changement: ' + err.message })
     }
   }
 
-  const deleteAdmin = async (adminId) => {
+  const deleteAdmin = async (adminId, adminRole = 'admin') => {
+    // PROTECTION: Prevent deleting developer and super admins
+    if (adminRole === 'developer' || adminRole === 'super_admin') {
+      setModal({
+        show: true,
+        type: 'error',
+        title: '🔒 Suppression Interdite',
+        message: `Les comptes ${adminRole === 'developer' ? 'Développeur' : 'Super Admin'} ne peuvent pas être supprimés pour des raisons de sécurité.`,
+        onConfirm: () => setModal({show: false})
+      })
+      return
+    }
+
     setModal({
       show: true,
       type: 'confirm',
@@ -578,9 +600,9 @@ const DeveloperDashboard = () => {
         try {
           await api.delete(`/site-settings/admin/${adminId}`)
           setAdmins(admins.filter(a => a.id !== adminId))
-          setModal({ show: true, type: 'success', title: '✅ Admin Supprimé', message: 'L\'administrateur a été supprimé' })
+          setModal({ show: true, type: 'success', title: '✅ Admin Supprimé', message: 'L\'administrateur a été supprimé', onConfirm: () => setModal({show: false}) })
         } catch (err) {
-          setModal({ show: true, type: 'error', title: '❌ Erreur', message: 'Erreur lors de la suppression' })
+          setModal({ show: true, type: 'error', title: '❌ Erreur', message: 'Erreur lors de la suppression', onConfirm: () => setModal({show: false}) })
         }
       }
     })
@@ -588,16 +610,34 @@ const DeveloperDashboard = () => {
 
   const createAdmin = async () => {
     if (!newAdminEmail) {
-      alert('Veuillez entrer un email')
+      setModal({ 
+        show: true, 
+        type: 'error', 
+        title: '❌ Champ Obligatoire', 
+        message: 'Veuillez entrer un email',
+        onConfirm: () => setModal({show: false})
+      })
       return
     }
     try {
       const response = await api.post('/site-settings/admin-create', { email: newAdminEmail })
       setAdmins([...admins, response.data])
       setNewAdminEmail('')
-      alert('Admin créé - Password temporaire envoyé par email')
-    } catch {
-      alert('Erreur lors de la création')
+      setModal({ 
+        show: true, 
+        type: 'success', 
+        title: '✅ Admin Créé', 
+        message: 'Admin créé - Mot de passe temporaire envoyé par email',
+        onConfirm: () => setModal({show: false})
+      })
+    } catch (err) {
+      setModal({ 
+        show: true, 
+        type: 'error', 
+        title: '❌ Erreur', 
+        message: 'Erreur lors de la création: ' + err.message,
+        onConfirm: () => setModal({show: false})
+      })
     }
   }
 
@@ -1502,14 +1542,17 @@ const DeveloperDashboard = () => {
                           </td>
                           <td style={{ fontSize: '0.9rem' }}>{new Date(admin.created_at).toLocaleDateString('fr-FR')}</td>
                           <td>
-                            {admin.role !== 'developer' && (
+                            {admin.role !== 'developer' && admin.role !== 'super_admin' && (
                               <button
                                 className="btn btn-sm btn-danger"
-                                onClick={() => deleteAdmin(admin.id)}
+                                onClick={() => deleteAdmin(admin.id, admin.role)}
                                 title="Supprimer"
                               >
                                 🗑️
                               </button>
+                            )}
+                            {(admin.role === 'developer' || admin.role === 'super_admin') && (
+                              <span style={{ color: '#ffc107', fontSize: '0.8rem', fontWeight: 'bold' }}>🔒 Protégé</span>
                             )}
                           </td>
                         </tr>
@@ -1535,11 +1578,146 @@ const DeveloperDashboard = () => {
                 borderRadius: 'var(--border-radius-lg)',
                 padding: '2rem'
               }}>
-                <h4 style={{ marginBottom: '1.5rem', color: 'var(--primary-color)' }}>💅 Services (Gestion Complète)</h4>
+                <div className="d-flex justify-content-between align-items-center mb-4">
+                  <h4 style={{ color: 'var(--primary-color)', margin: 0 }}>💅 Services (Gestion Complète)</h4>
+                  <button
+                    className="btn btn-success"
+                    onClick={() => setShowNewServiceForm(!showNewServiceForm)}
+                  >
+                    {showNewServiceForm ? '✕ Annuler' : '➕ Ajouter Service'}
+                  </button>
+                </div>
+
+                {/* Add New Service Form - Collapsible */}
+                {showNewServiceForm && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="card mb-4"
+                    style={{
+                      background: 'var(--bg-color)',
+                      border: '2px solid #00ff96',
+                      borderRadius: 'var(--border-radius-lg)',
+                      padding: '2rem'
+                    }}
+                  >
+                    <h6 style={{ color: '#00ff96', marginBottom: '1.5rem' }}>➕ Créer un Nouveau Service</h6>
+                    <div className="row g-3">
+                      <div className="col-12 col-md-6">
+                        <label className="form-label">Nom du Service</label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          value={newServiceForm.name}
+                          onChange={(e) => setNewServiceForm({...newServiceForm, name: e.target.value})}
+                          style={{ borderColor: 'var(--primary-color)', background: 'var(--surface)', color: 'var(--text-color)' }}
+                        />
+                      </div>
+                      <div className="col-12 col-md-6">
+                        <label className="form-label">Catégorie</label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          value={newServiceForm.category}
+                          onChange={(e) => setNewServiceForm({...newServiceForm, category: e.target.value})}
+                          placeholder="ex: Soins du visage"
+                          style={{ borderColor: 'var(--primary-color)', background: 'var(--surface)', color: 'var(--text-color)' }}
+                        />
+                      </div>
+                      <div className="col-12 col-md-6">
+                        <label className="form-label">Prix (FCFA)</label>
+                        <input
+                          type="number"
+                          className="form-control"
+                          value={newServiceForm.price}
+                          onChange={(e) => setNewServiceForm({...newServiceForm, price: parseFloat(e.target.value)})}
+                          style={{ borderColor: 'var(--primary-color)', background: 'var(--surface)', color: 'var(--text-color)' }}
+                        />
+                      </div>
+                      <div className="col-12 col-md-6">
+                        <label className="form-label">Durée (minutes)</label>
+                        <input
+                          type="number"
+                          className="form-control"
+                          value={newServiceForm.duration}
+                          onChange={(e) => setNewServiceForm({...newServiceForm, duration: parseInt(e.target.value)})}
+                          style={{ borderColor: 'var(--primary-color)', background: 'var(--surface)', color: 'var(--text-color)' }}
+                        />
+                      </div>
+                      <div className="col-12">
+                        <label className="form-label">Description</label>
+                        <textarea
+                          className="form-control"
+                          value={newServiceForm.description}
+                          onChange={(e) => setNewServiceForm({...newServiceForm, description: e.target.value})}
+                          rows="3"
+                          style={{ borderColor: 'var(--primary-color)', background: 'var(--surface)', color: 'var(--text-color)' }}
+                        ></textarea>
+                      </div>
+                      <div className="col-12">
+                        <label className="form-label">Image du Service</label>
+                        <div style={{
+                          border: '2px dashed var(--primary-color)',
+                          borderRadius: 'var(--border-radius-md)',
+                          padding: '1rem',
+                          textAlign: 'center',
+                          cursor: 'pointer',
+                          position: 'relative'
+                        }}>
+                          {newServiceImagePreview ? (
+                            <div>
+                              <img src={newServiceImagePreview} alt="Preview" style={{ maxHeight: '150px', marginBottom: '0.5rem' }} />
+                              <p style={{ fontSize: '0.9rem', margin: 0 }}>Cliquez pour changer</p>
+                            </div>
+                          ) : (
+                            <div>
+                              <p style={{ fontSize: '1.5rem', margin: 0, marginBottom: '0.5rem' }}>📸</p>
+                              <p>Cliquez pour ajouter une image</p>
+                            </div>
+                          )}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleNewServiceImageUpload}
+                            style={{
+                              position: 'absolute',
+                              width: '100%',
+                              height: '100%',
+                              opacity: 0,
+                              cursor: 'pointer',
+                              top: 0,
+                              left: 0
+                            }}
+                          />
+                        </div>
+                      </div>
+                      <div className="col-12">
+                        <label className="form-check">
+                          <input
+                            type="checkbox"
+                            className="form-check-input"
+                            checked={newServiceForm.active}
+                            onChange={(e) => setNewServiceForm({...newServiceForm, active: e.target.checked})}
+                          />
+                          <span className="form-check-label">✅ Service Actif</span>
+                        </label>
+                      </div>
+                      <div className="col-12">
+                        <button
+                          className="btn btn-success w-100"
+                          onClick={createNewService}
+                        >
+                          💾 Créer Service
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
                 
                 {/* Search & Filter Bar */}
                 <div className="row g-2 mb-3">
-                  <div className="col-12 col-md-4">
+                  <div className="col-12 col-md-3">
                     <input
                       type="text"
                       className="form-control"
@@ -1551,6 +1729,22 @@ const DeveloperDashboard = () => {
                       }}
                       style={{ borderColor: 'var(--primary-color)' }}
                     />
+                  </div>
+                  <div className="col-12 col-md-2">
+                    <select
+                      className="form-select"
+                      value={serviceCategoryFilter}
+                      onChange={(e) => {
+                        setServiceCategoryFilter(e.target.value)
+                        setServicePage(1)
+                      }}
+                      style={{ borderColor: 'var(--primary-color)' }}
+                    >
+                      <option value="all">📁 Toutes catégories</option>
+                      {[...new Set(services.map(s => s.category).filter(c => c))].map(cat => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </select>
                   </div>
                   <div className="col-12 col-md-3">
                     <select
@@ -1568,7 +1762,7 @@ const DeveloperDashboard = () => {
                       <option value="status">✅ Statut</option>
                     </select>
                   </div>
-                  <div className="col-12 col-md-5 text-end">
+                  <div className="col-12 col-md-4 text-end">
                     <small style={{ color: 'var(--text-muted)' }}>
                       Total: <strong>{filteredServices.length}</strong> services | 
                       Page <strong>{servicePage}</strong>/{totalServicePages}
@@ -2148,7 +2342,13 @@ const DeveloperDashboard = () => {
                           if (input === 'RESET') {
                             executeGlobalReset()
                           } else {
-                            alert('❌ Confirmation invalide. Tapez exactement "RESET"')
+                            setModal({
+                              show: true,
+                              type: 'error',
+                              title: '❌ Confirmation Invalide',
+                              message: 'Veuillez taper exactement "RESET" pour confirmer',
+                              onConfirm: () => setModal({show: false})
+                            })
                           }
                         }}
                       >
@@ -2214,7 +2414,95 @@ const DeveloperDashboard = () => {
                   </button>
                 </div>
 
-                {editingProfile ? (
+                {!editingProfile ? (
+                  /* DISPLAY MODE - Show current info */
+                  <div className="row g-4">
+                    <div className="col-12 col-md-4 text-center">
+                      {profileForm.profile_photo ? (
+                        <img 
+                          src={profileForm.profile_photo} 
+                          alt="Avatar" 
+                          style={{
+                            width: '150px',
+                            height: '150px',
+                            borderRadius: '50%',
+                            objectFit: 'cover',
+                            border: '3px solid var(--primary-color)',
+                            marginBottom: '1rem'
+                          }}
+                        />
+                      ) : (
+                        <div style={{
+                          width: '150px',
+                          height: '150px',
+                          borderRadius: '50%',
+                          background: 'var(--bg-color)',
+                          border: '3px solid var(--primary-color)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          marginBottom: '1rem',
+                          fontSize: '3rem'
+                        }}>
+                          👤
+                        </div>
+                      )}
+                      <h6 style={{ color: 'var(--text-color)', marginBottom: '2rem' }}>Développeur</h6>
+                      
+                      {/* Developer QR Code */}
+                      <div style={{
+                        background: 'var(--bg-color)',
+                        border: '2px solid var(--primary-color)',
+                        borderRadius: 'var(--border-radius-md)',
+                        padding: '1rem',
+                        marginBottom: '1rem'
+                      }}>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '0 0 0.5rem 0' }}>📱 Code QR</p>
+                        <div style={{ display: 'flex', justifyContent: 'center' }}>
+                          <QRCode 
+                            value={`tel:${profileForm.whatsapp || profileForm.phone || 'contact'}`}
+                            size={120}
+                            fgColor="var(--text-color)"
+                            bgColor="var(--bg-color)"
+                          />
+                        </div>
+                        <small style={{ color: 'var(--text-muted)', display: 'block', marginTop: '0.5rem' }}>
+                          Scannez pour contacter
+                        </small>
+                      </div>
+                    </div>
+
+                    <div className="col-12 col-md-8">
+                      <div className="row g-3">
+                        <div className="col-12">
+                          <label style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '0.25rem' }}>Nom Complet</label>
+                          <p style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--text-color)', margin: 0 }}>
+                            {profileForm.full_name || 'Non renseigné'}
+                          </p>
+                        </div>
+                        <div className="col-12">
+                          <label style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '0.25rem' }}>Email</label>
+                          <p style={{ fontSize: '1rem', color: 'var(--text-color)', margin: 0, fontFamily: 'monospace' }}>
+                            {profileForm.email || 'Non renseigné'}
+                          </p>
+                        </div>
+                        <div className="col-12 col-md-6">
+                          <label style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '0.25rem' }}>Téléphone</label>
+                          <p style={{ fontSize: '1rem', color: 'var(--text-color)', margin: 0 }}>
+                            {profileForm.phone || 'Non renseigné'}
+                          </p>
+                        </div>
+                        <div className="col-12 col-md-6">
+                          <label style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '0.25rem' }}>WhatsApp</label>
+                          <p style={{ fontSize: '1rem', color: 'var(--text-color)', margin: 0 }}>
+                            {profileForm.whatsapp || 'Non renseigné'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  /* EDIT MODE */
                   <div className="row g-3">
                     {/* Avatar Upload */}
                     <div className="col-12 col-md-4 text-center">
@@ -2392,92 +2680,6 @@ const DeveloperDashboard = () => {
                             💾 Sauvegarder le profil
                           </button>
                         </div>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="row g-3">
-                    <div className="col-12 col-md-4 text-center">
-                      {profileForm.profile_photo ? (
-                        <img 
-                          src={profileForm.profile_photo} 
-                          alt="Avatar" 
-                          style={{
-                            width: '150px',
-                            height: '150px',
-                            borderRadius: '50%',
-                            objectFit: 'cover',
-                            border: '3px solid var(--primary-color)',
-                            marginBottom: '1rem'
-                          }}
-                        />
-                      ) : (
-                        <div style={{
-                          width: '150px',
-                          height: '150px',
-                          borderRadius: '50%',
-                          background: 'var(--bg-color)',
-                          border: '3px dashed var(--primary-color)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '4rem',
-                          margin: '0 auto 1rem'
-                        }}>
-                          👤
-                        </div>
-                      )}
-                      <p style={{ marginTop: '1rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                        ID: {adminInfo.id?.substring(0, 8) || 'xx'}...
-                      </p>
-
-                      {/* QR Code for Developer Profile (REQUIREMENT 8) */}
-                      <div style={{
-                        background: 'var(--bg-color)',
-                        border: '2px solid var(--primary-color)',
-                        borderRadius: 'var(--border-radius-md)',
-                        padding: '1rem',
-                        marginTop: '1rem'
-                      }}>
-                        <h6 style={{ color: 'var(--primary-color)', marginBottom: '0.5rem', fontSize: '0.85rem' }}>📱 Mon QR Code</h6>
-                        <div style={{ textAlign: 'center' }}>
-                          <QRCode
-                            value={`DEVELOPER:${adminInfo.id}|EMAIL:${profileForm.email}|NAME:${profileForm.full_name}`}
-                            size={150}
-                            level="H"
-                            includeMargin={true}
-                            bgColor="var(--bg-color)"
-                            fgColor="var(--primary-color)"
-                          />
-                        </div>
-                        <small style={{ color: 'var(--text-secondary)', display: 'block', marginTop: '0.5rem' }}>
-                          Votre code d'identification
-                        </small>
-                      </div>
-                    </div>
-
-                    <div className="col-12 col-md-8">
-                      <div className="row g-3">
-                        <div className="col-12">
-                          <p><strong>Nom Complet:</strong> {profileForm.full_name || 'Non défini'}</p>
-                        </div>
-                        <div className="col-12">
-                          <p><strong>Email:</strong> {profileForm.email || 'Non défini'}</p>
-                        </div>
-                        <div className="col-12 col-md-6">
-                          <p><strong>Téléphone:</strong> {profileForm.phone || 'Non défini'}</p>
-                        </div>
-                        <div className="col-12 col-md-6">
-                          <p><strong>WhatsApp:</strong> {profileForm.whatsapp || 'Non défini'}</p>
-                        </div>
-                        <div className="col-12">
-                          <p><strong>Rôle:</strong> <span style={{ color: 'var(--success-color)', fontWeight: 'bold' }}>Developer</span></p>
-                        </div>
-                        {adminInfo.created_at && (
-                          <div className="col-12">
-                            <p><strong>Compte créé:</strong> {new Date(adminInfo.created_at).toLocaleDateString('fr-FR')}</p>
-                          </div>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -3457,6 +3659,20 @@ const DeveloperDashboard = () => {
         </AnimatePresence>
       </div>
 
+      {/* Modal Globale */}
+      <DashboardModal 
+        show={modal.show}
+        type={modal.type}
+        title={modal.title}
+        message={modal.message}
+        onConfirm={modal.onConfirm}
+        onCancel={() => setModal({...modal, show: false})}
+      />
+    </div>
+  )
+}
+
+export default DeveloperDashboard
       {/* REUSABLE MODAL COMPONENT (REPLACING alert()) */}
       {modal.show && (
         <motion.div
