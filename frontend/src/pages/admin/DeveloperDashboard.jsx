@@ -139,6 +139,16 @@ const DeveloperDashboard = () => {
     onCancel: null
   })
 
+  // ──── SECURITY CONFIGURATION ────
+  const [showSecurityConfig, setShowSecurityConfig] = useState(null) // null or 'HTTPS', 'JWT', 'RLS', 'RateLimit', 'AuditLogs'
+  const [securityConfig, setSecurityConfig] = useState({
+    https: { enabled: true, version: 'TLS 1.3' },
+    jwt: { enabled: true, expiry: '7d', algorithm: 'HS256' },
+    rls: { enabled: true, level: 'strict', tables: 'all' },
+    rateLimit: { enabled: true, requestsPerMin: 1000, ipBased: true },
+    auditLogs: { enabled: true, retention: '90 days', logSensitiveData: false }
+  })
+
   useEffect(() => {
     fetchAllData()
     // Only refetch if not in edit mode
@@ -775,6 +785,33 @@ const DeveloperDashboard = () => {
     setModal({ show: true, type: 'success', title: '✅ Export réussi', message: `${filteredLogs.length} logs exportés en CSV` })
   }
 
+  // ──── SECURITY CONFIGURATION ────
+  const openSecurityConfig = (elementName) => {
+    setShowSecurityConfig(elementName)
+  }
+
+  const saveSecurityConfig = (elementName) => {
+    setModal({
+      show: true,
+      type: 'success',
+      title: '✅ Configuration Sauvegardée',
+      message: `Les paramètres de ${elementName} ont été mis à jour avec succès`,
+      onConfirm: () => {
+        setShowSecurityConfig(null)
+        setModal({ show: false })
+      }
+    })
+  }
+
+  const toggleSecurityElement = (elementName) => {
+    const config = securityConfig[elementName.toLowerCase()]
+    if (config) {
+      setSecurityConfig({
+        ...securityConfig,
+        [elementName.toLowerCase()]: { ...config, enabled: !config.enabled }
+      })
+    }
+  }
 
   const deleteAppointment = async (id) => {
     setModal({
@@ -2986,12 +3023,12 @@ const DeveloperDashboard = () => {
               {/* Security Controls - Interactive */}
               <div className="row g-3 mb-4">
                 {[
-                  { icon: '🔒', title: 'HTTPS', desc: 'Connexion sécurisée', status: true, configurable: true },
-                  { icon: '🔐', title: 'JWT Auth', desc: 'Authentification tokens', status: true, configurable: true },
-                  { icon: '🛡️', title: 'bcryptJS', desc: 'Hachage mots de passe', status: true, configurable: false },
-                  { icon: '⚔️', title: 'RLS', desc: 'Row Level Security', status: true, configurable: true },
-                  { icon: '🚦', title: 'Rate Limit', desc: '1000 req/min', status: true, configurable: true },
-                  { icon: '📝', title: 'Audit Logs', desc: 'Tous les accès enregistrés', status: true, configurable: true }
+                  { icon: '🔒', title: 'HTTPS', desc: 'Connexion sécurisée', status: true, configurable: true, key: 'https' },
+                  { icon: '🔐', title: 'JWT Auth', desc: 'Authentification tokens', status: true, configurable: true, key: 'jwt' },
+                  { icon: '🛡️', title: 'bcryptJS', desc: 'Hachage mots de passe', status: true, configurable: false, key: 'bcrypt' },
+                  { icon: '⚔️', title: 'RLS', desc: 'Row Level Security', status: true, configurable: true, key: 'rls' },
+                  { icon: '🚦', title: 'Rate Limit', desc: '1000 req/min', status: true, configurable: true, key: 'rateLimit' },
+                  { icon: '📝', title: 'Audit Logs', desc: 'Tous les accès enregistrés', status: true, configurable: true, key: 'auditLogs' }
                 ].map((item, idx) => (
                   <div key={idx} className="col-12 col-md-6 col-lg-4">
                     <motion.div 
@@ -3002,10 +3039,10 @@ const DeveloperDashboard = () => {
                         border: `2px solid ${item.status ? '#00ff96' : '#ff6b6b'}`,
                         borderRadius: 'var(--border-radius-lg)',
                         padding: '1.5rem',
-                        cursor: 'pointer',
+                        cursor: item.configurable ? 'pointer' : 'default',
                         transition: 'all 0.3s'
                       }}
-                      onClick={() => item.configurable && alert(`Configuration de ${item.title}`)}
+                      onClick={() => item.configurable && openSecurityConfig(item.key)}
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '1rem' }}>
                         <div>
@@ -3042,7 +3079,10 @@ const DeveloperDashboard = () => {
                             className="form-check-input"
                             type="checkbox"
                             checked={item.status}
-                            onChange={(e) => e.stopPropagation()}
+                            onChange={(e) => {
+                              e.stopPropagation()
+                              if (item.configurable) toggleSecurityElement(item.key)
+                            }}
                             style={{
                               width: '3em',
                               height: '1.5em',
@@ -3235,6 +3275,145 @@ const DeveloperDashboard = () => {
                   </div>
                 </div>
               </div>
+
+              {/* SECURITY CONFIGURATION MODAL */}
+              <AnimatePresence>
+                {showSecurityConfig && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    style={{
+                      position: 'fixed',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      background: 'rgba(0, 0, 0, 0.7)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      zIndex: 10000
+                    }}
+                    onClick={() => setShowSecurityConfig(null)}
+                  >
+                    <motion.div
+                      initial={{ scale: 0.95 }}
+                      animate={{ scale: 1 }}
+                      style={{
+                        background: 'var(--surface)',
+                        borderRadius: 'var(--border-radius-lg)',
+                        padding: '2rem',
+                        maxWidth: '500px',
+                        width: '90%',
+                        border: '2px solid #00d9ff',
+                        maxHeight: '80vh',
+                        overflowY: 'auto'
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <h5 style={{ color: '#00d9ff', marginBottom: '1.5rem' }}>
+                        ⚙️ Configuration de {showSecurityConfig === 'https' && 'HTTPS'}
+                        {showSecurityConfig === 'jwt' && 'JWT Auth'}
+                        {showSecurityConfig === 'rls' && 'RLS'}
+                        {showSecurityConfig === 'rateLimit' && 'Rate Limit'}
+                        {showSecurityConfig === 'auditLogs' && 'Audit Logs'}
+                      </h5>
+
+                      {/* HTTPS CONFIG */}
+                      {showSecurityConfig === 'https' && (
+                        <div>
+                          <div className="mb-3">
+                            <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Version TLS</label>
+                            <select className="form-control" style={{ background: 'var(--bg-color)', color: 'var(--text-color)' }} value={securityConfig.https.version} onChange={(e) => setSecurityConfig({...securityConfig, https: {...securityConfig.https, version: e.target.value}})}>
+                              <option>TLS 1.2</option>
+                              <option>TLS 1.3</option>
+                            </select>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* JWT CONFIG */}
+                      {showSecurityConfig === 'jwt' && (
+                        <div>
+                          <div className="mb-3">
+                            <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Expiration du Token</label>
+                            <input type="text" className="form-control" style={{ background: 'var(--bg-color)', color: 'var(--text-color)' }} placeholder="Ex: 7d" value={securityConfig.jwt.expiry} onChange={(e) => setSecurityConfig({...securityConfig, jwt: {...securityConfig.jwt, expiry: e.target.value}})} />
+                          </div>
+                          <div className="mb-3">
+                            <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Algorithme</label>
+                            <select className="form-control" style={{ background: 'var(--bg-color)', color: 'var(--text-color)' }} value={securityConfig.jwt.algorithm} onChange={(e) => setSecurityConfig({...securityConfig, jwt: {...securityConfig.jwt, algorithm: e.target.value}})}>
+                              <option>HS256</option>
+                              <option>RS256</option>
+                              <option>ES256</option>
+                            </select>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* RLS CONFIG */}
+                      {showSecurityConfig === 'rls' && (
+                        <div>
+                          <div className="mb-3">
+                            <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Niveau RLS</label>
+                            <select className="form-control" style={{ background: 'var(--bg-color)', color: 'var(--text-color)' }} value={securityConfig.rls.level} onChange={(e) => setSecurityConfig({...securityConfig, rls: {...securityConfig.rls, level: e.target.value}})}>
+                              <option>strict</option>
+                              <option>moderate</option>
+                              <option>relaxed</option>
+                            </select>
+                          </div>
+                          <div className="mb-3">
+                            <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Tables Protégées</label>
+                            <select className="form-control" style={{ background: 'var(--bg-color)', color: 'var(--text-color)' }} value={securityConfig.rls.tables} onChange={(e) => setSecurityConfig({...securityConfig, rls: {...securityConfig.rls, tables: e.target.value}})}>
+                              <option>all</option>
+                              <option>users</option>
+                              <option>appointments</option>
+                            </select>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* RATE LIMIT CONFIG */}
+                      {showSecurityConfig === 'rateLimit' && (
+                        <div>
+                          <div className="mb-3">
+                            <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Requêtes par minute</label>
+                            <input type="number" className="form-control" style={{ background: 'var(--bg-color)', color: 'var(--text-color)' }} value={securityConfig.rateLimit.requestsPerMin} onChange={(e) => setSecurityConfig({...securityConfig, rateLimit: {...securityConfig.rateLimit, requestsPerMin: parseInt(e.target.value)}})} />
+                          </div>
+                          <div className="form-check mb-3">
+                            <input className="form-check-input" type="checkbox" checked={securityConfig.rateLimit.ipBased} onChange={(e) => setSecurityConfig({...securityConfig, rateLimit: {...securityConfig.rateLimit, ipBased: e.target.checked}})} />
+                            <label className="form-check-label" style={{ color: 'var(--text-color)' }}>Basé sur l'IP</label>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* AUDIT LOGS CONFIG */}
+                      {showSecurityConfig === 'auditLogs' && (
+                        <div>
+                          <div className="mb-3">
+                            <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Rétention des données</label>
+                            <select className="form-control" style={{ background: 'var(--bg-color)', color: 'var(--text-color)' }} value={securityConfig.auditLogs.retention} onChange={(e) => setSecurityConfig({...securityConfig, auditLogs: {...securityConfig.auditLogs, retention: e.target.value}})}>
+                              <option>30 days</option>
+                              <option>90 days</option>
+                              <option>1 year</option>
+                              <option>forever</option>
+                            </select>
+                          </div>
+                          <div className="form-check mb-3">
+                            <input className="form-check-input" type="checkbox" checked={securityConfig.auditLogs.logSensitiveData} onChange={(e) => setSecurityConfig({...securityConfig, auditLogs: {...securityConfig.auditLogs, logSensitiveData: e.target.checked}})} />
+                            <label className="form-check-label" style={{ color: 'var(--text-color)' }}>Enregistrer les données sensibles</label>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="d-flex gap-2 mt-4">
+                        <button className="btn btn-success flex-grow-1" onClick={() => saveSecurityConfig(showSecurityConfig)}>💾 Sauvegarder</button>
+                        <button className="btn btn-secondary flex-grow-1" onClick={() => setShowSecurityConfig(null)}>❌ Annuler</button>
+                      </div>
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
           )}
 
