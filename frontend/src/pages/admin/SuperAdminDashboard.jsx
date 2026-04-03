@@ -107,6 +107,16 @@ const SuperAdminDashboard = () => {
   // Mobile Menu
   const [showMobileMenu, setShowMobileMenu] = useState(false)
 
+  // Service Filtering
+  const [serviceFilterCategory, setServiceFilterCategory] = useState('')
+  const [serviceFilterPriceMin, setServiceFilterPriceMin] = useState('')
+  const [serviceFilterPriceMax, setServiceFilterPriceMax] = useState('')
+  const [serviceFilterStatus, setServiceFilterStatus] = useState('')
+  const [serviceFilterDurationMin, setServiceFilterDurationMin] = useState('')
+  const [serviceFilterDurationMax, setServiceFilterDurationMax] = useState('')
+  const [showServiceImageModal, setShowServiceImageModal] = useState(false)
+  const [selectedServiceImage, setSelectedServiceImage] = useState(null)
+
   const { admin, logout } = useContext(AuthContext)
   const navigate = useNavigate()
 
@@ -231,17 +241,18 @@ const SuperAdminDashboard = () => {
 
   const saveProfile = async () => {
     try {
-      if (!profileForm.full_name || !profileForm.email) {
-        alert('❌ Le nom et l\'email sont obligatoires')
+      // Allow partial form saves - only require at least one field to be filled
+      if (!profileForm.full_name && !profileForm.email && !profileForm.phone && !profileForm.whatsapp) {
+        alert('⚠️ Veuillez remplir au moins un champ')
         return
       }
       
       const payload = {
-        full_name: profileForm.full_name,
-        email: profileForm.email,
-        phone: profileForm.phone,
-        whatsapp: profileForm.whatsapp,
-        profile_photo: profileForm.profile_photo
+        full_name: profileForm.full_name || '',
+        email: profileForm.email || '',
+        phone: profileForm.phone || '',
+        whatsapp: profileForm.whatsapp || '',
+        profile_photo: profileForm.profile_photo || ''
       }
       
       await api.put('/auth/profile', payload)
@@ -419,6 +430,11 @@ const SuperAdminDashboard = () => {
       }, 0)
   }
 
+  // Calculate estimated revenue from ALL services (not just appointments)
+  const calculateEstimatedRevenue = () => {
+    return (services || []).reduce((sum, service) => sum + (service.price || 0), 0)
+  }
+
   // ============ SERVICE MANAGEMENT ============
   const handleServiceFormChange = (e) => {
     const { name, value, type, checked } = e.target
@@ -502,22 +518,22 @@ const SuperAdminDashboard = () => {
     try {
       // Prepare payload WITHOUT base64 images to avoid 413 Payload Too Large
       const payload = {
-        app_name: siteSettingsForm.app_name,
-        app_logo: logoPreview ? logoPreview : siteSettingsForm.app_logo,
-        hero_background_image: heroImagePreview ? heroImagePreview : siteSettingsForm.hero_background_image,
-        homepage_hero_title: siteSettingsForm.homepage_hero_title,
-        homepage_hero_subtitle: siteSettingsForm.homepage_hero_subtitle,
-        tagline: siteSettingsForm.tagline,
-        footer_company_name: siteSettingsForm.footer_company_name,
-        footer_address: siteSettingsForm.footer_address,
-        footer_phone: siteSettingsForm.footer_phone,
-        footer_email: siteSettingsForm.footer_email,
-        footer_whatsapp: siteSettingsForm.footer_whatsapp,
-        footer_instagram: siteSettingsForm.footer_instagram,
-        footer_facebook: siteSettingsForm.footer_facebook,
-        footer_twitter: siteSettingsForm.footer_twitter,
-        privacy_policy: siteSettingsForm.privacy_policy,
-        terms_of_service: siteSettingsForm.terms_of_service
+        app_name: siteSettingsForm.app_name || '',
+        app_logo: logoPreview ? logoPreview : (siteSettingsForm.app_logo || ''),
+        hero_background_image: heroImagePreview ? heroImagePreview : (siteSettingsForm.hero_background_image || ''),
+        homepage_hero_title: siteSettingsForm.homepage_hero_title || '',
+        homepage_hero_subtitle: siteSettingsForm.homepage_hero_subtitle || '',
+        tagline: siteSettingsForm.tagline || '',
+        footer_company_name: siteSettingsForm.footer_company_name || '',
+        footer_address: siteSettingsForm.footer_address || '',
+        footer_phone: siteSettingsForm.footer_phone || '',
+        footer_email: siteSettingsForm.footer_email || '',
+        footer_whatsapp: siteSettingsForm.footer_whatsapp || '',
+        footer_instagram: siteSettingsForm.footer_instagram || '',
+        footer_facebook: siteSettingsForm.footer_facebook || '',
+        footer_twitter: siteSettingsForm.footer_twitter || '',
+        privacy_policy: siteSettingsForm.privacy_policy || '',
+        terms_of_service: siteSettingsForm.terms_of_service || ''
       }
 
       // Only include images if they are URLs, not base64
@@ -617,10 +633,29 @@ const SuperAdminDashboard = () => {
   ]
 
   // Pagination helpers
-  const filteredServices = services.filter(s =>
-    s.title?.toLowerCase().includes(serviceSearch.toLowerCase()) ||
-    s.description?.toLowerCase().includes(serviceSearch.toLowerCase())
-  )
+  const filteredServices = services.filter(s => {
+    // Search filter
+    const matchesSearch = s.title?.toLowerCase().includes(serviceSearch.toLowerCase()) ||
+                          s.description?.toLowerCase().includes(serviceSearch.toLowerCase())
+    
+    // Category filter
+    const matchesCategory = !serviceFilterCategory || s.category === serviceFilterCategory
+    
+    // Price filter
+    const price = s.price || 0
+    const matchesPrice = (!serviceFilterPriceMin || price >= parseFloat(serviceFilterPriceMin)) &&
+                         (!serviceFilterPriceMax || price <= parseFloat(serviceFilterPriceMax))
+    
+    // Duration filter
+    const duration = s.duration_minutes || 0
+    const matchesDuration = (!serviceFilterDurationMin || duration >= parseFloat(serviceFilterDurationMin)) &&
+                            (!serviceFilterDurationMax || duration <= parseFloat(serviceFilterDurationMax))
+    
+    // Status filter
+    const matchesStatus = !serviceFilterStatus || (serviceFilterStatus === 'active' ? s.active : !s.active)
+    
+    return matchesSearch && matchesCategory && matchesPrice && matchesDuration && matchesStatus
+  })
   const paginatedServices = filteredServices.slice(
     (servicePage - 1) * SERVICES_PER_PAGE,
     servicePage * SERVICES_PER_PAGE
@@ -938,7 +973,7 @@ const SuperAdminDashboard = () => {
                   { icon: '⏳', title: 'En Attente', value: (appointments.filter(a => a.status === 'pending') || []).length, color: '#ffd700', bg: 'rgba(255, 215, 0, 0.1)' },
                   { icon: '❌', title: 'Refusés', value: (appointments.filter(a => a.status === 'rejected') || []).length, color: '#ff6b6b', bg: 'rgba(255, 107, 107, 0.1)' },
                   { icon: '💅', title: 'Services', value: services.length || 0, color: '#ff1493', bg: 'rgba(255, 20, 147, 0.1)' },
-                  { icon: '💰', title: 'Revenus Estimés', value: `${(calculateTotalRevenue() / 1000).toFixed(1)}K FCFA`, color: '#32cd32', bg: 'rgba(50, 205, 50, 0.1)' }
+                  { icon: '💰', title: 'Revenus Estimés', value: `${(calculateEstimatedRevenue() / 1000).toFixed(1)}K FCFA`, color: '#32cd32', bg: 'rgba(50, 205, 50, 0.1)' }
                 ].map((kpi, idx) => (
                   <motion.div
                     key={idx}
@@ -1493,13 +1528,13 @@ const SuperAdminDashboard = () => {
                   </motion.div>
                 )}
 
-                {/* Search and Pagination */}
+                {/* Search and Advanced Filtering */}
                 <div className="row g-2 mb-3">
-                  <div className="col-12 col-md-6">
+                  <div className="col-12">
                     <input
                       type="text"
                       className="form-control"
-                      placeholder="🔍 Rechercher..."
+                      placeholder="🔍 Rechercher par titre ou description..."
                       value={serviceSearch}
                       onChange={(e) => {
                         setServiceSearch(e.target.value)
@@ -1508,10 +1543,119 @@ const SuperAdminDashboard = () => {
                       style={{ borderColor: 'var(--primary-color)' }}
                     />
                   </div>
-                  <div className="col-12 col-md-6">
-                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                      <small>Page {servicePage} / {totalServicePages}</small>
-                    </div>
+                  
+                  {/* Filtering Rows */}
+                  <div className="col-12 col-md-3">
+                    <select
+                      className="form-select"
+                      value={serviceFilterCategory}
+                      onChange={(e) => {
+                        setServiceFilterCategory(e.target.value)
+                        setServicePage(1)
+                      }}
+                      style={{ borderColor: 'var(--primary-color)' }}
+                    >
+                      <option value="">📁 Toutes catégories</option>
+                      {getServiceCategories().filter(cat => cat !== 'autre').map(cat => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="col-12 col-md-3">
+                    <select
+                      className="form-select"
+                      value={serviceFilterStatus}
+                      onChange={(e) => {
+                        setServiceFilterStatus(e.target.value)
+                        setServicePage(1)
+                      }}
+                      style={{ borderColor: 'var(--primary-color)' }}
+                    >
+                      <option value="">✅ Tous les statuts</option>
+                      <option value="active">✅ Actifs</option>
+                      <option value="inactive">❌ Inactifs</option>
+                    </select>
+                  </div>
+
+                  <div className="col-12 col-md-2">
+                    <input
+                      type="number"
+                      className="form-control"
+                      placeholder="💰 Prix min"
+                      value={serviceFilterPriceMin}
+                      onChange={(e) => {
+                        setServiceFilterPriceMin(e.target.value)
+                        setServicePage(1)
+                      }}
+                      style={{ borderColor: 'var(--primary-color)' }}
+                    />
+                  </div>
+
+                  <div className="col-12 col-md-2">
+                    <input
+                      type="number"
+                      className="form-control"
+                      placeholder="💰 Prix max"
+                      value={serviceFilterPriceMax}
+                      onChange={(e) => {
+                        setServiceFilterPriceMax(e.target.value)
+                        setServicePage(1)
+                      }}
+                      style={{ borderColor: 'var(--primary-color)' }}
+                    />
+                  </div>
+
+                  <div className="col-12 col-md-2">
+                    <input
+                      type="number"
+                      className="form-control"
+                      placeholder="⏱️ Durée min"
+                      value={serviceFilterDurationMin}
+                      onChange={(e) => {
+                        setServiceFilterDurationMin(e.target.value)
+                        setServicePage(1)
+                      }}
+                      style={{ borderColor: 'var(--primary-color)' }}
+                    />
+                  </div>
+
+                  <div className="col-12 col-md-2">
+                    <input
+                      type="number"
+                      className="form-control"
+                      placeholder="⏱️ Durée max"
+                      value={serviceFilterDurationMax}
+                      onChange={(e) => {
+                        setServiceFilterDurationMax(e.target.value)
+                        setServicePage(1)
+                      }}
+                      style={{ borderColor: 'var(--primary-color)' }}
+                    />
+                  </div>
+
+                  <div className="col-12 col-md-2">
+                    <button
+                      className="btn btn-outline-primary w-100"
+                      onClick={() => {
+                        setServiceSearch('')
+                        setServiceFilterCategory('')
+                        setServiceFilterStatus('')
+                        setServiceFilterPriceMin('')
+                        setServiceFilterPriceMax('')
+                        setServiceFilterDurationMin('')
+                        setServiceFilterDurationMax('')
+                        setServicePage(1)
+                      }}
+                    >
+                      🔄 Réinitialiser
+                    </button>
+                  </div>
+
+                  <div className="col-12">
+                    <small style={{ color: 'var(--text-muted)' }}>
+                      🔎 Résultats: {filteredServices.length} services | Page {servicePage} / {totalServicePages}
+                    </small>
                   </div>
                 </div>
 
@@ -1534,9 +1678,27 @@ const SuperAdminDashboard = () => {
                         <tr key={service.id} style={{ borderBottom: '1px solid var(--surface-2)' }}>
                           <td>
                             {service.image_url ? (
-                              <img src={service.image_url} alt="" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />
+                              <img 
+                                src={service.image_url} 
+                                alt="" 
+                                style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', cursor: 'pointer' }}
+                                onClick={() => {
+                                  setSelectedServiceImage(service)
+                                  setShowServiceImageModal(true)
+                                }}
+                                title="Cliquer pour voir l'image"
+                              />
                             ) : (
-                              <span style={{ fontSize: '1.2rem' }}>🖼️</span>
+                              <span 
+                                style={{ fontSize: '1.2rem', cursor: 'pointer' }}
+                                onClick={() => {
+                                  setSelectedServiceImage(service)
+                                  setShowServiceImageModal(true)
+                                }}
+                                title="Pas d'image"
+                              >
+                                🖼️
+                              </span>
                             )}
                           </td>
                           <td style={{ fontWeight: '500' }}>{service.title}</td>
@@ -1626,6 +1788,81 @@ const SuperAdminDashboard = () => {
             </motion.div>
           )}
 
+          {/* SERVICE IMAGE MODAL */}
+          {showServiceImageModal && selectedServiceImage && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: 'rgba(0, 0, 0, 0.9)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 1050
+              }}
+              onClick={() => setShowServiceImageModal(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.8 }}
+                animate={{ scale: 1 }}
+                exit={{ scale: 0.8 }}
+                style={{
+                  background: 'var(--surface)',
+                  border: '2px solid var(--primary-color)',
+                  borderRadius: 'var(--border-radius-lg)',
+                  padding: '2rem',
+                  maxWidth: '600px',
+                  width: '90%',
+                  textAlign: 'center'
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <h5 style={{ color: 'var(--primary-color)', marginBottom: '1.5rem' }}>
+                  🖼️ Image du Service: {selectedServiceImage.title}
+                </h5>
+                
+                {selectedServiceImage.image_url ? (
+                  <img 
+                    src={selectedServiceImage.image_url} 
+                    alt={selectedServiceImage.title}
+                    style={{
+                      maxWidth: '100%',
+                      maxHeight: '500px',
+                      borderRadius: 'var(--border-radius-md)',
+                      marginBottom: '1.5rem',
+                      objectFit: 'cover'
+                    }}
+                  />
+                ) : (
+                  <div style={{
+                    background: 'var(--bg-color)',
+                    border: '2px dashed var(--primary-color)',
+                    borderRadius: 'var(--border-radius-md)',
+                    padding: '3rem',
+                    marginBottom: '1.5rem',
+                    textAlign: 'center'
+                  }}>
+                    <p style={{ fontSize: '4rem', marginBottom: '1rem' }}>🖼️</p>
+                    <p style={{ color: 'var(--text-muted)' }}>Aucune image disponible pour ce service</p>
+                  </div>
+                )}
+                
+                <button
+                  className="btn btn-primary w-100"
+                  onClick={() => setShowServiceImageModal(false)}
+                >
+                  ✅ Fermer
+                </button>
+              </motion.div>
+            </motion.div>
+          )}
+
           {/* SERVICE QR CODE MODAL */}
           {showServiceQRModal && selectedServiceForQR && (
             <motion.div
@@ -1708,29 +1945,8 @@ const SuperAdminDashboard = () => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
             >
-              <div className="card" style={{
-                background: 'var(--surface)',
-                border: '1px solid var(--primary-color)',
-                borderRadius: 'var(--border-radius-lg)',
-                boxShadow: 'var(--shadow-card)',
-                padding: '2rem'
-              }}>
-                <h5 style={{ marginBottom: '1.5rem' }}>📊 Statistiques détaillées (7 derniers jours)</h5>
-                <ResponsiveContainer width="100%" height={400}>
-                  <BarChart data={generateRealStats().weeklyStats}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--primary-color)" opacity="0.2" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="accepted" fill="#00d9ff" name="Acceptés" />
-                    <Bar dataKey="pending" fill="#ffd700" name="En attente" />
-                    <Bar dataKey="rejected" fill="#ff6b6b" name="Refusés" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-              
-              <div className="row g-3 mt-4">
+              {/* Main Statistics Cards */}
+              <div className="row g-3 mb-4">
                 <div className="col-12 col-md-4">
                   <div className="card" style={{
                     background: 'var(--surface)',
@@ -1753,7 +1969,7 @@ const SuperAdminDashboard = () => {
                     padding: '1.5rem',
                     textAlign: 'center'
                   }}>
-                    <h6 style={{ color: '#ffd700', marginBottom: '0.5rem' }}>Total En attente</h6>
+                    <h6 style={{ color: '#ffd700', marginBottom: '0.5rem' }}>En attente</h6>
                     <p style={{ fontSize: '2rem', fontWeight: 'bold', margin: 0, color: '#ffd700' }}>
                       {appointments.filter(a => a.status === 'pending').length}
                     </p>
@@ -1767,7 +1983,7 @@ const SuperAdminDashboard = () => {
                     padding: '1.5rem',
                     textAlign: 'center'
                   }}>
-                    <h6 style={{ color: '#ff6b6b', marginBottom: '0.5rem' }}>Total Refusés</h6>
+                    <h6 style={{ color: '#ff6b6b', marginBottom: '0.5rem' }}>Refusés</h6>
                     <p style={{ fontSize: '2rem', fontWeight: 'bold', margin: 0, color: '#ff6b6b' }}>
                       {appointments.filter(a => a.status === 'rejected').length}
                     </p>
@@ -1775,7 +1991,136 @@ const SuperAdminDashboard = () => {
                 </div>
               </div>
 
-              <div className="row g-3 mt-4">
+              {/* Revenue Estimated Card */}
+              <div className="row g-3 mb-4">
+                <div className="col-12 col-md-6">
+                  <div className="card" style={{
+                    background: 'var(--surface)',
+                    border: '2px solid #32cd32',
+                    borderRadius: 'var(--border-radius-lg)',
+                    padding: '1.5rem',
+                    textAlign: 'center'
+                  }}>
+                    <h6 style={{ color: '#32cd32', marginBottom: '0.5rem' }}>💰 Revenu Total Accepté</h6>
+                    <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#32cd32', margin: 0 }}>
+                      {(calculateTotalRevenue() / 1000).toFixed(1)}K FCFA
+                    </p>
+                    <small style={{ color: 'var(--text-muted)' }}>RDV acceptés</small>
+                  </div>
+                </div>
+                <div className="col-12 col-md-6">
+                  <div className="card" style={{
+                    background: 'var(--surface)',
+                    border: '2px solid #ff9800',
+                    borderRadius: 'var(--border-radius-lg)',
+                    padding: '1.5rem',
+                    textAlign: 'center'
+                  }}>
+                    <h6 style={{ color: '#ff9800', marginBottom: '0.5rem' }}>📊 Revenu Estimé (Services)</h6>
+                    <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#ff9800', margin: 0 }}>
+                      {(calculateEstimatedRevenue() / 1000).toFixed(1)}K FCFA
+                    </p>
+                    <small style={{ color: 'var(--text-muted)' }}>Tous les services</small>
+                  </div>
+                </div>
+              </div>
+
+              {/* Charts Section */}
+              <div className="row g-3 mb-4">
+                {/* Bar Chart - Weekly Appointments */}
+                <div className="col-12 col-lg-6">
+                  <div className="card" style={{
+                    background: 'var(--surface)',
+                    border: '1px solid var(--primary-color)',
+                    borderRadius: 'var(--border-radius-lg)',
+                    boxShadow: 'var(--shadow-card)',
+                    padding: '1.5rem'
+                  }}>
+                    <h6 style={{ color: 'var(--primary-color)', marginBottom: '1rem' }}>📊 RDV - 7 derniers jours</h6>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={generateRealStats().weeklyStats}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--primary-color)" opacity="0.2" />
+                        <XAxis dataKey="name" stroke="var(--text-muted)" />
+                        <YAxis stroke="var(--text-muted)" />
+                        <Tooltip contentStyle={{ background: 'var(--bg-color)', border: '1px solid var(--primary-color)' }} />
+                        <Legend />
+                        <Bar dataKey="accepted" fill="#00d9ff" name="Acceptés" />
+                        <Bar dataKey="pending" fill="#ffd700" name="En attente" />
+                        <Bar dataKey="rejected" fill="#ff6b6b" name="Refusés" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* Pie Chart - Appointment Distribution */}
+                <div className="col-12 col-lg-6">
+                  <div className="card" style={{
+                    background: 'var(--surface)',
+                    border: '1px solid var(--primary-color)',
+                    borderRadius: 'var(--border-radius-lg)',
+                    boxShadow: 'var(--shadow-card)',
+                    padding: '1.5rem'
+                  }}>
+                    <h6 style={{ color: 'var(--primary-color)', marginBottom: '1rem' }}>🥧 Distribution RDV</h6>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <PieChart>
+                        <Pie
+                          data={generateRealStats().appointmentStats}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          label={({ name, value }) => `${name}: ${value}`}
+                          outerRadius={80}
+                          dataKey="value"
+                        >
+                          {generateRealStats().appointmentStats.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.fill} />
+                          ))}
+                        </Pie>
+                        <Tooltip contentStyle={{ background: 'var(--bg-color)', border: '1px solid var(--primary-color)' }} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </div>
+
+              {/* Service Categories Chart */}
+              {services.length > 0 && (
+                <div className="row g-3 mb-4">
+                  <div className="col-12">
+                    <div className="card" style={{
+                      background: 'var(--surface)',
+                      border: '1px solid var(--primary-color)',
+                      borderRadius: 'var(--border-radius-lg)',
+                      boxShadow: 'var(--shadow-card)',
+                      padding: '1.5rem'
+                    }}>
+                      <h6 style={{ color: 'var(--primary-color)', marginBottom: '1rem' }}>🎯 Services par Catégorie</h6>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <BarChart data={Array.from({ length: Math.max(3, Math.min(8, services.length)) }, (_, i) => {
+                          const service = services[i] || {}
+                          return {
+                            name: service.title?.substring(0, 15) || 'Service ' + (i + 1),
+                            price: service.price || 0,
+                            duration: service.duration_minutes || 0
+                          }
+                        })}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="var(--primary-color)" opacity="0.2" />
+                          <XAxis dataKey="name" stroke="var(--text-muted)" />
+                          <YAxis stroke="var(--text-muted)" />
+                          <Tooltip contentStyle={{ background: 'var(--bg-color)', border: '1px solid var(--primary-color)' }} />
+                          <Legend />
+                          <Bar dataKey="price" fill="#ff1493" name="Prix (FCFA)" />
+                          <Bar dataKey="duration" fill="#00d9ff" name="Durée (min)" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Summary Table */}
+              <div className="row g-3">
                 <div className="col-12">
                   <div className="card" style={{
                     background: 'var(--surface)',
@@ -1783,13 +2128,41 @@ const SuperAdminDashboard = () => {
                     borderRadius: 'var(--border-radius-lg)',
                     padding: '1.5rem'
                   }}>
-                    <h6 style={{ color: 'var(--primary-color)', marginBottom: '1rem' }}>💰 Revenu Estimé</h6>
-                    <p style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--primary-color)', margin: 0 }}>
-                      {generateRealStats().totalRevenue.toLocaleString()} FCFA
-                    </p>
-                    <p style={{ fontSize: '0.85rem', color: 'var(--text-color)', opacity: 0.7, margin: '0.5rem 0 0 0' }}>
-                      (Calculé sur les RDV acceptés)
-                    </p>
+                    <h6 style={{ color: 'var(--primary-color)', marginBottom: '1rem' }}>📋 Résumé Global</h6>
+                    <div className="table-responsive">
+                      <table className="table table-sm">
+                        <tbody>
+                          <tr>
+                            <td style={{ fontWeight: 'bold', color: 'var(--primary-color)' }}>Total Rendez-vous</td>
+                            <td style={{ textAlign: 'right', fontSize: '1.1rem', fontWeight: 'bold' }}>{appointments.length}</td>
+                          </tr>
+                          <tr>
+                            <td style={{ fontWeight: 'bold', color: 'var(--primary-color)' }}>Total Services</td>
+                            <td style={{ textAlign: 'right', fontSize: '1.1rem', fontWeight: 'bold' }}>{services.length}</td>
+                          </tr>
+                          <tr>
+                            <td style={{ fontWeight: 'bold', color: 'var(--primary-color)' }}>Taux de Réussite</td>
+                            <td style={{ textAlign: 'right', fontSize: '1.1rem', fontWeight: 'bold' }}>
+                              {appointments.length > 0 
+                                ? ((appointments.filter(a => a.status === 'accepted').length / appointments.length) * 100).toFixed(1) 
+                                : 0}%
+                            </td>
+                          </tr>
+                          <tr style={{ borderTop: '2px solid var(--primary-color)' }}>
+                            <td style={{ fontWeight: 'bold', color: '#32cd32' }}>Revenu Total (Acceptés)</td>
+                            <td style={{ textAlign: 'right', fontSize: '1.1rem', fontWeight: 'bold', color: '#32cd32' }}>
+                              {calculateTotalRevenue().toLocaleString()} FCFA
+                            </td>
+                          </tr>
+                          <tr>
+                            <td style={{ fontWeight: 'bold', color: '#ff9800' }}>Revenu Estimé (Services)</td>
+                            <td style={{ textAlign: 'right', fontSize: '1.1rem', fontWeight: 'bold', color: '#ff9800' }}>
+                              {calculateEstimatedRevenue().toLocaleString()} FCFA
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 </div>
               </div>
