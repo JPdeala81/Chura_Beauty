@@ -249,26 +249,47 @@ const SuperAdminDashboard = () => {
     try {
       // Allow partial form saves - only require at least one field to be filled
       if (!profileForm.full_name && !profileForm.email && !profileForm.phone && !profileForm.whatsapp) {
-        alert('⚠️ Veuillez remplir au moins un champ')
+        setModal({ show: true, type: 'warning', title: '⚠️ Champs Obligatoires', message: 'Veuillez remplir au moins un champ pour mettre à jour votre profil' })
         return
       }
       
-      const payload = {
-        full_name: profileForm.full_name || '',
-        email: profileForm.email || '',
-        phone: profileForm.phone || '',
-        whatsapp: profileForm.whatsapp || '',
-        profile_photo: profileForm.profile_photo || ''
+      // Build payload with only non-empty fields to reduce size
+      const payload = {}
+      
+      if (profileForm.full_name && profileForm.full_name.trim()) {
+        payload.full_name = profileForm.full_name.trim()
+      }
+      if (profileForm.email && profileForm.email.trim()) {
+        payload.email = profileForm.email.trim()
+      }
+      if (profileForm.phone && profileForm.phone.trim()) {
+        payload.phone = profileForm.phone.trim()
+      }
+      if (profileForm.whatsapp && profileForm.whatsapp.trim()) {
+        payload.whatsapp = profileForm.whatsapp.trim()
+      }
+      // Only include photo if it was changed (not the original)
+      if (profileForm.profile_photo && profileForm.profile_photo !== (adminData?.profile_photo || '')) {
+        payload.profile_photo = profileForm.profile_photo
+      }
+      
+      if (Object.keys(payload).length === 0) {
+        setModal({ show: true, type: 'warning', title: '⚠️ Rien à Sauvegarder', message: 'Aucune modification détectée' })
+        return
       }
       
       await api.put('/auth/profile', payload)
-      alert('✅ Profil mis à jour avec succès!')
+      setModal({ show: true, type: 'success', title: '✅ Profil Mis à Jour', message: 'Votre profil a été mis à jour avec succès!' })
       setEditingProfile(false)
       // Refetch to update the admin context
       await fetchAllData()
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error)
-      alert('❌ Erreur lors de la sauvegarde: ' + error.message)
+      let errorMsg = error.message
+      if (error.response?.status === 413) {
+        errorMsg = 'L\'image est trop grande. Veuillez utiliser une image plus petite ou sélectionner une autre image.'
+      }
+      setModal({ show: true, type: 'error', title: '❌ Erreur de Sauvegarde', message: errorMsg })
     }
   }
 

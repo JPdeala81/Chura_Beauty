@@ -472,9 +472,40 @@ const DeveloperDashboard = () => {
   const handleAvatarUpload = (e) => {
     const file = e.target.files[0]
     if (file) {
+      // Compress image before uploading
+      const img = new Image()
+      const canvas = document.createElement('canvas')
       const reader = new FileReader()
+      
       reader.onloadend = () => {
-        setProfileForm(prev => ({ ...prev, profile_photo: reader.result }))
+        img.onload = () => {
+          // Resize to max 300x300
+          let width = img.width
+          let height = img.height
+          const maxDimension = 300
+          
+          if (width > height) {
+            if (width > maxDimension) {
+              height = Math.round(height * (maxDimension / width))
+              width = maxDimension
+            }
+          } else {
+            if (height > maxDimension) {
+              width = Math.round(width * (maxDimension / height))
+              height = maxDimension
+            }
+          }
+          
+          canvas.width = width
+          canvas.height = height
+          const ctx = canvas.getContext('2d')
+          ctx.drawImage(img, 0, 0, width, height)
+          
+          // Compress to JPEG quality 0.7
+          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7)
+          setProfileForm(prev => ({ ...prev, profile_photo: compressedBase64 }))
+        }
+        img.src = reader.result
       }
       reader.readAsDataURL(file)
     }
@@ -487,27 +518,49 @@ const DeveloperDashboard = () => {
 
   const saveProfile = async () => {
     try {
-      if (!profileForm.full_name || !profileForm.email) {
-        setModal({ show: true, type: 'error', title: '❌ Champs Obligatoires', message: 'Le nom et l\'email sont obligatoires' })
+      // Require at least email or full_name
+      if (!profileForm.full_name && !profileForm.email) {
+        setModal({ show: true, type: 'error', title: '❌ Champs Requis', message: 'Veuillez entrer au minimum un nom ou une adresse email' })
         return
       }
       
-      const payload = {
-        full_name: profileForm.full_name,
-        email: profileForm.email,
-        phone: profileForm.phone,
-        whatsapp: profileForm.whatsapp,
-        profile_photo: profileForm.profile_photo
+      // Build payload with only non-empty fields to reduce size
+      const payload = {}
+      
+      if (profileForm.full_name && profileForm.full_name.trim()) {
+        payload.full_name = profileForm.full_name.trim()
+      }
+      if (profileForm.email && profileForm.email.trim()) {
+        payload.email = profileForm.email.trim()
+      }
+      if (profileForm.phone && profileForm.phone.trim()) {
+        payload.phone = profileForm.phone.trim()
+      }
+      if (profileForm.whatsapp && profileForm.whatsapp.trim()) {
+        payload.whatsapp = profileForm.whatsapp.trim()
+      }
+      // Only include photo if it was changed (not the original)
+      if (profileForm.profile_photo && profileForm.profile_photo !== (adminData?.profile_photo || '')) {
+        payload.profile_photo = profileForm.profile_photo
+      }
+      
+      if (Object.keys(payload).length === 0) {
+        setModal({ show: true, type: 'warning', title: '⚠️ Rien à Sauvegarder', message: 'Aucune modification détectée' })
+        return
       }
       
       await api.put('/auth/profile', payload)
-      setModal({ show: true, type: 'success', title: '✅ Profil Mis à Jour', message: 'Profil mis à jour avec succès!' })
+      setModal({ show: true, type: 'success', title: '✅ Profil Mis à Jour', message: 'Votre profil a été mis à jour avec succès!' })
       setEditingProfile(false)
       // Refetch to update the profile
       await fetchAllData()
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error)
-      setModal({ show: true, type: 'error', title: '❌ Erreur', message: 'Erreur lors de la sauvegarde: ' + error.message })
+      let errorMsg = error.message
+      if (error.response?.status === 413) {
+        errorMsg = 'L\'image est trop grande. Veuillez utiliser une image plus petite ou sélectionner une autre image.'
+      }
+      setModal({ show: true, type: 'error', title: '❌ Erreur de Sauvegarde', message: errorMsg })
     }
   }
 
@@ -2652,9 +2705,8 @@ const DeveloperDashboard = () => {
                         display: 'flex',
                         gap: '1rem',
                         padding: '0.5rem 1rem',
-                        borderBottom: '1px solid #3e3e42',
-                        fontSize: '0.9rem',
-                        borderBottom: '2px solid #00d9ff'
+                        borderBottom: '2px solid #00d9ff',
+                        fontSize: '0.9rem'
                       }}>
                         <span style={{ cursor: 'pointer', color: '#00d9ff', fontWeight: 'bold' }}>⌨️ Terminal</span>
                       </div>
