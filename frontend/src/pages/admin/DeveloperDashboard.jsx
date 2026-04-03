@@ -35,6 +35,12 @@ const DeveloperDashboard = () => {
   const [appointmentPage, setAppointmentPage] = useState(1)
   const APPOINTMENTS_PER_PAGE = 15
   
+  // ──── LOGS FILTERING ────
+  const [logLevelFilter, setLogLevelFilter] = useState('all') // all, error, info, debug, warning
+  const [logSearchFilter, setLogSearchFilter] = useState('')
+  const [logDateFrom, setLogDateFrom] = useState('')
+  const [logDateTo, setLogDateTo] = useState('')
+  
   // ──── DATABASE MANAGEMENT ────
   const [selectedTable, setSelectedTable] = useState('services') // services, appointments, admins
   const [newServiceForm, setNewServiceForm] = useState({
@@ -709,6 +715,66 @@ const DeveloperDashboard = () => {
       }
     })
   }
+
+  // ──── LOGS FILTERING ────
+  const getFilteredLogs = () => {
+    return logs.filter(log => {
+      // Filter by level
+      if (logLevelFilter !== 'all' && log.level !== logLevelFilter) return false
+      
+      // Filter by search message
+      if (logSearchFilter && !log.message.toLowerCase().includes(logSearchFilter.toLowerCase())) return false
+      
+      // Filter by date range
+      const logDate = new Date(log.created_at)
+      if (logDateFrom) {
+        const fromDate = new Date(logDateFrom)
+        if (logDate < fromDate) return false
+      }
+      if (logDateTo) {
+        const toDate = new Date(logDateTo)
+        toDate.setHours(23, 59, 59, 999) // Include entire day
+        if (logDate > toDate) return false
+      }
+      
+      return true
+    })
+  }
+
+  // ──── CSV EXPORT FOR LOGS ────
+  const exportLogsToCSV = () => {
+    const filteredLogs = getFilteredLogs()
+    if (filteredLogs.length === 0) {
+      setModal({ show: true, type: 'warning', title: '⚠️ Aucun Log', message: 'Aucun log à exporter' })
+      return
+    }
+
+    // Create CSV header
+    const headers = ['Level', 'Message', 'Date', 'Time']
+    const csvContent = [
+      headers.join(','),
+      ...filteredLogs.map(log => {
+        const date = new Date(log.created_at)
+        const dateStr = date.toLocaleDateString('fr-FR')
+        const timeStr = date.toLocaleTimeString('fr-FR')
+        return `"${log.level}","${log.message.replace(/"/g, '""')}","${dateStr}","${timeStr}"`
+      })
+    ].join('\n')
+
+    // Download CSV file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    link.setAttribute('href', url)
+    link.setAttribute('download', `logs-export-${new Date().getTime()}.csv`)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    
+    setModal({ show: true, type: 'success', title: '✅ Export réussi', message: `${filteredLogs.length} logs exportés en CSV` })
+  }
+
 
   const deleteAppointment = async (id) => {
     setModal({
@@ -1983,23 +2049,139 @@ const DeveloperDashboard = () => {
                 borderRadius: 'var(--border-radius-lg)',
                 padding: '2rem'
               }}>
+                {/* LOGS HEADER & ACTIONS */}
                 <div className="d-flex justify-content-between align-items-center mb-3">
                   <h5 style={{ margin: 0 }}>📝 Logs Détaillés</h5>
-                  <button
-                    className="btn btn-danger"
-                    onClick={clearAllLogs}
-                  >
-                    🗑️ Effacer Tous les Logs
-                  </button>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button
+                      className="btn btn-success"
+                      onClick={exportLogsToCSV}
+                      title="Exporter les logs filtrés en CSV"
+                    >
+                      📥 Exporter CSV
+                    </button>
+                    <button
+                      className="btn btn-danger"
+                      onClick={clearAllLogs}
+                    >
+                      🗑️ Effacer Tous
+                    </button>
+                  </div>
                 </div>
+
+                {/* LOGS FILTERS */}
+                <div style={{
+                  background: 'rgba(0, 217, 255, 0.05)',
+                  border: '1px solid rgba(0, 217, 255, 0.2)',
+                  borderRadius: 'var(--border-radius-md)',
+                  padding: '1.5rem',
+                  marginBottom: '1.5rem'
+                }}>
+                  <h6 style={{ margin: '0 0 1rem 0', color: 'var(--text-color)' }}>🔍 Filtres</h6>
+                  
+                  <div className="row g-3">
+                    {/* LEVEL FILTER */}
+                    <div className="col-12 col-md-3">
+                      <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                        Niveau de Log
+                      </label>
+                      <select
+                        className="form-control"
+                        value={logLevelFilter}
+                        onChange={(e) => setLogLevelFilter(e.target.value)}
+                        style={{
+                          background: 'var(--bg-color)',
+                          border: '1px solid var(--primary-color)',
+                          color: 'var(--text-color)',
+                          borderRadius: 'var(--border-radius-md)',
+                          padding: '0.5rem'
+                        }}
+                      >
+                        <option value="all">Tous</option>
+                        <option value="error">❌ Erreur</option>
+                        <option value="warning">⚠️ Avertissement</option>
+                        <option value="info">ℹ️ Info</option>
+                        <option value="debug">🐛 Debug</option>
+                      </select>
+                    </div>
+
+                    {/* SEARCH FILTER */}
+                    <div className="col-12 col-md-3">
+                      <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                        Rechercher Message
+                      </label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        placeholder="Rechercher..."
+                        value={logSearchFilter}
+                        onChange={(e) => setLogSearchFilter(e.target.value)}
+                        style={{
+                          background: 'var(--bg-color)',
+                          border: '1px solid var(--primary-color)',
+                          color: 'var(--text-color)',
+                          borderRadius: 'var(--border-radius-md)',
+                          padding: '0.5rem'
+                        }}
+                      />
+                    </div>
+
+                    {/* DATE FROM */}
+                    <div className="col-12 col-md-3">
+                      <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                        Du
+                      </label>
+                      <input
+                        type="date"
+                        className="form-control"
+                        value={logDateFrom}
+                        onChange={(e) => setLogDateFrom(e.target.value)}
+                        style={{
+                          background: 'var(--bg-color)',
+                          border: '1px solid var(--primary-color)',
+                          color: 'var(--text-color)',
+                          borderRadius: 'var(--border-radius-md)',
+                          padding: '0.5rem'
+                        }}
+                      />
+                    </div>
+
+                    {/* DATE TO */}
+                    <div className="col-12 col-md-3">
+                      <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                        Au
+                      </label>
+                      <input
+                        type="date"
+                        className="form-control"
+                        value={logDateTo}
+                        onChange={(e) => setLogDateTo(e.target.value)}
+                        style={{
+                          background: 'var(--bg-color)',
+                          border: '1px solid var(--primary-color)',
+                          color: 'var(--text-color)',
+                          borderRadius: 'var(--border-radius-md)',
+                          padding: '0.5rem'
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* FILTER SUMMARY */}
+                  <div style={{ marginTop: '1rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                    {getFilteredLogs().length} log{getFilteredLogs().length !== 1 ? 's' : ''} trouvé{getFilteredLogs().length !== 1 ? 's' : ''}
+                  </div>
+                </div>
+
+                {/* LOGS LIST */}
                 <div style={{
                   maxHeight: '500px',
                   overflowY: 'auto',
                   display: 'grid',
                   gap: '0.5rem'
                 }}>
-                  {logs.length > 0 ? (
-                    logs.map((log, idx) => (
+                  {getFilteredLogs().length > 0 ? (
+                    getFilteredLogs().map((log, idx) => (
                       <div
                         key={idx}
                         style={{
@@ -2023,7 +2205,7 @@ const DeveloperDashboard = () => {
                     ))
                   ) : (
                     <div style={{ textAlign: 'center', color: 'var(--text-color)', opacity: 0.6, padding: '2rem' }}>
-                      Aucun log
+                      {logs.length === 0 ? 'Aucun log' : 'Aucun log correspondant aux filtres'}
                     </div>
                   )}
                 </div>
