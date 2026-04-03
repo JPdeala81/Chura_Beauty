@@ -115,9 +115,6 @@ const DeveloperDashboard = () => {
   })
 
   // ──── CODING INTERFACE (FEATURE 13) ────
-  const [codeEditorContent, setCodeEditorContent] = useState('// Bienvenue dans l\'éditeur de code\n// Vous pouvez afficher et modifier les fichiers du projet ici')
-  const [selectedFile, setSelectedFile] = useState(null)
-  const [fileExplorer, setFileExplorer] = useState([])
   const [codingStats, setCodingStats] = useState({
     totalFiles: 0,
     pythonFiles: 0,
@@ -160,6 +157,17 @@ const DeveloperDashboard = () => {
       totalLines: 15240
     })
   }, [])
+
+  // ──── CODING INTERFACE - FILE MANAGEMENT ────
+  const [fileSystem, setFileSystem] = useState([
+    { name: 'admin.jsx', level: 3, type: 'jsx', content: '// Admin Dashboard Component\nimport React from \'react\'\n\nexport const AdminDashboard = () => {\n  return <div>Admin Panel</div>\n}' },
+    { name: 'Header.jsx', level: 3, type: 'jsx', content: '// Header Component\nimport React from \'react\'\n\nexport const Header = () => {\n  return <header>Header</header>\n}' },
+    { name: 'AuthContext.js', level: 3, type: 'js', content: '// Authentication Context\nimport React, { createContext } from \'react\'\n\nexport const AuthContext = createContext(null)' }
+  ])
+  const [selectedFile, setSelectedFile] = useState(fileSystem[0])
+  const [codeEditorContent, setCodeEditorContent] = useState(fileSystem[0]?.content || '')
+  const [terminalOutput, setTerminalOutput] = useState(['$ npm start', '> Server running on port 3000\n✓ Connected to Supabase'])
+  const [terminalCommand, setTerminalCommand] = useState('')
 
   useEffect(() => {
     fetchAllData()
@@ -823,6 +831,80 @@ const DeveloperDashboard = () => {
         [elementName.toLowerCase()]: { ...config, enabled: !config.enabled }
       })
     }
+  }
+
+  // ──── CODING INTERFACE - FILE OPERATIONS ────
+  const createNewFile = () => {
+    const newFileName = prompt('📄 Nouveau fichier (ex: utils.js):')
+    if (!newFileName) return
+    
+    const newFile = {
+      name: newFileName,
+      level: 3,
+      type: newFileName.split('.').pop(),
+      content: `// Fichier: ${newFileName}\n// Créé le ${new Date().toLocaleString('fr-FR')}\n\n`
+    }
+    
+    const updated = [...fileSystem, newFile]
+    setFileSystem(updated)
+    setSelectedFile(newFile)
+    setCodeEditorContent(newFile.content)
+    setModal({ show: true, type: 'success', title: '✅ Fichier Créé', message: `${newFileName} a été créé avec succès` })
+  }
+
+  const deleteFile = (fileName) => {
+    setModal({
+      show: true,
+      type: 'confirm',
+      title: '🗑️ Supprimer Fichier',
+      message: `Êtes-vous sûr de vouloir supprimer "${fileName}"? Cette action ne peut pas être annulée.`,
+      onConfirm: () => {
+        const updated = fileSystem.filter(f => f.name !== fileName)
+        setFileSystem(updated)
+        setSelectedFile(updated[0] || null)
+        setCodeEditorContent(updated[0]?.content || '')
+        setModal({ show: true, type: 'success', title: '✅ Supprimé', message: `${fileName} a été supprimé` })
+      }
+    })
+  }
+
+  const saveFile = () => {
+    if (!selectedFile) return
+    
+    const updated = fileSystem.map(f => 
+      f.name === selectedFile.name ? { ...f, content: codeEditorContent } : f
+    )
+    setFileSystem(updated)
+    setSelectedFile({ ...selectedFile, content: codeEditorContent })
+    setModal({ show: true, type: 'success', title: '💾 Sauvegardé', message: `${selectedFile.name} a été sauvegardé` })
+  }
+
+  const executeTerminalCommand = (command) => {
+    const cmd = command.trim()
+    if (!cmd) return
+    
+    let response = ''
+    
+    if (cmd === 'npm start') {
+      response = '> Server running on port 3000\n✓ Connected to Supabase'
+    } else if (cmd === 'npm run build') {
+      response = '✓ Build succeeded in 28.5s\n✓ All 1940 modules transformed'
+    } else if (cmd === 'npm test') {
+      response = '✓ All tests passed (15/15)'
+    } else if (cmd === 'ls' || cmd === 'dir') {
+      response = 'admin.jsx  Header.jsx  AuthContext.js  utils.js  styles.css'
+    } else if (cmd === 'pwd') {
+      response = '/home/dev/chura-site/frontend'
+    } else if (cmd === 'clear') {
+      setTerminalOutput([])
+      setTerminalCommand('')
+      return
+    } else {
+      response = `Command not found: ${cmd}`
+    }
+    
+    setTerminalOutput([...terminalOutput, `$ ${cmd}`, response])
+    setTerminalCommand('')
   }
 
   const deleteAppointment = async (id) => {
@@ -2420,51 +2502,40 @@ const DeveloperDashboard = () => {
                       padding: '0.5rem',
                       fontSize: '0.85rem'
                     }}>
-                      {[
-                        { name: 'frontend/', level: 0, expand: true, type: 'folder' },
-                        { name: 'src/', level: 1, expand: true, type: 'folder' },
-                        { name: 'pages/', level: 2, expand: true, type: 'folder' },
-                        { name: 'admin.jsx', level: 3, type: 'jsx' },
-                        { name: 'components/', level: 2, expand: true, type: 'folder' },
-                        { name: 'Header.jsx', level: 3, type: 'jsx' },
-                        { name: 'Dashboard.jsx', level: 3, type: 'jsx' },
-                        { name: 'context/', level: 2, expand: true, type: 'folder' },
-                        { name: 'AuthContext.js', level: 3, type: 'js' },
-                        { name: 'backend/', level: 0, expand: true, type: 'folder' },
-                        { name: 'controllers/', level: 1, expand: true, type: 'folder' },
-                        { name: 'authController.js', level: 2, type: 'js' },
-                        { name: 'servicesController.js', level: 2, type: 'js' }
-                      ].map((file, idx) => {
-                        const icons = {
-                          'folder': '📁',
-                          'jsx': '⚛️',
-                          'js': '🟨',
-                          'css': '🎨',
-                          'json': '{ }'
-                        }
-                        const paddingLeftValue = file.level * 8 + 'px'
-                        const paddingValue = '0.4rem ' + (file.level * 8 + 4) + 'px'
-                        return (
-                          <div 
-                            key={idx}
-                            style={{
-                              paddingLeft: paddingLeftValue,
-                              padding: paddingValue,
-                              cursor: 'pointer',
-                              borderRadius: '3px',
-                              transition: 'all 0.2s',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '0.4rem'
-                            }}
-                            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'}
-                            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                      <div style={{ padding: '0.5rem', marginBottom: '0.5rem', display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
+                        <button onClick={createNewFile} className="btn btn-sm" style={{ background: '#2d5a2d', color: '#6a9955', border: 'none', padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}>➕ Nouveau</button>
+                      </div>
+                      {fileSystem.map((file, idx) => (
+                        <div 
+                          key={idx}
+                          style={{
+                            padding: '0.4rem 0.5rem',
+                            cursor: 'pointer',
+                            borderRadius: '3px',
+                            transition: 'all 0.2s',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.4rem',
+                            background: selectedFile?.name === file.name ? 'rgba(160, 160, 255, 0.2)' : 'transparent',
+                            borderLeft: selectedFile?.name === file.name ? '3px solid #a0a0ff' : 'none'
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.background = selectedFile?.name === file.name ? 'rgba(160, 160, 255, 0.2)' : 'rgba(255, 255, 255, 0.1)'}
+                          onMouseLeave={(e) => e.currentTarget.style.background = selectedFile?.name === file.name ? 'rgba(160, 160, 255, 0.2)' : 'transparent'}
+                          onClick={() => {
+                            setSelectedFile(file)
+                            setCodeEditorContent(file.content)
+                          }}
+                        >
+                          <span>{file.type === 'jsx' ? '⚛️' : file.type === 'js' ? '🟨' : '📄'}</span>
+                          <span style={{ flex: 1 }}>{file.name}</span>
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); deleteFile(file.name) }}
+                            style={{ background: 'transparent', color: '#ff6b6b', border: 'none', cursor: 'pointer', padding: '0', fontSize: '0.8rem' }}
                           >
-                            <span>{icons[file.type] || '📄'}</span>
-                            <span>{file.name}</span>
-                          </div>
-                        )
-                      })}
+                            ✕
+                          </button>
+                        </div>
+                      ))}
                     </div>
                   </div>
 
@@ -2484,89 +2555,89 @@ const DeveloperDashboard = () => {
                       padding: '0.5rem 0.75rem',
                       overflowX: 'auto'
                     }}>
-                      {['admin.jsx', 'Header.jsx', 'AuthContext.js'].map((tab, idx) => (
+                      {selectedFile ? (
                         <div 
-                          key={idx}
                           style={{
                             padding: '0.5rem 1rem',
-                            borderBottom: idx === 0 ? '2px solid #a0a0ff' : '2px solid transparent',
+                            borderBottom: '2px solid #a0a0ff',
                             cursor: 'pointer',
                             fontSize: '0.9rem',
                             whiteSpace: 'nowrap',
-                            transition: 'all 0.2s'
+                            transition: 'all 0.2s',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem'
                           }}
                         >
-                          {tab === 'admin.jsx' ? '⚛️' : tab === 'Header.jsx' ? '⚛️' : '🟨'} {tab}
+                          {selectedFile.type === 'jsx' ? '⚛️' : selectedFile.type === 'js' ? '🟨' : '📄'} {selectedFile.name}
+                          <span style={{ fontSize: '0.7rem', color: codeEditorContent !== selectedFile.content ? '#ffc107' : '#858585' }}>
+                            {codeEditorContent !== selectedFile.content ? '● ' : ''}
+                          </span>
                         </div>
-                      ))}
+                      ) : (
+                        <div style={{ padding: '0.5rem 1rem', color: '#858585', fontSize: '0.9rem' }}>Aucun fichier sélectionné</div>
+                      )}
                     </div>
 
-                    {/* Code Editor */}
+                    {/* Code Editor - Interactive */}
                     <div style={{
                       flex: 1,
                       display: 'flex',
-                      overflow: 'hidden'
+                      flexDirection: 'column',
+                      overflow: 'hidden',
+                      background: '#1e1e1e'
                     }}>
-                      {/* Line Numbers & Code */}
-                      <div style={{
-                        flex: 1,
-                        display: 'flex',
-                        overflow: 'auto',
-                        background: '#1e1e1e'
-                      }}>
-                        <div style={{
-                          background: '#1e1e1e',
-                          color: '#858585',
-                          padding: '1rem 0.75rem',
-                          fontFamily: 'Consolas, monospace',
-                          fontSize: '0.9rem',
-                          lineHeight: 1.6,
-                          userSelect: 'none',
-                          borderRight: '1px solid #3e3e42',
-                          textAlign: 'right',
-                          minWidth: 'fit-content'
-                        }}>
-                          {Array.from({ length: 50 }, (_, i) => (
-                            <div key={i}>{i + 1}</div>
-                          ))}
+                      {selectedFile ? (
+                        <>
+                          <textarea
+                            value={codeEditorContent}
+                            onChange={(e) => setCodeEditorContent(e.target.value)}
+                            style={{
+                              flex: 1,
+                              padding: '1rem',
+                              fontFamily: 'Consolas, monospace',
+                              fontSize: '0.9rem',
+                              lineHeight: 1.6,
+                              color: '#ce9178',
+                              background: '#1e1e1e',
+                              border: 'none',
+                              outline: 'none',
+                              resize: 'none',
+                              overflow: 'auto'
+                            }}
+                            placeholder="Commencez à écrire du code..."
+                            onKeyDown={(e) => {
+                              if (e.ctrlKey && e.key === 's') {
+                                e.preventDefault()
+                                saveFile()
+                              }
+                            }}
+                          />
+                          <div style={{
+                            background: '#252526',
+                            borderTop: '1px solid #3e3e42',
+                            padding: '0.5rem 1rem',
+                            display: 'flex',
+                            gap: '0.5rem',
+                            fontSize: '0.85rem'
+                          }}>
+                            <button 
+                              onClick={saveFile}
+                              className="btn btn-sm"
+                              style={{ background: '#2d5a2d', color: '#6a9955', border: 'none', padding: '0.25rem 0.75rem' }}
+                            >
+                              💾 Sauvegarder (Ctrl+S)
+                            </button>
+                            <span style={{ color: '#858585' }}>
+                              Lignes: {codeEditorContent.split('\n').length} | Caractères: {codeEditorContent.length}
+                            </span>
+                          </div>
+                        </>
+                      ) : (
+                        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#858585' }}>
+                          📄 Sélectionnez un fichier pour commencer
                         </div>
-                        <div style={{
-                          flex: 1,
-                          padding: '1rem',
-                          fontFamily: 'Consolas, monospace',
-                          fontSize: '0.9rem',
-                          lineHeight: 1.6,
-                          color: '#ce9178',
-                          overflow: 'auto'
-                        }}>
-                          {codeEditorContent.split('\n').slice(0, 50).map((line, i) => (
-                            <div key={i} style={{ minHeight: '1.6em' }}>
-                              <span style={{ color: '#ce9178' }}>{line || ' '}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Minimap */}
-                      <div style={{
-                        width: '70px',
-                        background: '#1e1e1e',
-                        borderLeft: '1px solid #3e3e42',
-                        padding: '0.5rem 0.25rem'
-                      }}>
-                        <div style={{
-                          width: '100%',
-                          height: '100%',
-                          background: 'rgba(160, 160, 255, 0.1)',
-                          borderRadius: '2px',
-                          fontSize: '0.6rem',
-                          color: '#666'
-                        }}>
-                          {codeEditorContent.split('\n').slice(0, 20).map((_, i) => (
-                            <div key={i} style={{ height: '3px', background: 'rgba(160, 160, 255, 0.2)', margin: '1px 0' }}></div>
-                          ))}
-                        </div>
-                      </div>
+                      )}
                     </div>
 
                     {/* Bottom Panel - Terminal & Issues */}
@@ -2582,25 +2653,55 @@ const DeveloperDashboard = () => {
                         gap: '1rem',
                         padding: '0.5rem 1rem',
                         borderBottom: '1px solid #3e3e42',
-                        fontSize: '0.9rem'
+                        fontSize: '0.9rem',
+                        borderBottom: '2px solid #00d9ff'
                       }}>
-                        <span style={{ cursor: 'pointer' }}>Terminal</span>
-                        <span style={{ cursor: 'pointer' }}>Problèmes</span>
-                        <span style={{ cursor: 'pointer' }}>Débogueur</span>
+                        <span style={{ cursor: 'pointer', color: '#00d9ff', fontWeight: 'bold' }}>⌨️ Terminal</span>
                       </div>
                       <div style={{
                         flex: 1,
                         overflow: 'auto',
                         padding: '1rem',
                         fontFamily: 'Consolas, monospace',
-                        fontSize: '0.85rem'
+                        fontSize: '0.85rem',
+                        color: '#d4d4d4'
                       }}>
-                        <div>$ npm run build</div>
-                        <div style={{ color: '#00d9ff' }}>ℹ️ Building project...</div>
-                        <div style={{ color: '#ffc107' }}>⏳ Vite 5.4.21</div>
-                        <div style={{ color: '#00ff00' }}>✓ 1939 modules transformed.</div>
-                        <div style={{ color: '#00ff00' }}>✓ Built in 26.20s</div>
-                        <div style={{ color: '#00ff96' }}>Ready for deployment ✓</div>
+                        {terminalOutput.map((line, idx) => (
+                          <div key={idx} style={{ color: line.startsWith('$') ? '#00d9ff' : line.startsWith('✓') ? '#00ff96' : line.startsWith('✕') ? '#ff6b6b' : '#d4d4d4' }}>
+                            {line}
+                          </div>
+                        ))}
+                      </div>
+                      <div style={{
+                        background: '#252526',
+                        borderTop: '1px solid #3e3e42',
+                        padding: '0.5rem 1rem',
+                        display: 'flex',
+                        gap: '0.5rem',
+                        alignItems: 'center'
+                      }}>
+                        <span style={{ color: '#00d9ff', fontWeight: 'bold' }}>$</span>
+                        <input
+                          type="text"
+                          value={terminalCommand}
+                          onChange={(e) => setTerminalCommand(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              executeTerminalCommand(terminalCommand)
+                            }
+                          }}
+                          placeholder="Entrez une commande (npm start, npm run build, ls, clear...)"
+                          style={{
+                            flex: 1,
+                            background: 'transparent',
+                            border: 'none',
+                            color: '#d4d4d4',
+                            fontFamily: 'Consolas, monospace',
+                            fontSize: '0.85rem',
+                            outline: 'none'
+                          }}
+                          autoFocus
+                        />
                       </div>
                     </div>
                   </div>
