@@ -540,11 +540,10 @@ const SuperAdminDashboard = () => {
 
   const saveSiteSettings = async () => {
     try {
-      // Prepare payload WITHOUT base64 images to avoid 413 Payload Too Large
+      // Prepare payload with ONLY valid columns that exist in site_settings table
+      // Note: app_logo should NOT be sent to site_settings
       const payload = {
         app_name: siteSettingsForm.app_name || '',
-        app_logo: logoPreview ? logoPreview : (siteSettingsForm.app_logo || ''),
-        hero_background_image: heroImagePreview ? heroImagePreview : (siteSettingsForm.hero_background_image || ''),
         homepage_hero_title: siteSettingsForm.homepage_hero_title || '',
         homepage_hero_subtitle: siteSettingsForm.homepage_hero_subtitle || '',
         tagline: siteSettingsForm.tagline || '',
@@ -560,16 +559,16 @@ const SuperAdminDashboard = () => {
         terms_of_service: siteSettingsForm.terms_of_service || ''
       }
 
-      // Only include images if they are URLs, not base64
-      if (payload.app_logo && payload.app_logo.startsWith('data:')) {
-        delete payload.app_logo
-      }
-      if (payload.hero_background_image && payload.hero_background_image.startsWith('data:')) {
-        delete payload.hero_background_image
-      }
+      // Filter out empty values for partial updates
+      const filteredPayload = Object.entries(payload).reduce((acc, [key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          acc[key] = value
+        }
+        return acc
+      }, {})
       
-      console.log('📤 Envoi des paramètres:', payload)
-      const response = await api.put('/site-settings', payload)
+      console.log('📤 Envoi des paramètres du site:', filteredPayload)
+      const response = await api.put('/site-settings', filteredPayload)
       
       console.log('✅ Réponse:', response.data)
       alert('✅ Paramètres du site sauvegardés avec succès!')
@@ -717,20 +716,24 @@ const SuperAdminDashboard = () => {
   // ============ PAYMENT NETWORKS ============
   const savePaymentConfig = async () => {
     try {
-      // Try to save through site-settings endpoint (more reliable)
+      // Payment config should have its own endpoint or table
+      // Don't send airtel_code/moov_code to site-settings as they don't exist there
       const payload = {
-        airtel_code: paymentConfig.airtel_code,
-        moov_code: paymentConfig.moov_code,
         is_payment_enabled: paymentConfig.is_payment_enabled
       }
       
-      await api.put('/site-settings', payload)
+      // Try the dedicated endpoint first
+      await api.put('/site-settings/payment-config', payload)
       alert('✅ Configuration des réseaux de paiement mise à jour avec succès')
     } catch (err) {
       console.error('Erreur savePaymentConfig:', err)
-      // Fallback: try the alternative endpoint
+      // Fallback: try alternative endpoint
       try {
-        await api.put('/auth/admin/payment-config', paymentConfig)
+        await api.post('/payments/config', {
+          airtel_code: paymentConfig.airtel_code,
+          moov_code: paymentConfig.moov_code,
+          is_payment_enabled: paymentConfig.is_payment_enabled
+        })
         alert('✅ Configuration des réseaux mise à jour')
       } catch (fallbackErr) {
         alert(`❌ Erreur: ${fallbackErr.response?.data?.message || fallbackErr.message}`)
@@ -2473,7 +2476,8 @@ const SuperAdminDashboard = () => {
                         borderRadius: 'var(--border-radius-lg)',
                         padding: '2rem',
                         cursor: 'pointer',
-                        transition: 'all 0.3s'
+                        transition: 'all 0.3s',
+                        position: 'relative'
                       }}>
                         {profileForm.profile_photo ? (
                           <div>
@@ -2485,13 +2489,14 @@ const SuperAdminDashboard = () => {
                                 height: '150px',
                                 borderRadius: '50%',
                                 objectFit: 'cover',
-                                marginBottom: '1rem'
+                                marginBottom: '1rem',
+                                pointerEvents: 'none'
                               }}
                             />
-                            <p style={{ fontSize: '0.9rem', marginBottom: '0.5rem' }}>Cliquez pour changer</p>
+                            <p style={{ fontSize: '0.9rem', marginBottom: '0.5rem', pointerEvents: 'none' }}>Cliquez pour changer</p>
                           </div>
                         ) : (
-                          <div>
+                          <div style={{ pointerEvents: 'none' }}>
                             <p style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>📷</p>
                             <p style={{ marginBottom: 0 }}>Cliquez pour ajouter une photo</p>
                           </div>
@@ -2502,6 +2507,8 @@ const SuperAdminDashboard = () => {
                           onChange={handleAvatarUpload}
                           style={{
                             position: 'absolute',
+                            top: 0,
+                            left: 0,
                             width: '100%',
                             height: '100%',
                             opacity: 0,
