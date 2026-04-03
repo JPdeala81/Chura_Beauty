@@ -97,6 +97,11 @@ const DeveloperDashboard = () => {
     confirmPassword: ''
   })
 
+  // Admin Management
+  const [newAdminEmail, setNewAdminEmail] = useState('')
+  const [editingAdminId, setEditingAdminId] = useState(null)
+  const [editingAdminForm, setEditingAdminForm] = useState({ email: '', role: 'admin' })
+
   // Payment Networks Configuration
   const [paymentConfig, setPaymentConfig] = useState({
     airtel_code: '',
@@ -636,6 +641,53 @@ const DeveloperDashboard = () => {
         type: 'error', 
         title: '❌ Erreur', 
         message: 'Erreur lors de la création: ' + err.message,
+        onConfirm: () => setModal({show: false})
+      })
+    }
+  }
+
+  const startEditAdmin = (admin) => {
+    setEditingAdminId(admin.id)
+    setEditingAdminForm({ email: admin.email, role: admin.role })
+  }
+
+  const cancelEditAdmin = () => {
+    setEditingAdminId(null)
+    setEditingAdminForm({ email: '', role: 'admin' })
+  }
+
+  const updateAdmin = async (adminId) => {
+    if (!editingAdminForm.email) {
+      setModal({ 
+        show: true, 
+        type: 'error', 
+        title: '❌ Champ Obligatoire', 
+        message: 'L\'email est obligatoire',
+        onConfirm: () => setModal({show: false})
+      })
+      return
+    }
+    
+    try {
+      await api.put(`/site-settings/admin/${adminId}`, {
+        email: editingAdminForm.email,
+        role: editingAdminForm.role
+      })
+      setAdmins(admins.map(a => a.id === adminId ? {...a, ...editingAdminForm} : a))
+      cancelEditAdmin()
+      setModal({ 
+        show: true, 
+        type: 'success', 
+        title: '✅ Admin Mis à Jour', 
+        message: 'L\'administrateur a été mis à jour avec succès',
+        onConfirm: () => setModal({show: false})
+      })
+    } catch (err) {
+      setModal({ 
+        show: true, 
+        type: 'error', 
+        title: '❌ Erreur', 
+        message: 'Erreur lors de la mise à jour: ' + err.message,
         onConfirm: () => setModal({show: false})
       })
     }
@@ -1531,31 +1583,85 @@ const DeveloperDashboard = () => {
                     </thead>
                     <tbody>
                       {admins.map(admin => (
-                        <tr key={admin.id}>
-                          <td>{admin.email}</td>
-                          <td>
-                            <span className="badge" style={{
-                              background: admin.role === 'developer' ? '#a0a0ff' : '#00ff96'
-                            }}>
-                              {admin.role === 'developer' ? 'Développeur' : 'Admin'}
-                            </span>
-                          </td>
-                          <td style={{ fontSize: '0.9rem' }}>{new Date(admin.created_at).toLocaleDateString('fr-FR')}</td>
-                          <td>
-                            {admin.role !== 'developer' && admin.role !== 'super_admin' && (
-                              <button
-                                className="btn btn-sm btn-danger"
-                                onClick={() => deleteAdmin(admin.id, admin.role)}
-                                title="Supprimer"
+                        editingAdminId === admin.id ? (
+                          /* EDIT ROW */
+                          <motion.tr key={admin.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                            <td>
+                              <input
+                                type="email"
+                                className="form-control form-control-sm"
+                                value={editingAdminForm.email}
+                                onChange={(e) => setEditingAdminForm({...editingAdminForm, email: e.target.value})}
+                                style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                              />
+                            </td>
+                            <td>
+                              <select
+                                className="form-select form-select-sm"
+                                value={editingAdminForm.role}
+                                onChange={(e) => setEditingAdminForm({...editingAdminForm, role: e.target.value})}
+                                style={{ borderColor: 'var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
                               >
-                                🗑️
+                                <option value="admin">Admin</option>
+                                <option value="super_admin">Super Admin</option>
+                                <option value="developer" disabled>Développeur (protégé)</option>
+                              </select>
+                            </td>
+                            <td style={{ fontSize: '0.9rem' }}>{new Date(admin.created_at).toLocaleDateString('fr-FR')}</td>
+                            <td>
+                              <button
+                                className="btn btn-sm btn-success me-1"
+                                onClick={() => updateAdmin(admin.id)}
+                                title="Sauvegarder"
+                              >
+                                ✅
                               </button>
-                            )}
-                            {(admin.role === 'developer' || admin.role === 'super_admin') && (
-                              <span style={{ color: '#ffc107', fontSize: '0.8rem', fontWeight: 'bold' }}>🔒 Protégé</span>
-                            )}
-                          </td>
-                        </tr>
+                              <button
+                                className="btn btn-sm btn-secondary"
+                                onClick={cancelEditAdmin}
+                                title="Annuler"
+                              >
+                                ❌
+                              </button>
+                            </td>
+                          </motion.tr>
+                        ) : (
+                          /* DISPLAY ROW */
+                          <tr key={admin.id}>
+                            <td>{admin.email}</td>
+                            <td>
+                              <span className="badge" style={{
+                                background: admin.role === 'developer' ? '#a0a0ff' : admin.role === 'super_admin' ? '#ff9800' : '#00ff96'
+                              }}>
+                                {admin.role === 'developer' ? 'Développeur' : admin.role === 'super_admin' ? 'Super Admin' : 'Admin'}
+                              </span>
+                            </td>
+                            <td style={{ fontSize: '0.9rem' }}>{new Date(admin.created_at).toLocaleDateString('fr-FR')}</td>
+                            <td>
+                              {admin.role !== 'developer' && admin.role !== 'super_admin' && (
+                                <>
+                                  <button
+                                    className="btn btn-sm btn-warning me-1"
+                                    onClick={() => startEditAdmin(admin)}
+                                    title="Éditer"
+                                  >
+                                    ✏️
+                                  </button>
+                                  <button
+                                    className="btn btn-sm btn-danger"
+                                    onClick={() => deleteAdmin(admin.id, admin.role)}
+                                    title="Supprimer"
+                                  >
+                                    🗑️
+                                  </button>
+                                </>
+                              )}
+                              {(admin.role === 'developer' || admin.role === 'super_admin') && (
+                                <span style={{ color: '#ffc107', fontSize: '0.8rem', fontWeight: 'bold' }}>🔒 Protégé</span>
+                              )}
+                            </td>
+                          </tr>
+                        )
                       ))}
                     </tbody>
                   </table>
