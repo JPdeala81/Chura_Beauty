@@ -97,8 +97,7 @@ const DeveloperDashboard = () => {
     confirmPassword: ''
   })
 
-  // Admin Management
-  const [newAdminEmail, setNewAdminEmail] = useState('')
+  // Admin Management - Edit form
   const [editingAdminId, setEditingAdminId] = useState(null)
   const [editingAdminForm, setEditingAdminForm] = useState({ email: '', role: 'admin' })
 
