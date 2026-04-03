@@ -952,10 +952,10 @@ const DeveloperDashboard = () => {
         </div>
       </header>
 
-      <div className="container-fluid px-3 px-md-4">
+      <div className="container-fluid" style={{ padding: 'clamp(1rem, 5vw, 2rem)' }}>
         {/* Navigation Tabs */}
-        <div className="mb-4" style={{ borderBottom: '2px solid var(--surface)' }}>
-          <div className="d-flex gap-2 flex-wrap">
+        <div className="mb-4" style={{ borderBottom: '2px solid var(--surface)', overflowX: 'auto' }}>
+          <div className="d-flex gap-2 flex-nowrap" style={{ minWidth: 'min-content' }}>
             {[
               { id: 'overview', label: '📊 Aperçu' },
               { id: 'appointments', label: '📅 RDV' },
@@ -978,12 +978,14 @@ const DeveloperDashboard = () => {
                   background: activeTab === tab.id ? 'var(--primary-color)' : 'transparent',
                   color: activeTab === tab.id ? 'white' : 'var(--text-color)',
                   border: 'none',
-                  padding: '0.75rem 1rem',
+                  padding: 'clamp(0.5rem, 2vw, 0.75rem) clamp(0.5rem, 3vw, 1rem)',
                   borderBottom: activeTab === tab.id ? '3px solid var(--primary-color)' : 'none',
                   transition: 'var(--transition-smooth)',
-                  fontSize: '0.85rem',
+                  fontSize: 'clamp(0.7rem, 2vw, 0.85rem)',
                   fontWeight: activeTab === tab.id ? 'bold' : 'normal',
-                  whiteSpace: 'nowrap'
+                  whiteSpace: 'nowrap',
+                  minWidth: 'fit-content',
+                  flexShrink: 0
                 }}
                 onClick={() => setActiveTab(tab.id)}
               >
