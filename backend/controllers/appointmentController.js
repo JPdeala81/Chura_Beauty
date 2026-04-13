@@ -433,38 +433,90 @@ export const updateAppointmentStatus = async (req, res) => {
     // Calculer la revenue si accepté
     const revenue = status === 'accepted' ? appointment.services.price : 0
 
-    // Mettre à jour le status
-    const { data: updatedAppointment, error } = await supabase
-      .from('appointments')
-      .update({
-        status,
-        admin_notes: admin_notes || null,
-        revenue,
-      })
-      .eq('id', appointmentId)
-      .select()
-      .single()
+    // Mettre à jour le status - avec retry logic si des colonnes manquent
+    let updatedAppointment = null
+    let updateError = null
 
-    if (error) {
+    const updateConfigs = [
+      {
+        name: 'Tous les champs (status, admin_notes, revenue)',
+        data: { status, admin_notes: admin_notes || null, revenue }
+      },
+      {
+        name: 'Sans admin_notes',
+        data: { status, revenue }
+      },
+      {
+        name: 'Sans revenue',
+        data: { status, admin_notes: admin_notes || null }
+      },
+      {
+        name: 'Juste status',
+        data: { status }
+      }
+    ]
+
+    for (const config of updateConfigs) {
+      // Nettoyer les champs null
+      const cleanUpdateData = Object.fromEntries(
+        Object.entries(config.data).filter(([_, v]) => v !== null)
+      )
+
+      console.log(`⏳ Tentative update: ${config.name}`)
+
+      try {
+        const { data: result, error: err } = await supabase
+          .from('appointments')
+          .update(cleanUpdateData)
+          .eq('id', appointmentId)
+          .select()
+          .single()
+
+        if (!err && result) {
+          updatedAppointment = result
+          console.log(`✅ Statut mis à jour avec: ${config.name}`)
+          break
+        } else if (err) {
+          updateError = err
+          console.log(`⚠️  Erreur update "${config.name}": ${err?.message}`)
+        }
+      } catch (catchErr) {
+        console.error(`❌ Exception update "${config.name}":`, catchErr.message)
+        updateError = catchErr
+      }
+    }
+
+    if (!updatedAppointment) {
+      console.error('❌ Failed to update appointment status:', updateError?.message)
       return res.status(500).json({
         success: false,
-        message: error.message,
+        message: updateError?.message || 'Failed to update appointment status',
       })
     }
 
-    // Créer une notification
-    await supabase
-      .from('notifications')
-      .insert({
-        appointment_id: appointmentId,
-        message: `Rendez-vous ${status === 'accepted' ? 'accepté' : 'refusé'}`,
-        type: status === 'accepted' ? 'accepted' : 'refused',
-      })
+    // Créer une notification (non-blocking)
+    try {
+      await supabase
+        .from('notifications')
+        .insert({
+          appointment_id: appointmentId,
+          message: `Rendez-vous ${status === 'accepted' ? 'accepté' : 'refusé'}`,
+          type: status === 'accepted' ? 'accepted' : 'refused',
+        })
+      console.log('✅ Status notification created')
+    } catch (notifError) {
+      console.error('⚠️ Failed to create status notification:', notifError.message)
+    }
 
-    // Envoyer message WhatsApp
-    const message = generateAppointmentMessage(appointment, status === 'accepted')
-    if (appointment.client_whatsapp) {
-      await sendWhatsAppMessage(appointment.client_whatsapp, message)
+    // Envoyer message WhatsApp (non-blocking)
+    try {
+      const message = generateAppointmentMessage(appointment, status === 'accepted')
+      if (appointment.client_whatsapp) {
+        await sendWhatsAppMessage(appointment.client_whatsapp, message)
+        console.log('✅ WhatsApp message sent to client')
+      }
+    } catch (whatsappError) {
+      console.error('⚠️ Failed to send WhatsApp to client:', whatsappError.message)
     }
 
     res.status(200).json({
