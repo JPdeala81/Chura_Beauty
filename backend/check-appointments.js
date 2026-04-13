@@ -10,17 +10,7 @@ const supabase = createClient(
 (async () => {
   console.log('📋 Checking appointments table structure...');
   
-  // Get the raw table info from information_schema
-  const { data, error } = await supabase
-    .rpc('get_table_columns', { table_name: 'appointments' })
-    .catch(err => {
-      // If RPC doesn't exist, try direct query
-      return { data: null, error: err };
-    });
-  
-  if (data) {
-    console.log('✅ Columns via RPC:', data);
-  } else {
+  try {
     // Try to select with *
     const { data: appointments, error: selectError } = await supabase
       .from('appointments')
@@ -32,17 +22,21 @@ const supabase = createClient(
     } else if (appointments && appointments.length > 0) {
       console.log('✅ Appointments table columns:');
       Object.keys(appointments[0]).forEach(col => {
-        console.log(`  - ${col}: ${appointments[0][col]}`);
+        console.log(`  - ${col}`);
       });
+      console.log('\n📊 First appointment data:');
+      console.log(JSON.stringify(appointments[0], null, 2));
     } else {
-      console.log('⚠️ Table exists but is empty');
-      // Try to know table structure even if empty - retrieve metadata
-      const { data: metadata, error: metaError } = await supabase
+      console.log('⚠️ Table exists but is empty - checking with select()');
+      // Get empty result to see schema
+      const { error: emptyError } = await supabase
         .from('appointments')
         .select()
         .limit(0);
-      console.log('Metadata check for empty table done');
+      console.log('Query result:', emptyError ? emptyError.message : 'Success but no rows');
     }
+  } catch (e) {
+    console.error('Exception:', e.message);
   }
   
   process.exit(0);

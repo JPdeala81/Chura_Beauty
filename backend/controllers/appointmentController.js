@@ -26,14 +26,14 @@ export const createAppointment = async (req, res) => {
       console.log(`👤 No auth user - generated anonymous guest ID: ${user_id}`)
     }
 
-    console.log('📝 Creating appointment:', {
-      client_name,
-      client_email,
-      desired_date,
-      slot_start,
-      slot_end,
+    console.log('📝 Creating appointment - RECEIVED DATA:', {
+      client_name: client_name !== undefined ? `'${client_name}'` : 'undefined',
+      client_phone: client_phone !== undefined ? `'${client_phone}'` : 'undefined',
+      client_email: client_email !== undefined ? `'${client_email}'` : 'undefined',
+      client_whatsapp: client_whatsapp !== undefined ? `'${client_whatsapp}'` : 'undefined',
+      service_id: service_id !== undefined ? `'${service_id}'` : 'undefined',
+      desired_date: desired_date !== undefined ? `'${desired_date}'` : 'undefined',
       user_id: user_id ? '✓ Set (generated)' : '✗ Not set',
-      status_will_be: 'pending'
     })
 
     // Vérifier que le service existe
@@ -203,6 +203,11 @@ export const createAppointment = async (req, res) => {
 
       console.log(`⏳ Tentative: ${attempt.name}`)
       console.log(`   Champs: [${Object.keys(cleanData).join(', ')}]`)
+      
+      // Log first attempt data in detail
+      if (attempt.name === 'Tous les champs') {
+        console.log(`   📊 DATA VALUES:`, JSON.stringify(cleanData, null, 2))
+      }
 
       try {
         const { data: result, error: err } = await supabase
