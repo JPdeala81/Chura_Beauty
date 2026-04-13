@@ -62,57 +62,77 @@ export const createAppointment = async (req, res) => {
       appointmentData.client_email = client_email
     }
 
-    // Créer le rendez-vous
-    const { data: appointment, error } = await supabase
-      .from('appointments')
-      .insert([appointmentData])
-      .select()
+    // Créer le rendez-vous - avec retry logic pour les colonnes manquantes
+    let appointmentFinal = null
+    let lastError = null
 
-    if (error) {
-      console.error('❌ Error creating appointment:', error)
-      
-      // Si l'erreur est liée à client_email, on réessaye sans
-      if (error.message && error.message.includes('client_email')) {
-        console.log('⚠️ Retrying without client_email column...')
-        delete appointmentData.client_email
-        
-        const { data: appointmentRetry, error: errorRetry } = await supabase
-          .from('appointments')
-          .insert([appointmentData])
-          .select()
-        
-        if (errorRetry) {
-          return res.status(500).json({
-            success: false,
-            message: errorRetry.message,
-          })
+    // Stratégie: essayer avec tous les champs, puis progressivement en retirer
+    const fieldsToTry = [
+      {
+        name: 'Tous les champs',
+        data: appointmentData
+      },
+      {
+        name: 'Sans client_email',
+        data: { ...appointmentData, client_email: undefined }
+      },
+      {
+        name: 'Sans client_name',
+        data: { ...appointmentData, client_name: undefined }
+      },
+      {
+        name: 'Sans client_phone',
+        data: { ...appointmentData, client_phone: undefined }
+      },
+      {
+        name: 'Sans client_whatsapp',
+        data: { ...appointmentData, client_whatsapp: undefined }
+      },
+      {
+        name: 'Champs minimaux',
+        data: {
+          service_id,
+          desired_date,
+          slot_start,
+          slot_end,
+          selected_options: selected_options || [],
+          custom_description,
+          status: 'pending',
+          revenue: 0,
         }
+      }
+    ]
 
-        // Utiliser le premier élément du tableau retourné
-        const appointmentData_final = appointmentRetry && appointmentRetry.length > 0 ? appointmentRetry[0] : null
-        
-        if (appointmentData_final) {
-          return res.status(201).json({
-            success: true,
-            message: 'Appointment created (email stored separately)',
-            appointment: appointmentData_final,
-          })
-        }
+    for (const attempt of fieldsToTry) {
+      // Nettoyer les champs undefined/null
+      const cleanData = Object.fromEntries(
+        Object.entries(attempt.data).filter(([_, v]) => v !== undefined && v !== null)
+      )
 
-        return res.status(500).json({
-          success: false,
-          message: 'Failed to create appointment',
-        })
+      console.log(`⏳ Tentative: ${attempt.name}`)
+
+      const { data: result, error: err } = await supabase
+        .from('appointments')
+        .insert([cleanData])
+        .select()
+
+      if (!err && result) {
+        appointmentFinal = result && result.length > 0 ? result[0] : result
+        console.log(`✅ Rendez-vous créé avec succès: ${attempt.name}`)
+        break
       }
 
-      return res.status(500).json({
-        success: false,
-        message: error.message,
-      })
+      lastError = err
+      console.log(`⚠️ Erreur avec "${attempt.name}": ${err?.message}`)
     }
 
-    // Utiliser le premier élément du tableau retourné
-    const appointmentFinal = appointment && appointment.length > 0 ? appointment[0] : appointment
+    if (!appointmentFinal) {
+      console.error('❌ Impossible de créer le rendez-vous après toutes les tentatives:', lastError)
+      return res.status(500).json({
+        success: false,
+        message: lastError?.message || 'Impossible de créer le rendez-vous',
+      })
+    }
 
     console.log('✅ Appointment created:', {
       id: appointmentFinal?.id,
