@@ -152,7 +152,14 @@ const SuperAdminDashboard = () => {
       // Extract correct data from responses
       if (appoRes.status === 'fulfilled') {
         const apptData = appoRes.value.data
-        setAppointments(apptData.appointments || [])
+        const appts = apptData.appointments || []
+        console.log('✅ Appointments chargés:', appts)
+        console.log(`📊 Total appointments: ${appts.length}`)
+        if (appts.length > 0) {
+          console.log('🔑 Premier rendez-vous:', JSON.stringify(appts[0], null, 2).substring(0, 300))
+          console.log('📋 Colonnes:', Object.keys(appts[0]))
+        }
+        setAppointments(appts)
       }
       if (servRes.status === 'fulfilled') {
         const servData = servRes.value.data
@@ -217,11 +224,20 @@ const SuperAdminDashboard = () => {
   }
 
   const filteredAppointments = appointments.filter(apt => {
-    const matchesSearch = apt.client_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         apt.client_email?.toLowerCase().includes(searchTerm.toLowerCase())
+    const clientName = apt.client_name || apt.name || 'Anonyme'
+    const clientEmail = apt.client_email || apt.email || ''
+    
+    const matchesSearch = clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         clientEmail.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = filterStatus === 'all' || apt.status === filterStatus
     return matchesSearch && matchesStatus
   })
+
+  // Fonction pour obtenir le nom du service
+  const getServiceName = (serviceId) => {
+    const service = services.find(s => s.id === serviceId)
+    return service?.title || service?.name || serviceId || 'Service inconnu'
+  }
 
   // Profile Management Handlers
   const handleProfileChange = (e) => {
@@ -1345,44 +1361,60 @@ const SuperAdminDashboard = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {filteredAppointments.map(apt => (
-                          <motion.tr key={apt.id}>
-                            <td>{apt.client_name}</td>
-                            <td>{apt.client_email}</td>
-                            <td>{apt.client_phone}</td>
-                            <td>{apt.service_id}</td>
-                            <td>{new Date(apt.appointment_date).toLocaleDateString()}</td>
-                            <td>
-                              <span className="badge" style={{
-                                background: apt.status === 'pending' ? '#ffd700' : apt.status === 'accepted' ? '#00d9ff' : '#ff6b6b'
-                              }}>
-                                {apt.status === 'pending' && '⏳ En attente'}
-                                {apt.status === 'accepted' && '✅ Accepté'}
-                                {apt.status === 'rejected' && '❌ Refusé'}
-                              </span>
-                            </td>
-                            <td>
-                              {apt.status === 'pending' && (
-                                <div className="d-flex gap-2">
-                                  <button
-                                    className="btn btn-sm btn-success"
-                                    onClick={() => updateAppointmentStatus(apt.id, 'accepted')}
-                                    title="Accepter"
-                                  >
-                                    ✅
-                                  </button>
-                                  <button
-                                    className="btn btn-sm btn-danger"
-                                    onClick={() => updateAppointmentStatus(apt.id, 'rejected')}
-                                    title="Refuser"
-                                  >
-                                    ❌
-                                  </button>
-                                </div>
-                              )}
-                            </td>
-                          </motion.tr>
-                        ))}
+                        {filteredAppointments.map(apt => {
+                          const clientName = apt.client_name || 'Anonyme'
+                          const clientEmail = apt.client_email || 'N/A'
+                          const clientPhone = apt.client_phone || 'N/A'
+                          const serviceName = getServiceName(apt.service_id)
+                          const appointmentDate = apt.appointment_date ? new Date(apt.appointment_date).toLocaleDateString() : 'N/A'
+                          
+                          return (
+                            <motion.tr key={apt.id}>
+                              <td>{clientName}</td>
+                              <td>{clientEmail}</td>
+                              <td>{clientPhone}</td>
+                              <td>{serviceName}</td>
+                              <td>{appointmentDate}</td>
+                              <td>
+                                <span className="badge" style={{
+                                  background: apt.status === 'pending' ? '#ffd700' : apt.status === 'accepted' ? '#00d9ff' : '#ff6b6b'
+                                }}>
+                                  {apt.status === 'pending' && '⏳ En attente'}
+                                  {apt.status === 'accepted' && '✅ Accepté'}
+                                  {apt.status === 'rejected' && '❌ Refusé'}
+                                </span>
+                              </td>
+                              <td>
+                                {apt.status === 'pending' && (
+                                  <div className="d-flex gap-2">
+                                    <button
+                                      className="btn btn-sm btn-success"
+                                      onClick={() => updateAppointmentStatus(apt.id, 'accepted')}
+                                      title="Accepter"
+                                    >
+                                      ✅
+                                    </button>
+                                    <button
+                                      className="btn btn-sm btn-danger"
+                                      onClick={() => updateAppointmentStatus(apt.id, 'rejected')}
+                                      title="Refuser"
+                                    >
+                                      ❌
+                                    </button>
+                                  </div>
+                                )}
+                              </td>
+                            </motion.tr>
+                          )
+                        }           >
+                                      ❌
+                                    </button>
+                                  </div>
+                                )}
+                              </td>
+                            </motion.tr>
+                          )
+                        })}
                       </tbody>
                     </table>
                   ) : (
