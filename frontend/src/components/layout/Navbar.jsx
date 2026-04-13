@@ -127,7 +127,7 @@ const Navbar = () => {
             {token ? (
               <>
                 <Link 
-                  to="/admin/dashboard" 
+                  to="/admin" 
                   className="btn-luxury-gradient"
                   onClick={() => setMenuOpen(false)}
                   style={{ 
