@@ -394,12 +394,35 @@ const SuperAdminDashboard = () => {
 
   const updateAppointmentStatus = async (id, newStatus) => {
     try {
-      await api.patch(`/appointments/${id}`, { status: newStatus })
+      // Use correct endpoint: /appointments/:id/status (NOT /appointments/:id)
+      const response = await api.patch(`/appointments/${id}/status`, { status: newStatus })
+      
+      // Update local state
       setAppointments(appointments.map(apt => 
         apt.id === id ? { ...apt, status: newStatus } : apt
       ))
+      
+      // Show success message
+      alert(`✅ Rendez-vous ${newStatus === 'accepted' ? 'accepté' : 'refusé'} avec succès!\nUn message WhatsApp a été envoyé au client.`)
+      
+      console.log('✅ WhatsApp sent to client:', response.data)
     } catch (err) {
-      console.error('Erreur update:', err)
+      console.error('❌ Erreur lors de la mise à jour:', err)
+      alert(`❌ Erreur: ${err.response?.data?.message || err.message}`)
+    }
+  }
+
+  const deleteAppointment = async (id) => {
+    // Ask for confirmation
+    if (window.confirm('⚠️ Êtes-vous sûr de vouloir supprimer définitivement ce rendez-vous? Cette action est irréversible.')) {
+      try {
+        await api.delete(`/appointments/${id}`)
+        setAppointments(appointments.filter(apt => apt.id !== id))
+        alert('✅ Rendez-vous supprimé avec succès')
+      } catch (err) {
+        console.error('❌ Erreur suppression:', err)
+        alert(`❌ Erreur: ${err.response?.data?.message || err.message}`)
+      }
     }
   }
 
@@ -1388,24 +1411,33 @@ const SuperAdminDashboard = () => {
                                 </span>
                               </td>
                               <td>
-                                {apt.status === 'pending' && (
-                                  <div className="d-flex gap-2">
-                                    <button
-                                      className="btn btn-sm btn-success"
-                                      onClick={() => updateAppointmentStatus(apt.id, 'accepted')}
-                                      title="Accepter"
-                                    >
-                                      ✅
-                                    </button>
-                                    <button
-                                      className="btn btn-sm btn-danger"
-                                      onClick={() => updateAppointmentStatus(apt.id, 'rejected')}
-                                      title="Refuser"
-                                    >
-                                      ❌
-                                    </button>
-                                  </div>
-                                )}
+                                <div className="d-flex gap-2" style={{ flexWrap: 'wrap' }}>
+                                  {apt.status === 'pending' && (
+                                    <>
+                                      <button
+                                        className="btn btn-sm btn-success"
+                                        onClick={() => updateAppointmentStatus(apt.id, 'accepted')}
+                                        title="Accepter et envoyer WhatsApp"
+                                      >
+                                        ✅
+                                      </button>
+                                      <button
+                                        className="btn btn-sm btn-danger"
+                                        onClick={() => updateAppointmentStatus(apt.id, 'rejected')}
+                                        title="Refuser et envoyer WhatsApp"
+                                      >
+                                        ❌
+                                      </button>
+                                    </>
+                                  )}
+                                  <button
+                                    className="btn btn-sm btn-outline-danger"
+                                    onClick={() => deleteAppointment(apt.id)}
+                                    title="Supprimer ce rendez-vous"
+                                  >
+                                    🗑️
+                                  </button>
+                                </div>
                               </td>
                             </motion.tr>
                           )
