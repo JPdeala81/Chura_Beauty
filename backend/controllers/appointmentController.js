@@ -51,13 +51,21 @@ export const createAppointment = async (req, res) => {
       })
     }
 
+    // Vérifier que appointment_date est fourni (NOT NULL constraint)
+    if (!desired_date) {
+      return res.status(400).json({
+        success: false,
+        message: 'desired_date is required for appointment',
+      })
+    }
+
     // Préparer les données d'insertion
     const appointmentData = {
       service_id,
       client_name,
       client_phone,
       client_whatsapp,
-      desired_date,
+      appointment_date: desired_date, // Map desired_date to appointment_date (DB column name)
       slot_start,
       slot_end,
       selected_options: selected_options || [],
@@ -128,24 +136,17 @@ export const createAppointment = async (req, res) => {
           client_phone,
           client_email,
           client_whatsapp,
-          desired_date,
+          appointment_date: desired_date,
           status: 'pending',
           revenue: 0,
           user_id,
         }
       },
       {
-        name: 'Sans desired_date',
+        name: 'Sans slot_start et slot_end (v2)',
         data: {
           service_id,
-          client_name,
-          client_phone,
-          client_email,
-          client_whatsapp,
-          slot_start,
-          slot_end,
-          selected_options: selected_options || [],
-          custom_description,
+          appointment_date: desired_date,
           status: 'pending',
           revenue: 0,
           user_id,
@@ -157,7 +158,7 @@ export const createAppointment = async (req, res) => {
         name: 'Minimal: service + date + user_id',
         data: {
           service_id,
-          desired_date,
+          appointment_date: desired_date,
           status: 'pending',
           user_id,
         }
