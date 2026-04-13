@@ -306,43 +306,81 @@ export const getAppointments = async (req, res) => {
     console.log('📋 getAppointments called with query:', req.query)
     const { status, service_id, start_date, end_date } = req.query
 
+    // 1. D'abord vérifier combien de rendez-vous existent en total
+    const { count: totalCount } = await supabase
+      .from('appointments')
+      .select('*', { count: 'exact', head: true })
+    
+    console.log(`📊 Total appointments in DB: ${totalCount}`)
+
+    // 2. Récupérer les rendez-vous sans la jointure d'abord pour voir les données brutes
     let query = supabase
       .from('appointments')
-      .select('*, services!inner(title, price)')
+      .select('*')
 
     if (status) {
       query = query.eq('status', status)
+      console.log(`🔍 Filter by status: ${status}`)
     }
 
     if (service_id) {
       query = query.eq('service_id', service_id)
+      console.log(`🔍 Filter by service_id: ${service_id}`)
     }
 
     if (start_date) {
-      query = query.gte('desired_date', start_date)
+      query = query.gte('appointment_date', start_date)
+      console.log(`🔍 Filter from date: ${start_date}`)
     }
 
     if (end_date) {
-      query = query.lte('desired_date', end_date)
+      query = query.lte('appointment_date', end_date)
+      console.log(`🔍 Filter to date: ${end_date}`)
     }
 
     const { data: appointments, error } = await query.order('created_at', { ascending: false })
 
-    console.log('📋 Supabase query result - Appointments:', appointments)
-    console.log('📋 Supabase query result - Error:', error)
+    console.log(`📋 Query returned ${appointments?.length || 0} appointments`)
+    console.log('📋 First appointment sample:', appointments?.[0] ? JSON.stringify(appointments[0]).substring(0, 200) : 'NO APPOINTMENTS')
+    console.log('📋 Supabase error:', error)
 
     if (error) {
       console.error('❌ Supabase error:', error)
       return res.status(500).json({
         success: false,
         message: error.message,
+        code: error.code,
       })
     }
 
-    console.log('✅ Returning appointments:', appointments)
+    // 3. Optionnel: Enrichir avec les infos du service
+    let enrichedAppointments = appointments
+    if (appointments && appointments.length > 0) {
+      const serviceIds = [...new Set(appointments.map(a => a.service_id).filter(Boolean))]
+      
+      if (serviceIds.length > 0) {
+        console.log(`📦 Fetching service info for ${serviceIds.length} services`)
+        const { data: services } = await supabase
+          .from('services')
+          .select('id, title, price')
+          .in('id', serviceIds)
+
+        const servicesMap = {}
+        services?.forEach(s => {
+          servicesMap[s.id] = s
+        })
+
+        enrichedAppointments = appointments.map(appt => ({
+          ...appt,
+          service: servicesMap[appt.service_id] || { title: 'Service inconnu', price: 0 }
+        }))
+      }
+    }
+
+    console.log('✅ Returning appointments:', enrichedAppointments.length, 'records')
     res.status(200).json({
       success: true,
-      appointments,
+      appointments: enrichedAppointments,
     })
   } catch (error) {
     console.error('❌ Controller error:', error)
