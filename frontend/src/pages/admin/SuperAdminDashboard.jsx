@@ -1406,14 +1406,6 @@ const SuperAdminDashboard = () => {
                               </td>
                             </motion.tr>
                           )
-                        }           >
-                                      ❌
-                                    </button>
-                                  </div>
-                                )}
-                              </td>
-                            </motion.tr>
-                          )
                         })}
                       </tbody>
                     </table>
