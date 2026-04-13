@@ -1,28 +1,20 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../../services/api'
+import { useSiteSettings } from '../../contexts/SiteSettingsContext'
 
 const Footer = () => {
-  const [adminInfo, setAdminInfo] = useState({
-    salonName: 'Chura Beauty Salon',
-    phone: '+241 00 00 00 00',
-    whatsapp: '+241 00 00 00 00',
-    address: 'Libreville, Gabon',
-    instagram: '',
-    facebook: ''
-  })
-
-  useEffect(() => {
-    const fetchAdmin = async () => {
-      try {
-        const response = await api.get('/auth/profile')
-        if (response.data) setAdminInfo(response.data)
-      } catch (error) {
-        console.log('Infos salon non disponibles')
-      }
-    }
-    fetchAdmin()
-  }, [])
+  const siteSettings = useSiteSettings()
+  
+  // Fallback to site settings, then to defaults
+  const adminInfo = {
+    salonName: siteSettings.companyName || siteSettings.appName || 'Chura Beauty Salon',
+    phone: siteSettings.footerPhone || '+241 00 00 00 00',
+    whatsapp: siteSettings.footerWhatsapp || '+241 00 00 00 00',
+    address: siteSettings.address || 'Libreville, Gabon',
+    instagram: siteSettings.footerInstagram || '',
+    facebook: siteSettings.footerFacebook || ''
+  }
 
   return (
     <footer className="footer-luxury">

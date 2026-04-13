@@ -2,35 +2,27 @@ import { useState, useEffect, useContext } from 'react'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { AuthContext } from '../../context/AuthContext'
+import { useSiteSettings } from '../../contexts/SiteSettingsContext'
 import api from '../../services/api'
 
 const floatingEmojis = ['💆‍♀️', '✨', '💅', '🌸', '💄', '👑', '🌺', '💎', '🪷', '🌟']
 
 const HeroSection = ({ onScrollToServices }) => {
   const { token, admin } = useContext(AuthContext)
-  const [adminInfo, setAdminInfo] = useState({
-    salonName: 'Chura Beauty Salon',
-    bio: 'Votre destination beauté à Libreville',
-    coverPicture: null,
-    heroTitle: 'Révélez Votre Beauté Naturelle',
-    heroSubtitle: 'Des soins d\'exception pour sublimer votre beauté'
-  })
+  const siteSettings = useSiteSettings()
+  
+  // Use site settings with fallbacks
+  const adminInfo = {
+    salonName: siteSettings.companyName || siteSettings.appName || 'Chura Beauty Salon',
+    bio: siteSettings.heroSubtitle || 'Votre destination beauté à Libreville',
+    coverPicture: siteSettings.heroBackground || null,
+    heroTitle: siteSettings.heroTitle || 'Révélez Votre Beauté Naturelle',
+    heroSubtitle: siteSettings.heroSubtitle || 'Des soins d\'exception pour sublimer votre beauté'
+  }
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1024)
   
   // Check if user is admin or developer
   const isAdminOrDeveloper = token && admin && (admin.role === 'admin' || admin.role === 'developer')
-
-  useEffect(() => {
-    const fetchAdmin = async () => {
-      try {
-        const response = await api.get('/auth/profile')
-        if (response.data) setAdminInfo(prev => ({ ...prev, ...response.data }))
-      } catch (error) {
-        console.log('Profil par défaut utilisé')
-      }
-    }
-    fetchAdmin()
-  }, [])
 
   // Handle window resize for responsive padding
   useEffect(() => {

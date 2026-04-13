@@ -48,6 +48,16 @@ ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS is_maintenance BOOLEAN DEFAUL
 ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS maintenance_end TIMESTAMP;
 ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS maintenance_reason TEXT;
 ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS site_created_at TIMESTAMP DEFAULT NOW();
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS app_name TEXT;
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS app_logo TEXT;
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS hero_background_image TEXT;
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS homepage_hero_title TEXT;
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS homepage_hero_subtitle TEXT;
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS footer_phone TEXT;
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS footer_email TEXT;
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS footer_whatsapp TEXT;
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS footer_instagram TEXT;
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS footer_facebook TEXT;
 
 -- Create logs table for system monitoring
 CREATE TABLE IF NOT EXISTS logs (

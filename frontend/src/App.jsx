@@ -5,6 +5,7 @@ import { AuthProvider } from './context/AuthContext'
 import { NotificationProvider } from './context/NotificationContext'
 import { ThemeProvider } from './context/ThemeContext'
 import { QRCodeProvider } from './context/QRCodeContext'
+import { SiteSettingsProvider } from './contexts/SiteSettingsContext'
 import ThemeSwitcherFloating from './components/ThemeSwitcherFloating'
 import Home from './pages/Home'
 import Services from './pages/Services'
@@ -118,11 +119,13 @@ function App() {
         <NotificationProvider>
           <ThemeProvider>
             <QRCodeProvider>
-              {isMaintenance ? (
-                <Maintenance />
-              ) : (
-                <AppRoutes />
-              )}
+              <SiteSettingsProvider>
+                {isMaintenance ? (
+                  <Maintenance />
+                ) : (
+                  <AppRoutes />
+                )}
+              </SiteSettingsProvider>
             </QRCodeProvider>
           </ThemeProvider>
         </NotificationProvider>
