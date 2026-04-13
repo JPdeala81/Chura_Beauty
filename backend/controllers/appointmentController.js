@@ -66,7 +66,7 @@ export const createAppointment = async (req, res) => {
     let appointmentFinal = null
     let lastError = null
 
-    // Stratégie: essayer avec tous les champs, puis progressivement en retirer
+    // Stratégie: essayer avec tous les champs, puis progressivement en retirer les colonnes optionnelles
     const fieldsToTry = [
       {
         name: 'Tous les champs',
@@ -89,14 +89,28 @@ export const createAppointment = async (req, res) => {
         data: { ...appointmentData, client_whatsapp: undefined }
       },
       {
-        name: 'Champs minimaux',
+        name: 'Sans custom_description',
+        data: { ...appointmentData, custom_description: undefined }
+      },
+      {
+        name: 'Sans selected_options',
+        data: { ...appointmentData, selected_options: undefined }
+      },
+      {
+        name: 'Sans custom_description et selected_options',
+        data: {
+          ...appointmentData,
+          custom_description: undefined,
+          selected_options: undefined
+        }
+      },
+      {
+        name: 'Champs minimaux (garantis)',
         data: {
           service_id,
           desired_date,
           slot_start,
           slot_end,
-          selected_options: selected_options || [],
-          custom_description,
           status: 'pending',
           revenue: 0,
         }
