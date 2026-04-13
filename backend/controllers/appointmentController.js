@@ -111,19 +111,28 @@ export const createAppointment = async (req, res) => {
 
       console.log(`⏳ Tentative: ${attempt.name}`)
 
-      const { data: result, error: err } = await supabase
-        .from('appointments')
-        .insert([cleanData])
-        .select()
+      try {
+        const { data: result, error: err } = await supabase
+          .from('appointments')
+          .insert([cleanData])
+          .select()
 
-      if (!err && result) {
-        appointmentFinal = result && result.length > 0 ? result[0] : result
-        console.log(`✅ Rendez-vous créé avec succès: ${attempt.name}`)
-        break
+        // Vérifier que c'est vraiment un succès: pas d'erreur ET result est un array non-vide
+        if (!err && result && Array.isArray(result) && result.length > 0) {
+          appointmentFinal = result[0]
+          console.log(`✅ Rendez-vous créé avec succès: ${attempt.name}`)
+          break
+        } else if (err) {
+          lastError = err
+          console.log(`⚠️ Erreur avec "${attempt.name}": ${err?.message}`)
+        } else if (!result || !Array.isArray(result) || result.length === 0) {
+          console.log(`⚠️ Résultat vide avec "${attempt.name}": ${JSON.stringify(result)}`)
+          lastError = new Error(`Empty result from insert`)
+        }
+      } catch (catchErr) {
+        console.error(`❌ Exception lors de "${attempt.name}":`, catchErr.message)
+        lastError = catchErr
       }
-
-      lastError = err
-      console.log(`⚠️ Erreur avec "${attempt.name}": ${err?.message}`)
     }
 
     if (!appointmentFinal) {
@@ -140,45 +149,54 @@ export const createAppointment = async (req, res) => {
       status: appointmentFinal?.status
     })
 
-    // Créer une notification
-    await supabase
-      .from('notifications')
-      .insert({
-        appointment_id: appointmentFinal.id,
-        message: `Nouvelle demande de rendez-vous de ${client_name} pour ${service.title}`,
-        type: 'new_request',
-      })
-
-    // Récupérer le numéro WhatsApp du super admin
-    const { data: admin, error: adminError } = await supabase
-      .from('admins')
-      .select('whatsapp')
-      .limit(1)
-      .single()
-
-    // Envoyer un message WhatsApp au super admin
-    if (admin && admin.whatsapp && !adminError) {
-      const adminMessage = generateNewAppointmentNotification({
-        client_name,
-        clientWhatsapp: client_whatsapp,
-        service: service,
-        desired_date: desired_date,
-        slot_start,
-        slot_end,
-        custom_description,
-      })
-      try {
-        await sendWhatsAppMessage(admin.whatsapp, adminMessage)
-        console.log('✅ WhatsApp notification sent to admin')
-      } catch (whatsappError) {
-        console.error('⚠️ Failed to send WhatsApp notification to admin:', whatsappError.message)
-      }
-    }
-
+    // Envoyer la réponse de succès immédiatement
     res.status(201).json({
       success: true,
       appointment: appointmentFinal,
     })
+
+    // Créer une notification (non-blocking)
+    try {
+      await supabase
+        .from('notifications')
+        .insert({
+          appointment_id: appointmentFinal.id,
+          message: `Nouvelle demande de rendez-vous de ${client_name} pour ${service.title}`,
+          type: 'new_request',
+        })
+      console.log('✅ Notification created')
+    } catch (notifError) {
+      console.error('⚠️ Failed to create notification:', notifError.message)
+    }
+
+    // Récupérer le numéro WhatsApp du super admin et envoyer message
+    try {
+      const { data: admin, error: adminError } = await supabase
+        .from('admins')
+        .select('whatsapp')
+        .limit(1)
+        .single()
+
+      if (admin && admin.whatsapp && !adminError) {
+        const adminMessage = generateNewAppointmentNotification({
+          client_name,
+          clientWhatsapp: client_whatsapp,
+          service: service,
+          desired_date: desired_date,
+          slot_start,
+          slot_end,
+          custom_description,
+        })
+        try {
+          await sendWhatsAppMessage(admin.whatsapp, adminMessage)
+          console.log('✅ WhatsApp notification sent to admin')
+        } catch (whatsappError) {
+          console.error('⚠️ Failed to send WhatsApp notification to admin:', whatsappError.message)
+        }
+      }
+    } catch (adminError) {
+      console.error('⚠️ Failed to fetch admin or send WhatsApp:', adminError.message)
+    }
   } catch (error) {
     res.status(500).json({
       success: false,
