@@ -300,6 +300,9 @@ const DeveloperDashboard = () => {
 
   const saveSiteSettings = async () => {
     try {
+      console.log('💾 Saving site settings...')
+      console.log('📋 Current form data:', siteSettingsForm)
+      
       const payload = {
         app_name: siteSettingsForm.app_name,
         app_logo: logoPreview ? logoPreview : siteSettingsForm.app_logo,
@@ -322,18 +325,24 @@ const DeveloperDashboard = () => {
 
       // Only include images if they are URLs, not base64
       if (payload.app_logo && payload.app_logo.startsWith('data:')) {
+        console.log('🖼️  app_logo is base64, removing from payload')
         delete payload.app_logo
       }
       if (payload.hero_background_image && payload.hero_background_image.startsWith('data:')) {
+        console.log('🖼️  hero_background_image is base64, removing from payload')
         delete payload.hero_background_image
       }
       
-      await api.put('/site-settings', payload)
+      console.log('📤 Sending payload with', Object.keys(payload).length, 'fields:', Object.keys(payload))
+      const response = await api.put('/site-settings', payload)
+      console.log('✅ Response from server:', response)
+      
       setModal({ show: true, type: 'success', title: '✅ Succès', message: 'Paramètres sauvegardés avec succès!' })
       // Refetch data after save
       await fetchAllData()
     } catch (error) {
-      console.error('Erreur lors de la sauvegarde:', error)
+      console.error('❌ Erreur lors de la sauvegarde:', error)
+      console.error('Response:', error.response?.data)
       setModal({ show: true, type: 'error', title: '❌ Erreur', message: 'Erreur lors de la sauvegarde: ' + error.message })
     }
   }

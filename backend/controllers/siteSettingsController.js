@@ -173,6 +173,8 @@ const siteSettingsController = {
   // Update site settings (upsert)
   updateSiteSettings: async (req, res) => {
     try {
+      console.log('📝 updateSiteSettings called with body:', JSON.stringify(req.body).substring(0, 200) + '...')
+      
       const {
         app_name,
         app_logo,
@@ -216,14 +218,19 @@ const siteSettingsController = {
       } = req.body
 
       // First, check if settings exist
+      console.log('🔍 Checking if site_settings record exists...')
       const { data: existing, error: checkError } = await supabase
         .from('site_settings')
         .select('id')
         .single()
 
       if (checkError && checkError.code !== 'PGRST116') {
+        console.error('❌ Error checking existing settings:', checkError)
         return res.status(500).json({ error: checkError.message })
       }
+      
+      console.log(`📋 Existing record: ${existing ? 'YES (id: ' + existing.id + ')' : 'NO - will insert new'}`)
+      
 
       const updateData = {
         app_name,
@@ -269,27 +276,33 @@ const siteSettingsController = {
       }
 
       // Filter out undefined values to prevent errors
+      const cleanedData = {}
       Object.keys(updateData).forEach(key => {
-        if (updateData[key] === undefined) {
-          delete updateData[key]
+        if (updateData[key] !== undefined && updateData[key] !== null) {
+          cleanedData[key] = updateData[key]
         }
       })
+      
+      console.log(`📊 Fields to update: ${Object.keys(cleanedData).length} fields`)
+      console.log('🔧 Update data keys:', Object.keys(cleanedData).slice(0, 5), '...')
 
       let result
 
       if (existing) {
         // Update existing record
+        console.log(`✏️  Updating existing record (id: ${existing.id})`)
         result = await supabase
           .from('site_settings')
-          .update(updateData)
+          .update(cleanedData)
           .eq('id', existing.id)
           .select()
       } else {
         // Insert new record
+        console.log('➕ Inserting new site_settings record')
         result = await supabase
           .from('site_settings')
           .insert([{
-            ...updateData,
+            ...cleanedData,
             created_at: new Date().toISOString()
           }])
           .select()
@@ -298,9 +311,20 @@ const siteSettingsController = {
       const { data, error } = result
 
       if (error) {
-        return res.status(500).json({ error: error.message })
+        console.error('❌ Database error:', {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint
+        })
+        return res.status(500).json({ 
+          error: error.message,
+          code: error.code,
+          details: error.details
+        })
       }
 
+      console.log('✅ Site settings updated successfully')
       res.json({ message: 'Site settings updated', data: data[0] })
     } catch (err) {
       res.status(500).json({ error: err.message })
