@@ -17,12 +17,16 @@ export const createAppointment = async (req, res) => {
       custom_description,
     } = req.body
 
+    // Extraire user_id si présent (peut être du JWT ou du body)
+    const user_id = req.user?.id || req.user?.sub || req.body.user_id || null
+
     console.log('📝 Creating appointment:', {
       client_name,
       client_email,
       desired_date,
       slot_start,
       slot_end,
+      user_id: user_id ? '✓ Set' : '✗ Not set',
       status_will_be: 'pending'
     })
 
@@ -56,8 +60,12 @@ export const createAppointment = async (req, res) => {
       revenue: 0,
     }
 
-    // Essayer d'ajouter client_email si la colonne existe
-    // sinon elle sera ignorée par Supabase
+    // Ajouter user_id si disponible
+    if (user_id) {
+      appointmentData.user_id = user_id
+    }
+
+    // Essayer d'ajouter client_email si disponible
     if (client_email) {
       appointmentData.client_email = client_email
     }
@@ -69,49 +77,56 @@ export const createAppointment = async (req, res) => {
     // Stratégie COMPLÈTE: essayer progressivement TOUS les champs, du plus complet au minimal absolu
     // Cela gère les cas où n'importe quelle colonne peut manquer
     const fieldsToTry = [
-      // Niveau 1-2: Tous les champs
+      // Niveau 1-3: Tous les champs avec user_id priorité
       {
-        name: 'Tous les champs',
-        data: appointmentData
+        name: 'Tous les champs avec user_id',
+        data: user_id ? { ...appointmentData, user_id } : appointmentData
+      },
+      {
+        name: 'Tous les champs sans user_id',
+        data: { ...appointmentData, user_id: undefined }
       },
       {
         name: 'Sans client_email',
-        data: { ...appointmentData, client_email: undefined }
+        data: user_id 
+          ? { ...appointmentData, client_email: undefined, user_id }
+          : { ...appointmentData, client_email: undefined, user_id: undefined }
       },
       
-      // Niveau 3-7: Sans champs clients un par un
+      // Niveau 4-8: Sans champs clients un par un (avec user_id)
       {
-        name: 'Sans client_name',
-        data: { ...appointmentData, client_name: undefined }
+        name: 'Sans client_name et user_id',
+        data: { ...appointmentData, client_name: undefined, user_id: undefined }
       },
       {
-        name: 'Sans client_phone',
-        data: { ...appointmentData, client_phone: undefined }
+        name: 'Sans client_phone et user_id',
+        data: { ...appointmentData, client_phone: undefined, user_id: undefined }
       },
       {
-        name: 'Sans client_whatsapp',
-        data: { ...appointmentData, client_whatsapp: undefined }
+        name: 'Sans client_whatsapp et user_id',
+        data: { ...appointmentData, client_whatsapp: undefined, user_id: undefined }
       },
       
-      // Niveau 8-9: Sans champs descriptifs
+      // Niveau 9-10: Sans champs descriptifs
       {
-        name: 'Sans custom_description',
-        data: { ...appointmentData, custom_description: undefined }
+        name: 'Sans custom_description et user_id',
+        data: { ...appointmentData, custom_description: undefined, user_id: undefined }
       },
       {
-        name: 'Sans selected_options',
-        data: { ...appointmentData, selected_options: undefined }
+        name: 'Sans selected_options et user_id',
+        data: { ...appointmentData, selected_options: undefined, user_id: undefined }
       },
       {
-        name: 'Sans custom_description et selected_options',
+        name: 'Sans custom_description, selected_options et user_id',
         data: {
           ...appointmentData,
           custom_description: undefined,
-          selected_options: undefined
+          selected_options: undefined,
+          user_id: undefined
         }
       },
       {
-        name: 'Sans tous les clients et descriptions',
+        name: 'Sans clients, descriptions et user_id',
         data: {
           service_id,
           desired_date,
@@ -122,9 +137,9 @@ export const createAppointment = async (req, res) => {
         }
       },
       
-      // Niveau 10-14: Sans champs temporels
+      // Niveau 11-14: Sans champs temporels
       {
-        name: 'Sans slot_start et slot_end',
+        name: 'Sans slot_start, slot_end et user_id',
         data: {
           service_id,
           client_name,
@@ -137,7 +152,7 @@ export const createAppointment = async (req, res) => {
         }
       },
       {
-        name: 'Sans desired_date',
+        name: 'Sans desired_date et user_id',
         data: {
           service_id,
           client_name,
@@ -153,7 +168,7 @@ export const createAppointment = async (req, res) => {
         }
       },
       {
-        name: 'Sans desired_date et slot times',
+        name: 'Sans dates, times et user_id',
         data: {
           service_id,
           client_name,
@@ -167,7 +182,7 @@ export const createAppointment = async (req, res) => {
         }
       },
       {
-        name: 'Sans tous les clients',
+        name: 'Sans clients et user_id',
         data: {
           service_id,
           desired_date,
@@ -182,7 +197,7 @@ export const createAppointment = async (req, res) => {
       
       // Niveau 15-19: Absolument minimal
       {
-        name: 'Minimal: service + desired_date + status',
+        name: 'Minimal: service + desired_date',
         data: {
           service_id,
           desired_date,
@@ -197,7 +212,7 @@ export const createAppointment = async (req, res) => {
         }
       },
       {
-        name: 'Minimal: service + status + revenue',
+        name: 'Minimal avec revenue',
         data: {
           service_id,
           status: 'pending',
@@ -205,13 +220,14 @@ export const createAppointment = async (req, res) => {
         }
       },
       {
-        name: 'Juste service_id',
+        name: 'Juste service_id + status',
         data: {
           service_id,
+          status: 'pending',
         }
       },
       {
-        name: 'Tentative finale - minimal object',
+        name: 'Ultime tentative finale',
         data: {
           service_id: service_id || 'unknown',
         }
