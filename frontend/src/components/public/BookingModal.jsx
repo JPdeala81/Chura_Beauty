@@ -100,6 +100,18 @@ export default function BookingModal({ show, onHide, service, availableSlots = [
       };
 
       console.log('📝 Submitting appointment:', appointmentData);
+      console.log('🔍 Checking submitted data:', {
+        has_client_name: appointmentData.client_name ? '✓ YES' : '❌ NO',
+        has_client_phone: appointmentData.client_phone ? '✓ YES' : '❌ NO', 
+        has_client_email: appointmentData.client_email ? '✓ YES' : '❌ NO',
+        has_client_whatsapp: appointmentData.client_whatsapp ? '✓ YES' : '❌ NO',
+        actual_values: {
+          client_name: appointmentData.client_name,
+          client_phone: appointmentData.client_phone,
+          client_email: appointmentData.client_email,
+          client_whatsapp: appointmentData.client_whatsapp
+        }
+      });
       await appointmentService.createAppointment(appointmentData);
       setSuccess('Rendez-vous demandé avec succès !');
 

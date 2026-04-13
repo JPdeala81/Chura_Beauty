@@ -5,6 +5,9 @@ import { randomUUID } from 'crypto'
 
 export const createAppointment = async (req, res) => {
   try {
+    // Log ENTIRE request body first
+    console.log('\n🔍 REQUEST BODY (RAW):', JSON.stringify(req.body, null, 2))
+    
     const {
       service_id,
       client_name,
