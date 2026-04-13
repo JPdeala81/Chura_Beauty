@@ -44,7 +44,7 @@ const DeveloperDashboard = () => {
   // ──── DATABASE MANAGEMENT ────
   const [selectedTable, setSelectedTable] = useState('services') // services, appointments, admins
   const [newServiceForm, setNewServiceForm] = useState({
-    name: '', title: '', category: '', price: 0, duration: 30, description: '', active: true
+    name: '', title: '', category: '', price: 0, duration: 30, description: '', active: true, checkboxOptions: ''
   })
   const [newServiceImage, setNewServiceImage] = useState(null)
   const [newServiceImagePreview, setNewServiceImagePreview] = useState(null)
@@ -449,7 +449,10 @@ const DeveloperDashboard = () => {
         duration_minutes: newServiceForm.duration || 30,
         description: newServiceForm.description,
         active: newServiceForm.active,
-        image_url: newServiceImage
+        image_url: newServiceImage,
+        checkbox_options: newServiceForm.checkboxOptions
+          ? newServiceForm.checkboxOptions.split(',').map(o => o.trim()).filter(Boolean)
+          : []
       }
 
       await api.post('/services', payload)
@@ -457,7 +460,7 @@ const DeveloperDashboard = () => {
       
       // Reset form
       setShowNewServiceForm(false)
-      setNewServiceForm({ name: '', title: '', category: '', price: 0, duration: 30, description: '', active: true })
+      setNewServiceForm({ name: '', title: '', category: '', price: 0, duration: 30, description: '', active: true, checkboxOptions: '' })
       setNewServiceImage(null)
       setNewServiceImagePreview(null)
       
@@ -1651,6 +1654,17 @@ const DeveloperDashboard = () => {
                           rows="3"
                           style={{borderColor: 'var(--primary-color)'}}
                         />
+                      </div>
+                      <div className="col-12">
+                        <input
+                          type="text"
+                          className="form-control"
+                          placeholder="Paramètres/Options (séparées par des virgules)"
+                          value={newServiceForm.checkboxOptions}
+                          onChange={(e) => setNewServiceForm({...newServiceForm, checkboxOptions: e.target.value})}
+                          style={{borderColor: 'var(--primary-color)'}}
+                        />
+                        <small style={{color: '#888'}}>Ex: Sans shampoing, Premium, Avec massage</small>
                       </div>
                       <div className="col-12">
                         <label className="form-check">

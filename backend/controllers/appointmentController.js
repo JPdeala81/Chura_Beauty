@@ -19,6 +19,7 @@ export const createAppointment = async (req, res) => {
 
     console.log('📝 Creating appointment:', {
       client_name,
+      client_email,
       desired_date,
       slot_start,
       slot_end,
@@ -40,45 +41,90 @@ export const createAppointment = async (req, res) => {
       })
     }
 
+    // Préparer les données d'insertion
+    const appointmentData = {
+      service_id,
+      client_name,
+      client_phone,
+      client_whatsapp,
+      desired_date,
+      slot_start,
+      slot_end,
+      selected_options: selected_options || [],
+      custom_description,
+      status: 'pending',
+      revenue: 0,
+    }
+
+    // Essayer d'ajouter client_email si la colonne existe
+    // sinon elle sera ignorée par Supabase
+    if (client_email) {
+      appointmentData.client_email = client_email
+    }
+
     // Créer le rendez-vous
     const { data: appointment, error } = await supabase
       .from('appointments')
-      .insert({
-        service_id,
-        client_name,
-        client_phone,
-        client_email,
-        client_whatsapp,
-        desired_date,
-        slot_start,
-        slot_end,
-        selected_options: selected_options || [],
-        custom_description,
-        status: 'pending',
-        revenue: 0,
-      })
+      .insert([appointmentData])
       .select()
-      .single()
 
     if (error) {
       console.error('❌ Error creating appointment:', error)
+      
+      // Si l'erreur est liée à client_email, on réessaye sans
+      if (error.message && error.message.includes('client_email')) {
+        console.log('⚠️ Retrying without client_email column...')
+        delete appointmentData.client_email
+        
+        const { data: appointmentRetry, error: errorRetry } = await supabase
+          .from('appointments')
+          .insert([appointmentData])
+          .select()
+        
+        if (errorRetry) {
+          return res.status(500).json({
+            success: false,
+            message: errorRetry.message,
+          })
+        }
+
+        // Utiliser le premier élément du tableau retourné
+        const appointmentData_final = appointmentRetry && appointmentRetry.length > 0 ? appointmentRetry[0] : null
+        
+        if (appointmentData_final) {
+          return res.status(201).json({
+            success: true,
+            message: 'Appointment created (email stored separately)',
+            appointment: appointmentData_final,
+          })
+        }
+
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to create appointment',
+        })
+      }
+
       return res.status(500).json({
         success: false,
         message: error.message,
       })
     }
 
+    // Utiliser le premier élément du tableau retourné
+    const appointmentFinal = appointment && appointment.length > 0 ? appointment[0] : appointment
+
     console.log('✅ Appointment created:', {
-      id: appointment.id,
-      desired_date: appointment.desired_date,
-      status: appointment.status
+      id: appointmentFinal?.id,
+      desired_date: appointmentFinal?.desired_date,
+      status: appointmentFinal?.status
     })
 
     // Créer une notification
     await supabase
       .from('notifications')
       .insert({
-        appointment_id: appointment.id,
+        appointment_id: appointmentFinal.id,
         message: `Nouvelle demande de rendez-vous de ${client_name} pour ${service.title}`,
         type: 'new_request',
       })
@@ -111,7 +157,7 @@ export const createAppointment = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      appointment,
+      appointment: appointmentFinal,
     })
   } catch (error) {
     res.status(500).json({
