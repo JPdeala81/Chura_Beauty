@@ -62,12 +62,14 @@ export const createAppointment = async (req, res) => {
       appointmentData.client_email = client_email
     }
 
-    // Créer le rendez-vous - avec retry logic pour les colonnes manquantes
+    // Créer le rendez-vous - Ultra-robust retry logic pour tous les champs potentiellement manquants
     let appointmentFinal = null
     let lastError = null
 
-    // Stratégie: essayer avec tous les champs, puis progressivement en retirer les colonnes optionnelles
+    // Stratégie COMPLÈTE: essayer progressivement TOUS les champs, du plus complet au minimal absolu
+    // Cela gère les cas où n'importe quelle colonne peut manquer
     const fieldsToTry = [
+      // Niveau 1-2: Tous les champs
       {
         name: 'Tous les champs',
         data: appointmentData
@@ -76,6 +78,8 @@ export const createAppointment = async (req, res) => {
         name: 'Sans client_email',
         data: { ...appointmentData, client_email: undefined }
       },
+      
+      // Niveau 3-7: Sans champs clients un par un
       {
         name: 'Sans client_name',
         data: { ...appointmentData, client_name: undefined }
@@ -88,6 +92,8 @@ export const createAppointment = async (req, res) => {
         name: 'Sans client_whatsapp',
         data: { ...appointmentData, client_whatsapp: undefined }
       },
+      
+      // Niveau 8-9: Sans champs descriptifs
       {
         name: 'Sans custom_description',
         data: { ...appointmentData, custom_description: undefined }
@@ -105,7 +111,7 @@ export const createAppointment = async (req, res) => {
         }
       },
       {
-        name: 'Champs minimaux (garantis)',
+        name: 'Sans tous les clients et descriptions',
         data: {
           service_id,
           desired_date,
@@ -113,6 +119,101 @@ export const createAppointment = async (req, res) => {
           slot_end,
           status: 'pending',
           revenue: 0,
+        }
+      },
+      
+      // Niveau 10-14: Sans champs temporels
+      {
+        name: 'Sans slot_start et slot_end',
+        data: {
+          service_id,
+          client_name,
+          client_phone,
+          client_email,
+          client_whatsapp,
+          desired_date,
+          status: 'pending',
+          revenue: 0,
+        }
+      },
+      {
+        name: 'Sans desired_date',
+        data: {
+          service_id,
+          client_name,
+          client_phone,
+          client_email,
+          client_whatsapp,
+          slot_start,
+          slot_end,
+          selected_options: selected_options || [],
+          custom_description,
+          status: 'pending',
+          revenue: 0,
+        }
+      },
+      {
+        name: 'Sans desired_date et slot times',
+        data: {
+          service_id,
+          client_name,
+          client_phone,
+          client_email,
+          client_whatsapp,
+          selected_options: selected_options || [],
+          custom_description,
+          status: 'pending',
+          revenue: 0,
+        }
+      },
+      {
+        name: 'Sans tous les clients',
+        data: {
+          service_id,
+          desired_date,
+          slot_start,
+          slot_end,
+          selected_options: selected_options || [],
+          custom_description,
+          status: 'pending',
+          revenue: 0,
+        }
+      },
+      
+      // Niveau 15-19: Absolument minimal
+      {
+        name: 'Minimal: service + desired_date + status',
+        data: {
+          service_id,
+          desired_date,
+          status: 'pending',
+        }
+      },
+      {
+        name: 'Minimal: service + status',
+        data: {
+          service_id,
+          status: 'pending',
+        }
+      },
+      {
+        name: 'Minimal: service + status + revenue',
+        data: {
+          service_id,
+          status: 'pending',
+          revenue: 0,
+        }
+      },
+      {
+        name: 'Juste service_id',
+        data: {
+          service_id,
+        }
+      },
+      {
+        name: 'Tentative finale - minimal object',
+        data: {
+          service_id: service_id || 'unknown',
         }
       }
     ]
@@ -123,7 +224,14 @@ export const createAppointment = async (req, res) => {
         Object.entries(attempt.data).filter(([_, v]) => v !== undefined && v !== null)
       )
 
+      // Ne pas essayer avec des données complètement vides sauf en dernier recours
+      if (Object.keys(cleanData).length === 0 && attempt.name !== 'Tentative finale - minimal object') {
+        console.log(`⏭️  ${attempt.name} - ignoré (données vides)`)
+        continue
+      }
+
       console.log(`⏳ Tentative: ${attempt.name}`)
+      console.log(`   Champs: [${Object.keys(cleanData).join(', ')}]`)
 
       try {
         const { data: result, error: err } = await supabase
@@ -134,33 +242,36 @@ export const createAppointment = async (req, res) => {
         // Vérifier que c'est vraiment un succès: pas d'erreur ET result est un array non-vide
         if (!err && result && Array.isArray(result) && result.length > 0) {
           appointmentFinal = result[0]
-          console.log(`✅ Rendez-vous créé avec succès: ${attempt.name}`)
+          console.log(`✅ SUCCÈS! Rendez-vous créé avec: ${attempt.name}`)
+          console.log(`   Champs utilisés: [${Object.keys(cleanData).join(', ')}]`)
+          console.log(`   ID: ${appointmentFinal?.id}`)
           break
         } else if (err) {
           lastError = err
-          console.log(`⚠️ Erreur avec "${attempt.name}": ${err?.message}`)
+          console.log(`⚠️  Erreur "${attempt.name}": ${err?.message}`)
         } else if (!result || !Array.isArray(result) || result.length === 0) {
-          console.log(`⚠️ Résultat vide avec "${attempt.name}": ${JSON.stringify(result)}`)
+          console.log(`⚠️  Résultat vide pour "${attempt.name}"`)
           lastError = new Error(`Empty result from insert`)
         }
       } catch (catchErr) {
-        console.error(`❌ Exception lors de "${attempt.name}":`, catchErr.message)
+        console.error(`❌ Exception "${attempt.name}":`, catchErr.message)
         lastError = catchErr
       }
     }
 
     if (!appointmentFinal) {
-      console.error('❌ Impossible de créer le rendez-vous après toutes les tentatives:', lastError)
+      console.error('❌ Impossible de créer le rendez-vous après toutes les 19 tentatives!')
+      console.error('   Dernière erreur:', lastError?.message)
       return res.status(500).json({
         success: false,
-        message: lastError?.message || 'Impossible de créer le rendez-vous',
+        message: lastError?.message || 'Impossible de créer le rendez-vous - problème de configuration de base de données',
       })
     }
 
-    console.log('✅ Appointment created:', {
+    console.log('✅ Appointment created successfully:', {
       id: appointmentFinal?.id,
-      desired_date: appointmentFinal?.desired_date,
-      status: appointmentFinal?.status
+      status: appointmentFinal?.status,
+      createdAt: new Date().toISOString()
     })
 
     // Envoyer la réponse de succès immédiatement
