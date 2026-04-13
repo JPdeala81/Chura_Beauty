@@ -199,10 +199,17 @@ const DeveloperDashboard = () => {
       // Fetch REAL data from API responsibly
       try {
         const appoRes = await api.get('/appointments')
-        setAppointments(appoRes.data.appointments || appoRes.data || [])
-        console.log('✅ Appointments chargés:', appoRes.data)
+        const appts = appoRes.data.appointments || appoRes.data || []
+        console.log('✅ Appointments chargés:', appts)
+        console.log(`📊 Total appointments: ${appts.length}`)
+        if (appts.length > 0) {
+          console.log('📋 First appointment structure:', JSON.stringify(appts[0], null, 2))
+          console.log('🔑 Column names:', Object.keys(appts[0]))
+        }
+        setAppointments(appts)
       } catch (err) {
         console.warn('❌ Erreur appointments:', err.message)
+        console.error('Full error:', err)
         setAppointments([])
       }
 
@@ -416,14 +423,27 @@ const DeveloperDashboard = () => {
 
   // ============ APPOINTMENT FILTERING ============
   const getFilteredAppointments = () => {
+    console.log(`🔍 Filtering ${appointments.length} appointments with search='${appointmentSearch}' filter='${appointmentFilter}'`)
     let filtered = appointments.filter(a => {
+      // Handle missing columns gracefully
+      const clientName = a.client_name || a.name || 'Anonyme'
+      const clientPhone = a.client_phone || a.phone || ''
+      
       const matchSearch = appointmentSearch.toLowerCase() === '' || 
-        a.client_name?.toLowerCase().includes(appointmentSearch.toLowerCase()) ||
-        a.client_phone?.includes(appointmentSearch)
+        clientName.toLowerCase().includes(appointmentSearch.toLowerCase()) ||
+        clientPhone.includes(appointmentSearch)
       const matchFilter = appointmentFilter === 'all' || a.status === appointmentFilter
+      
       return matchSearch && matchFilter
     })
+    console.log(`✅ Filtered to ${filtered.length} appointments`)
     return filtered
+  }
+
+  // Fonction pour obtenir le nom du service à partir de l'ID
+  const getServiceName = (serviceId) => {
+    const service = services.find(s => s.id === serviceId)
+    return service?.title || service?.name || serviceId || 'Service inconnu'
   }
 
   // ============ SERVICE MANAGEMENT ============
@@ -1441,35 +1461,42 @@ const DeveloperDashboard = () => {
                     </thead>
                     <tbody>
                       {getFilteredAppointments().length > 0 ? (
-                        getFilteredAppointments().map(apt => (
-                          <tr key={apt.id}>
-                            <td>{apt.client_name || 'Anonyme'}</td>
-                            <td>{apt.client_phone || 'N/A'}</td>
-                            <td>{apt.appointment_date ? new Date(apt.appointment_date).toLocaleDateString('fr-FR') : 'N/A'}</td>
-                            <td>{apt.service_id || 'N/A'}</td>
-                            <td>
-                              <span className="badge px-2 py-2" style={{ 
-                                background: apt.status === 'accepted' ? '#00d9ff' : 
-                                           apt.status === 'pending' ? '#ffc107' : '#ff6b6b',
-                                color: apt.status === 'pending' ? '#000' : 'white',
-                                fontSize: '0.75rem',
-                                fontWeight: 'bold'
-                              }}>
-                                {apt.status === 'accepted' ? '✅ ACCEPTÉ' : 
-                                 apt.status === 'pending' ? '⏳ EN ATTENTE' : '❌ ANNULÉ'}
-                              </span>
-                            </td>
-                            <td>
-                              <button
-                                className="btn btn-sm btn-danger"
-                                onClick={() => deleteAppointment(apt.id)}
-                                title="Supprimer"
-                              >
-                                🗑️
-                              </button>
-                            </td>
-                          </tr>
-                        ))
+                        getFilteredAppointments().map(apt => {
+                          const clientName = apt.client_name || 'Anonyme'
+                          const clientPhone = apt.client_phone || 'N/A'
+                          const appointmentDate = apt.appointment_date ? new Date(apt.appointment_date).toLocaleDateString('fr-FR') : 'N/A'
+                          const serviceName = getServiceName(apt.service_id)
+                          
+                          return (
+                            <tr key={apt.id}>
+                              <td>{clientName}</td>
+                              <td>{clientPhone}</td>
+                              <td>{appointmentDate}</td>
+                              <td>{serviceName}</td>
+                              <td>
+                                <span className="badge px-2 py-2" style={{ 
+                                  background: apt.status === 'accepted' ? '#00d9ff' : 
+                                             apt.status === 'pending' ? '#ffc107' : '#ff6b6b',
+                                  color: apt.status === 'pending' ? '#000' : 'white',
+                                  fontSize: '0.75rem',
+                                  fontWeight: 'bold'
+                                }}>
+                                  {apt.status === 'accepted' ? '✅ ACCEPTÉ' : 
+                                   apt.status === 'pending' ? '⏳ EN ATTENTE' : '❌ ANNULÉ'}
+                                </span>
+                              </td>
+                              <td>
+                                <button
+                                  className="btn btn-sm btn-danger"
+                                  onClick={() => deleteAppointment(apt.id)}
+                                  title="Supprimer"
+                                >
+                                  🗑️
+                                </button>
+                              </td>
+                            </tr>
+                          )
+                        })
                       ) : (
                         <tr>
                           <td colSpan="6" className="text-center py-3">
