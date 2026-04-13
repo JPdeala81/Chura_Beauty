@@ -1,6 +1,7 @@
 import { supabase } from '../config/supabase.js'
 import { sendWhatsAppMessage } from '../utils/whatsappUtil.js'
 import { getAvailableSlots } from '../utils/slotUtil.js'
+import { randomUUID } from 'crypto'
 
 export const createAppointment = async (req, res) => {
   try {
@@ -18,7 +19,12 @@ export const createAppointment = async (req, res) => {
     } = req.body
 
     // Extraire user_id si présent (peut être du JWT ou du body)
-    const user_id = req.user?.id || req.user?.sub || req.body.user_id || null
+    // Si pas d'utilisateur authentifié, générer un UUID anonyme
+    let user_id = req.user?.id || req.user?.sub || req.body.user_id
+    if (!user_id) {
+      user_id = randomUUID()
+      console.log(`👤 No auth user - generated anonymous guest ID: ${user_id}`)
+    }
 
     console.log('📝 Creating appointment:', {
       client_name,
@@ -26,7 +32,7 @@ export const createAppointment = async (req, res) => {
       desired_date,
       slot_start,
       slot_end,
-      user_id: user_id ? '✓ Set' : '✗ Not set',
+      user_id: user_id ? '✓ Set (generated)' : '✗ Not set',
       status_will_be: 'pending'
     })
 
@@ -58,11 +64,7 @@ export const createAppointment = async (req, res) => {
       custom_description,
       status: 'pending',
       revenue: 0,
-    }
-
-    // Ajouter user_id si disponible
-    if (user_id) {
-      appointmentData.user_id = user_id
+      user_id, // Toujours présent (généré ou authentifié)
     }
 
     // Essayer d'ajouter client_email si disponible
@@ -74,72 +76,52 @@ export const createAppointment = async (req, res) => {
     let appointmentFinal = null
     let lastError = null
 
-    // Stratégie COMPLÈTE: essayer progressivement TOUS les champs, du plus complet au minimal absolu
-    // Cela gère les cas où n'importe quelle colonne peut manquer
+    // Stratégie COMPLÈTE: essayer progressivement les champs, du plus complet au minimal
+    // user_id est TOUJOURS présent (généré ou authentifié)
     const fieldsToTry = [
-      // Niveau 1-3: Tous les champs avec user_id priorité
+      // Niveau 1-3: Tous les champs principaux
       {
-        name: 'Tous les champs avec user_id',
-        data: user_id ? { ...appointmentData, user_id } : appointmentData
-      },
-      {
-        name: 'Tous les champs sans user_id',
-        data: { ...appointmentData, user_id: undefined }
+        name: 'Tous les champs',
+        data: appointmentData
       },
       {
         name: 'Sans client_email',
-        data: user_id 
-          ? { ...appointmentData, client_email: undefined, user_id }
-          : { ...appointmentData, client_email: undefined, user_id: undefined }
+        data: { ...appointmentData, client_email: undefined }
+      },
+      {
+        name: 'Sans client_name',
+        data: { ...appointmentData, client_name: undefined }
+      },
+      {
+        name: 'Sans client_phone',
+        data: { ...appointmentData, client_phone: undefined }
+      },
+      {
+        name: 'Sans client_whatsapp',
+        data: { ...appointmentData, client_whatsapp: undefined }
       },
       
-      // Niveau 4-8: Sans champs clients un par un (avec user_id)
+      // Niveau 5-7: Sans champs descriptifs
       {
-        name: 'Sans client_name et user_id',
-        data: { ...appointmentData, client_name: undefined, user_id: undefined }
+        name: 'Sans custom_description',
+        data: { ...appointmentData, custom_description: undefined }
       },
       {
-        name: 'Sans client_phone et user_id',
-        data: { ...appointmentData, client_phone: undefined, user_id: undefined }
+        name: 'Sans selected_options',
+        data: { ...appointmentData, selected_options: undefined }
       },
       {
-        name: 'Sans client_whatsapp et user_id',
-        data: { ...appointmentData, client_whatsapp: undefined, user_id: undefined }
-      },
-      
-      // Niveau 9-10: Sans champs descriptifs
-      {
-        name: 'Sans custom_description et user_id',
-        data: { ...appointmentData, custom_description: undefined, user_id: undefined }
-      },
-      {
-        name: 'Sans selected_options et user_id',
-        data: { ...appointmentData, selected_options: undefined, user_id: undefined }
-      },
-      {
-        name: 'Sans custom_description, selected_options et user_id',
+        name: 'Sans custom_description et selected_options',
         data: {
           ...appointmentData,
           custom_description: undefined,
-          selected_options: undefined,
-          user_id: undefined
-        }
-      },
-      {
-        name: 'Sans clients, descriptions et user_id',
-        data: {
-          service_id,
-          desired_date,
-          slot_start,
-          slot_end,
-          status: 'pending',
-          revenue: 0,
+          selected_options: undefined
         }
       },
       
-      // Niveau 11-14: Sans champs temporels
+      // Niveau 8-10: Sans champs temporels
       {
-        name: 'Sans slot_start, slot_end et user_id',
+        name: 'Sans slot_start et slot_end',
         data: {
           service_id,
           client_name,
@@ -149,10 +131,11 @@ export const createAppointment = async (req, res) => {
           desired_date,
           status: 'pending',
           revenue: 0,
+          user_id,
         }
       },
       {
-        name: 'Sans desired_date et user_id',
+        name: 'Sans desired_date',
         data: {
           service_id,
           client_name,
@@ -165,71 +148,42 @@ export const createAppointment = async (req, res) => {
           custom_description,
           status: 'pending',
           revenue: 0,
-        }
-      },
-      {
-        name: 'Sans dates, times et user_id',
-        data: {
-          service_id,
-          client_name,
-          client_phone,
-          client_email,
-          client_whatsapp,
-          selected_options: selected_options || [],
-          custom_description,
-          status: 'pending',
-          revenue: 0,
-        }
-      },
-      {
-        name: 'Sans clients et user_id',
-        data: {
-          service_id,
-          desired_date,
-          slot_start,
-          slot_end,
-          selected_options: selected_options || [],
-          custom_description,
-          status: 'pending',
-          revenue: 0,
+          user_id,
         }
       },
       
-      // Niveau 15-19: Absolument minimal
+      // Niveau 11-14: Minimal
       {
-        name: 'Minimal: service + desired_date',
+        name: 'Minimal: service + date + user_id',
         data: {
           service_id,
           desired_date,
           status: 'pending',
+          user_id,
         }
       },
       {
-        name: 'Minimal: service + status',
+        name: 'Minimal: service + user_id',
         data: {
           service_id,
           status: 'pending',
+          user_id,
         }
       },
       {
-        name: 'Minimal avec revenue',
+        name: 'Minimal: service + status + revenue + user_id',
         data: {
           service_id,
           status: 'pending',
           revenue: 0,
+          user_id,
         }
       },
       {
-        name: 'Juste service_id + status',
+        name: 'Ultime: service_id + user_id',
         data: {
           service_id,
-          status: 'pending',
-        }
-      },
-      {
-        name: 'Ultime tentative finale',
-        data: {
-          service_id: service_id || 'unknown',
+          user_id,
         }
       }
     ]
