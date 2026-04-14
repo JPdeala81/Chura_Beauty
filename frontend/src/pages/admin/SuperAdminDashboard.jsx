@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { AuthContext } from '../../context/AuthContext'
 import api from '../../services/api'
 import QRCodeConfig from '../../components/admin/QRCodeConfig'
+import DashboardModal from '../../components/admin/DashboardModal'
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
@@ -21,6 +22,7 @@ const SuperAdminDashboard = () => {
   const [adminInfo, setAdminInfo] = useState({})
   const [editingSettings, setEditingSettings] = useState(false)
   const [formData, setFormData] = useState({})
+  const [modal, setModal] = useState({ show: false, type: 'info', title: '', message: '' })
   
   // Service Management
   const [editingService, setEditingService] = useState(null)
@@ -402,28 +404,60 @@ const SuperAdminDashboard = () => {
         apt.id === id ? { ...apt, status: newStatus } : apt
       ))
       
-      // Show success message
-      alert(`✅ Rendez-vous ${newStatus === 'accepted' ? 'accepté' : 'refusé'} avec succès!\nUn message WhatsApp a été envoyé au client.`)
+      // Show beautiful success modal
+      setModal({
+        show: true,
+        type: 'success',
+        title: newStatus === 'accepted' ? '✅ Rendez-vous Accepté' : '❌ Rendez-vous Refusé',
+        message: `Le rendez-vous a été ${newStatus === 'accepted' ? 'accepté' : 'refusé'} avec succès!\nUn message WhatsApp a été envoyé au client.`,
+        onConfirm: () => setModal({ show: false, type: 'info', title: '', message: '' })
+      })
       
       console.log('✅ WhatsApp sent to client:', response.data)
     } catch (err) {
       console.error('❌ Erreur lors de la mise à jour:', err)
-      alert(`❌ Erreur: ${err.response?.data?.message || err.message}`)
+      setModal({
+        show: true,
+        type: 'error',
+        title: '❌ Erreur',
+        message: `Erreur: ${err.response?.data?.message || err.message}`,
+        onConfirm: () => setModal({ show: false, type: 'info', title: '', message: '' })
+      })
     }
   }
 
   const deleteAppointment = async (id) => {
-    // Ask for confirmation
-    if (window.confirm('⚠️ Êtes-vous sûr de vouloir supprimer définitivement ce rendez-vous? Cette action est irréversible.')) {
-      try {
-        await api.delete(`/appointments/${id}`)
-        setAppointments(appointments.filter(apt => apt.id !== id))
-        alert('✅ Rendez-vous supprimé avec succès')
-      } catch (err) {
-        console.error('❌ Erreur suppression:', err)
-        alert(`❌ Erreur: ${err.response?.data?.message || err.message}`)
-      }
-    }
+    // Show confirmation modal before deleting
+    setModal({
+      show: true,
+      type: 'confirm',
+      title: '⚠️ Supprimer Rendez-vous',
+      message: 'Êtes-vous sûr de vouloir supprimer définitivement ce rendez-vous? Cette action est irréversible.',
+      isDangerous: true,
+      onConfirm: async () => {
+        try {
+          await api.delete(`/appointments/${id}`)
+          setAppointments(appointments.filter(apt => apt.id !== id))
+          setModal({
+            show: true,
+            type: 'success',
+            title: '✅ Supprimé',
+            message: 'Rendez-vous supprimé avec succès',
+            onConfirm: () => setModal({ show: false, type: 'info', title: '', message: '' })
+          })
+        } catch (err) {
+          console.error('❌ Erreur suppression:', err)
+          setModal({
+            show: true,
+            type: 'error',
+            title: '❌ Erreur',
+            message: `Erreur: ${err.response?.data?.message || err.message}`,
+            onConfirm: () => setModal({ show: false, type: 'info', title: '', message: '' })
+          })
+        }
+      },
+      onCancel: () => setModal({ show: false, type: 'info', title: '', message: '' })
+    })
   }
 
   const handleSettingsChange = (e) => {
@@ -886,6 +920,18 @@ const SuperAdminDashboard = () => {
       minHeight: '100vh',
       fontFamily: 'var(--font-primary, sans-serif)'
     }}>
+      {/* Modal de Confirmation */}
+      <DashboardModal 
+        show={modal.show}
+        type={modal.type}
+        title={modal.title}
+        message={modal.message}
+        onConfirm={modal.onConfirm}
+        onCancel={() => setModal({ show: false, type: 'info', title: '', message: '' })}
+        confirmText={modal.confirmText || 'Confirmer'}
+        cancelText={modal.cancelText || 'Annuler'}
+        isDangerous={modal.isDangerous}
+      />
       {/* Header - Responsive Navbar */}
       <header style={{
         background: 'var(--gradient-primary)',
