@@ -116,6 +116,9 @@ const DeveloperDashboard = () => {
     is_payment_enabled: false
   })
 
+  // ──── HOOKS (MUST BE AT ROOT LEVEL) ────
+  const { isMaintenance: hookIsMaintenance, toggleMaintenance: hookToggleMaintenance } = useMaintenanceCheck()
+
   // ──── CODING INTERFACE (FEATURE 13) ────
   const [codingStats, setCodingStats] = useState({
     totalFiles: 0,
@@ -691,8 +694,6 @@ const DeveloperDashboard = () => {
 
   const toggleMaintenance = async () => {
     try {
-      const { toggleMaintenance: toggleMaintenanceMode } = useMaintenanceCheck()
-      
       const endTime = new Date(Date.now() + maintenanceDuration * 60000).toISOString()
       const newState = !maintenanceMode
       
@@ -711,53 +712,16 @@ const DeveloperDashboard = () => {
         }
       }
       
-      // Update local state and localStorage/custom event for other tabs
+      // Update local state and call hook to persist to localStorage
       setMaintenanceMode(newState)
       if (newState) setCountdownTime(maintenanceDuration * 60)
       
-      // Store maintenance info globally
-      localStorage.setItem('maintenanceMode', JSON.stringify({
-        enabled: newState,
-        data: {
-          is_maintenance: newState,
-          reason: maintenanceReason,
-          endTime: newState ? endTime : null
-        }
-      }))
-      
-      // Dispatch custom event for immediate updates in other components
-      window.dispatchEvent(new CustomEvent('maintenanceToggle', {
-        detail: {
-          isMaintenance: newState,
-          data: {
-            is_maintenance: newState,
-            reason: maintenanceReason,
-            endTime: newState ? endTime : null
-          }
-        }
-      }))
-      
-      // Store maintenance info globally
-      localStorage.setItem('maintenanceMode', JSON.stringify({
-        enabled: newState,
-        data: {
-          is_maintenance: newState,
-          reason: maintenanceReason,
-          endTime: newState ? endTime : null
-        }
-      }))
-      
-      // Dispatch custom event for immediate updates in other components
-      window.dispatchEvent(new CustomEvent('maintenanceToggle', {
-        detail: {
-          isMaintenance: newState,
-          data: {
-            is_maintenance: newState,
-            reason: maintenanceReason,
-            endTime: newState ? endTime : null
-          }
-        }
-      }))
+      // Call hook to properly save to localStorage and dispatch event
+      hookToggleMaintenance(newState, {
+        is_maintenance: newState,
+        reason: maintenanceReason,
+        endTime: newState ? endTime : null
+      })
       
       setModal({ 
         show: true, 
