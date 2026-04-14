@@ -32,6 +32,19 @@ export const useMaintenanceCheck = () => {
           data: res.data
         }))
       } else {
+        // API says not in maintenance - but check localStorage in case developer set it locally
+        const localMaintenance = localStorage.getItem('maintenanceMode')
+        if (localMaintenance) {
+          const parsed = JSON.parse(localMaintenance)
+          if (parsed.enabled) {
+            // Developer set maintenance locally - respect that and keep it
+            console.log('✅ Maintenance mode active locally (via localStorage)')
+            setIsMaintenance(true)
+            setMaintenanceData(parsed.data)
+            return
+          }
+        }
+        // No local maintenance - sync with server
         setIsMaintenance(false)
         setMaintenanceData(null)
         localStorage.setItem('maintenanceMode', JSON.stringify({

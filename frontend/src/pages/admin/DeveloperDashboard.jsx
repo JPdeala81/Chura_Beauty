@@ -45,7 +45,7 @@ const DeveloperDashboard = () => {
   // ──── DATABASE MANAGEMENT ────
   const [selectedTable, setSelectedTable] = useState('services') // services, appointments, admins
   const [newServiceForm, setNewServiceForm] = useState({
-    name: '', title: '', category: '', price: 0, duration: 30, description: '', active: true, checkboxOptions: ''
+    title: '', category: '', price: 0, duration: 30, description: '', active: true, checkboxOptions: ''
   })
   const [newServiceImage, setNewServiceImage] = useState(null)
   const [newServiceImagePreview, setNewServiceImagePreview] = useState(null)
@@ -469,7 +469,7 @@ const DeveloperDashboard = () => {
 
   const createNewService = async () => {
     try {
-      if (!newServiceForm.name || !newServiceForm.category || !newServiceForm.price) {
+      if (!newServiceForm.title || !newServiceForm.category || !newServiceForm.price) {
         setModal({ show: true, type: 'error', title: '❌ Champs Obligatoires', message: 'Nom, catégorie et prix sont obligatoires' })
         return
       }
@@ -480,7 +480,7 @@ const DeveloperDashboard = () => {
       }
 
       const payload = {
-        title: newServiceForm.name,
+        title: newServiceForm.title,
         category: newServiceForm.category,
         price: newServiceForm.price,
         duration_minutes: newServiceForm.duration || 30,
@@ -497,7 +497,7 @@ const DeveloperDashboard = () => {
       
       // Reset form
       setShowNewServiceForm(false)
-      setNewServiceForm({ name: '', title: '', category: '', price: 0, duration: 30, description: '', active: true, checkboxOptions: '' })
+      setNewServiceForm({ title: '', category: '', price: 0, duration: 30, description: '', active: true, checkboxOptions: '' })
       setNewServiceImage(null)
       setNewServiceImagePreview(null)
       
@@ -1215,7 +1215,7 @@ const DeveloperDashboard = () => {
       await api.put(`/services/${editingServiceId}`, payload)
       
       // Update local state
-      setServices(services.map(s => s.id === editingServiceId ? { ...s, ...payload } : s))
+      setServices(services.map(s => s.id === editingServiceId ? { ...s, title: payload.title, category: payload.category, price: payload.price, duration_minutes: payload.duration_minutes, description: payload.description, active: payload.active, image_url: payload.image_url } : s))
       
       setModal({
         show: true,
@@ -1859,8 +1859,8 @@ const DeveloperDashboard = () => {
                           type="text"
                           className="form-control"
                           placeholder="Nom du service"
-                          value={newServiceForm.name}
-                          onChange={(e) => setNewServiceForm({...newServiceForm, name: e.target.value})}
+                          value={newServiceForm.title}
+                          onChange={(e) => setNewServiceForm({...newServiceForm, title: e.target.value})}
                           style={{borderColor: 'var(--primary-color)'}}
                         />
                       </div>
@@ -1940,7 +1940,7 @@ const DeveloperDashboard = () => {
                             setEditingServiceId(null)
                             setNewServiceImage(null)
                             setNewServiceImagePreview(null)
-                            setNewServiceForm({name: '', title: '', category: '', price: 0, duration: 30, description: '', active: true})
+                            setNewServiceForm({title: '', category: '', price: 0, duration: 30, description: '', active: true})
                           }}
                         >
                           ✗ Annuler
