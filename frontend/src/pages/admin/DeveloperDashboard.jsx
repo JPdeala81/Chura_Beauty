@@ -330,14 +330,13 @@ const DeveloperDashboard = () => {
         about_content: siteSettingsForm.about_content
       }
 
-      // Only include images if they are URLs, not base64
+      // Include base64 images - backend will handle them properly
+      // DO NOT remove them! They need to be sent for saving to work
       if (payload.app_logo && payload.app_logo.startsWith('data:')) {
-        console.log('🖼️  app_logo is base64, removing from payload')
-        delete payload.app_logo
+        console.log('✅ Sending app_logo as base64 data')
       }
       if (payload.hero_background_image && payload.hero_background_image.startsWith('data:')) {
-        console.log('🖼️  hero_background_image is base64, removing from payload')
-        delete payload.hero_background_image
+        console.log('✅ Sending hero_background_image as base64 data')
       }
       
       console.log('📤 Sending payload with', Object.keys(payload).length, 'fields:', Object.keys(payload))
