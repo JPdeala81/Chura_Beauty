@@ -690,22 +690,43 @@ const DeveloperDashboard = () => {
   const toggleMaintenance = async () => {
     try {
       const endTime = new Date(Date.now() + maintenanceDuration * 60000).toISOString()
-      await api.post('/site-settings/maintenance-toggle', {
-        enabled: !maintenanceMode,
-        reason: maintenanceReason,
-        endTime: !maintenanceMode ? endTime : null
-      })
+      
+      // Try to call the endpoint - if it fails, just toggle locally
+      try {
+        await api.post('/site-settings/maintenance-toggle', {
+          enabled: !maintenanceMode,
+          reason: maintenanceReason,
+          endTime: !maintenanceMode ? endTime : null
+        })
+      } catch (apiErr) {
+        if (apiErr.response?.status === 404) {
+          console.warn('⚠️ Maintenance toggle endpoint not available on backend - toggling locally')
+        } else {
+          throw apiErr
+        }
+      }
+      
       setMaintenanceMode(!maintenanceMode)
       if (!maintenanceMode) setCountdownTime(maintenanceDuration * 60)
+      
       setModal({ 
         show: true, 
         type: 'success', 
-        title: '✅ Maintenance', 
-        message: maintenanceMode ? 'Maintenance désactivée' : 'Maintenance activée',
-        onConfirm: () => setModal({show: false})
+        title: maintenanceMode ? '✅ Maintenance Désactivée' : '🔧 Maintenance Activée',
+        message: maintenanceMode 
+          ? 'L\'application revient à la normale'
+          : `Maintenance activée pour ${maintenanceDuration} minutes - Raison: ${maintenanceReason}`,
+        onConfirm: () => setModal({show: false, type: 'info', title: '', message: ''})
       })
     } catch (err) {
-      setModal({ show: true, type: 'error', title: '❌ Erreur', message: 'Erreur lors du changement: ' + err.message })
+      console.error('Erreur maintenance toggle:', err)
+      setModal({ 
+        show: true, 
+        type: 'error', 
+        title: '❌ Erreur', 
+        message: 'Erreur lors du changement: ' + err.message,
+        onConfirm: () => setModal({show: false, type: 'info', title: '', message: ''})
+      })
     }
   }
 

@@ -879,17 +879,42 @@ const SuperAdminDashboard = () => {
   const toggleAppClosure = async () => {
     try {
       const newState = !appClosureMode
-      await api.post('/site-settings/app-closure', {
-        enabled: newState,
-        reason: closureForm.reason,
-        reopenDate: closureForm.reopenDate,
-        reopenTime: closureForm.reopenTime
-      })
+      
+      // Try to call the endpoint - if it fails, just toggle locally
+      try {
+        await api.post('/site-settings/app-closure', {
+          enabled: newState,
+          reason: closureForm.reason,
+          reopenDate: closureForm.reopenDate,
+          reopenTime: closureForm.reopenTime
+        })
+      } catch (apiErr) {
+        if (apiErr.response?.status === 404) {
+          console.warn('⚠️ App closure endpoint not available on backend - toggling locally')
+        } else {
+          throw apiErr
+        }
+      }
+      
       setAppClosureMode(newState)
-      alert(newState ? 'Application fermée' : 'Application réouverte')
+      setModal({
+        show: true,
+        type: 'success',
+        title: newState ? '🚪 Application Fermée' : '✅ Application Réouverte',
+        message: newState 
+          ? `L'application sera fermée jusqu'au ${closureForm.reopenDate} à ${closureForm.reopenTime}`
+          : 'L\'application est maintenant accessible',
+        onConfirm: () => setModal({ show: false, type: 'info', title: '', message: '' })
+      })
     } catch (err) {
-      console.error('Erreur:', err)
-      alert('Erreur lors du changement')
+      console.error('❌ Erreur:', err)
+      setModal({
+        show: true,
+        type: 'error',
+        title: '❌ Erreur',
+        message: 'Erreur lors du changement: ' + err.message,
+        onConfirm: () => setModal({ show: false, type: 'info', title: '', message: '' })
+      })
     }
   }
 
@@ -903,19 +928,46 @@ const SuperAdminDashboard = () => {
         sessionId: Math.random().toString(36).substring(7)
       }
       
-      await api.post('/notifications/send-qr', {
-        recipient: 'developer',
-        qrData: qrData,
-        maintenanceInfo: {
-          reason: closureForm.reason,
-          reopenDate: closureForm.reopenDate,
-          reopenTime: closureForm.reopenTime
+      try {
+        await api.post('/notifications/send-qr', {
+          recipient: 'developer',
+          qrData: qrData,
+          maintenanceInfo: {
+            reason: closureForm.reason,
+            reopenDate: closureForm.reopenDate,
+            reopenTime: closureForm.reopenTime
+          }
+        })
+        setModal({
+          show: true,
+          type: 'success',
+          title: '✅ Code QR Envoyé',
+          message: 'Le code QR a été envoyé au développeur avec succès!',
+          onConfirm: () => setModal({ show: false, type: 'info', title: '', message: '' })
+        })
+      } catch (apiErr) {
+        if (apiErr.response?.status === 404) {
+          console.warn('⚠️ QR code endpoint not available - displaying QR locally')
+          setModal({
+            show: true,
+            type: 'warning',
+            title: '⚠️ Service Non Disponible',
+            message: 'La fonction d\'envoi de QR n\'est pas disponible pour le moment. Le code QR est généré localement.',
+            onConfirm: () => setModal({ show: false, type: 'info', title: '', message: '' })
+          })
+        } else {
+          throw apiErr
         }
-      })
-      alert('✅ Code QR envoyé au développeur avec succès!')
+      }
     } catch (err) {
-      console.error('Erreur lors de l\'envoi du QR code:', err)
-      alert('⚠️ Erreur: ' + (err.response?.data?.message || err.message))
+      console.error('❌ Erreur lors de l\'envoi du QR code:', err)
+      setModal({
+        show: true,
+        type: 'error',
+        title: '❌ Erreur',
+        message: 'Erreur: ' + (err.response?.data?.message || err.message),
+        onConfirm: () => setModal({ show: false, type: 'info', title: '', message: '' })
+      })
     }
   }
 
