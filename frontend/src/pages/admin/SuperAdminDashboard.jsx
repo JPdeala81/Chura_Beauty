@@ -635,11 +635,11 @@ const SuperAdminDashboard = () => {
 
   const saveSiteSettings = async () => {
     try {
-      // Prepare payload with ALL site_settings fields including logo and hero background
-      const payload = {
+      // STRATEGY: Send parameters and images separately to avoid HTTP 413 Payload Too Large
+      
+      // Step 1: Prepare TEXT parameters payload (WITHOUT images initially)
+      const textPayload = {
         app_name: siteSettingsForm.app_name || '',
-        app_logo: siteSettingsForm.app_logo || '',  // NOW INCLUDED - Critical fix
-        hero_background_image: siteSettingsForm.hero_background_image || '',  // NOW INCLUDED - Critical fix
         homepage_hero_title: siteSettingsForm.homepage_hero_title || '',
         homepage_hero_subtitle: siteSettingsForm.homepage_hero_subtitle || '',
         tagline: siteSettingsForm.tagline || '',
@@ -655,28 +655,56 @@ const SuperAdminDashboard = () => {
         terms_of_service: siteSettingsForm.terms_of_service || ''
       }
 
-      // Filter out empty values for partial updates (keeping empty strings for logo/background)
-      const filteredPayload = Object.entries(payload).reduce((acc, [key, value]) => {
-        // IMPORTANT: Don't filter out app_logo and hero_background_image if they're empty strings
-        // They need to be sent to be saved properly
-        if (value !== undefined && value !== null) {
-          acc[key] = value
+      console.log('📤 Étape 1: Envoi des paramètres texte...')
+      const textResponse = await api.put('/site-settings', textPayload)
+      console.log('✅ Paramètres texte sauvegardés')
+
+      // Step 2: Send images separately (only if they exist and have changed)
+      if (siteSettingsForm.app_logo) {
+        console.log('📸 Étape 2a: Envoi du logo...')
+        const logoPayload = { app_logo: siteSettingsForm.app_logo }
+        await api.put('/site-settings', logoPayload)
+        console.log('✅ Logo mis à jour')
+      }
+
+      if (siteSettingsForm.hero_background_image) {
+        console.log('📸 Étape 2b: Envoi de l\'arrière-plan héros...')
+        const bgPayload = { hero_background_image: siteSettingsForm.hero_background_image }
+        await api.put('/site-settings', bgPayload)
+        console.log('✅ Arrière-plan mis à jour')
+      }
+
+      // Step 3: Handle image clearing
+      if (siteSettingsForm.app_logo === null) {
+        console.log('❌ Suppression du logo...')
+        await api.put('/site-settings', { app_logo: '' })
+      }
+
+      if (siteSettingsForm.hero_background_image === null) {
+        console.log('❌ Suppression de l\'arrière-plan...')
+        await api.put('/site-settings', { hero_background_image: '' })
+      }
+
+      setModal({
+        show: true,
+        type: 'success',
+        title: '✅ Paramètres Sauvegardés',
+        message: 'Tous les paramètres du site ont été mis à jour avec succès!',
+        onConfirm: () => {
+          setModal({ show: false, type: 'info', title: '', message: '' })
+          setEditingSiteSettings(false)
+          fetchAllData()
         }
-        return acc
-      }, {})
-      
-      console.log('📤 Envoi des paramètres du site (AVEC LOGO ET HERO BG):', filteredPayload)
-      const response = await api.put('/site-settings', filteredPayload)
-      
-      console.log('✅ Réponse:', response.data)
-      alert('✅ Paramètres du site sauvegardés avec succès! (Logo, arrière-plan et tous les paramètres)')
-      setEditingSiteSettings(false)
-      
-      // Refetch les données pour mettre à jour immédiatement
-      await fetchAllData()
+      })
     } catch (err) {
       console.error('❌ Erreur sauvegarde:', err.response?.data || err.message)
-      alert(`❌ Erreur lors de la sauvegarde: ${err.response?.data?.error || err.message}`)
+      setModal({
+        show: true,
+        type: 'error',
+        title: '❌ Erreur de Sauvegarde',
+        message: `Erreur: ${err.response?.data?.message || err.message}`,
+        onConfirm: () => setModal({ show: false, type: 'info', title: '', message: '' })
+      })
     }
   }
 

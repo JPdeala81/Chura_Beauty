@@ -310,10 +310,9 @@ const DeveloperDashboard = () => {
       console.log('💾 Saving site settings...')
       console.log('📋 Current form data:', siteSettingsForm)
       
-      const payload = {
+      // STRATEGY: Send text parameters and images separately to avoid HTTP 413 Payload Too Large
+      const textPayload = {
         app_name: siteSettingsForm.app_name,
-        app_logo: logoPreview ? logoPreview : siteSettingsForm.app_logo,
-        hero_background_image: heroImagePreview ? heroImagePreview : siteSettingsForm.hero_background_image,
         homepage_hero_title: siteSettingsForm.homepage_hero_title,
         homepage_hero_subtitle: siteSettingsForm.homepage_hero_subtitle,
         tagline: siteSettingsForm.tagline,
@@ -330,20 +329,28 @@ const DeveloperDashboard = () => {
         about_content: siteSettingsForm.about_content
       }
 
-      // Include base64 images - backend will handle them properly
-      // DO NOT remove them! They need to be sent for saving to work
-      if (payload.app_logo && payload.app_logo.startsWith('data:')) {
-        console.log('✅ Sending app_logo as base64 data')
+      // Send text parameters first
+      console.log('📤 Step 1: Sending text parameters...')
+      await api.put('/site-settings', textPayload)
+      console.log('✅ Text parameters saved')
+
+      // Send images separately (only if they exist)
+      const logoToSend = logoPreview || siteSettingsForm.app_logo
+      const heroToSend = heroImagePreview || siteSettingsForm.hero_background_image
+
+      if (logoToSend && logoToSend.startsWith('data:')) {
+        console.log('📸 Step 2a: Sending app_logo...')
+        await api.put('/site-settings', { app_logo: logoToSend })
+        console.log('✅ Logo saved')
       }
-      if (payload.hero_background_image && payload.hero_background_image.startsWith('data:')) {
-        console.log('✅ Sending hero_background_image as base64 data')
+
+      if (heroToSend && heroToSend.startsWith('data:')) {
+        console.log('📸 Step 2b: Sending hero_background_image...')
+        await api.put('/site-settings', { hero_background_image: heroToSend })
+        console.log('✅ Hero background saved')
       }
-      
-      console.log('📤 Sending payload with', Object.keys(payload).length, 'fields:', Object.keys(payload))
-      const response = await api.put('/site-settings', payload)
-      console.log('✅ Response from server:', response)
-      
-      setModal({ show: true, type: 'success', title: '✅ Succès', message: 'Paramètres sauvegardés avec succès!' })
+
+      setModal({ show: true, type: 'success', title: '✅ Succès', message: 'Tous les paramètres ont été sauvegardés avec succès!' })
       // Refetch data after save
       await fetchAllData()
     } catch (error) {
