@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { AuthContext } from '../../context/AuthContext'
 import api from '../../services/api'
 import QRCodeConfig from '../../components/admin/QRCodeConfig'
+import QRCode from 'qrcode.react'
 import DashboardModal from '../../components/admin/DashboardModal'
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
