@@ -1782,8 +1782,22 @@ const DeveloperDashboard = () => {
                             </span>
                           </td>
                           <td>
-                            <button className="btn btn-sm btn-info me-1">✏️</button>
-                            <button className="btn btn-sm btn-danger">🗑️</button>
+                            <button 
+                              className="btn btn-sm btn-info me-1"
+                              onClick={() => {
+                                setNewServiceForm(prev => !prev)
+                              }}
+                              title="Éditer service"
+                            >
+                              ✏️
+                            </button>
+                            <button 
+                              className="btn btn-sm btn-danger"
+                              onClick={() => deleteService(service.id)}
+                              title="Supprimer service"
+                            >
+                              🗑️
+                            </button>
                           </td>
                         </tr>
                       ))}
@@ -1800,8 +1814,36 @@ const DeveloperDashboard = () => {
                             </span>
                           </td>
                           <td>
-                            <button className="btn btn-sm btn-info me-1">✏️</button>
-                            <button className="btn btn-sm btn-danger">🗑️</button>
+                            <button 
+                              className="btn btn-sm btn-info me-1"
+                              onClick={() => {
+                                setModal({
+                                  show: true,
+                                  type: 'prompt',
+                                  title: '✏️ Éditer Rendez-vous',
+                                  message: `Nouveau statut: (pending/accepted/rejected)`,
+                                  onConfirm: async (value) => {
+                                    if (['pending', 'accepted', 'rejected'].includes(value)) {
+                                      const response = await api.patch(`/appointments/${apt.id}/status`, { status: value })
+                                      setAppointments(appointments.map(a => a.id === apt.id ? { ...a, status: value } : a))
+                                      setModal({ show: true, type: 'success', message: '✅ Mise à jour réussie' })
+                                    } else {
+                                      alert('❌ Statut invalide')
+                                    }
+                                  }
+                                })
+                              }}
+                              title="Éditer rendez-vous"
+                            >
+                              ✏️
+                            </button>
+                            <button 
+                              className="btn btn-sm btn-danger"
+                              onClick={() => deleteAppointment(apt.id)}
+                              title="Supprimer rendez-vous"
+                            >
+                              🗑️
+                            </button>
                           </td>
                         </tr>
                       ))}
@@ -1815,8 +1857,40 @@ const DeveloperDashboard = () => {
                           </td>
                           <td><span className="badge bg-success">ACTIF</span></td>
                           <td>
-                            <button className="btn btn-sm btn-info me-1">✏️</button>
-                            <button className="btn btn-sm btn-danger">🗑️</button>
+                            <button 
+                              className="btn btn-sm btn-info me-1"
+                              onClick={() => {
+                                setEditingAdmin(admin)
+                              }}
+                              title="Éditer administrateur"
+                            >
+                              ✏️
+                            </button>
+                            <button 
+                              className="btn btn-sm btn-danger"
+                              onClick={() => {
+                                if (confirm(`Êtes-vous sûr de vouloir supprimer ${admin.email}?`)) {
+                                  setModal({
+                                    show: true,
+                                    type: 'confirm',
+                                    title: '🔐 Confirmation',
+                                    message: `Supprimer l'administrateur ${admin.email}?`,
+                                    onConfirm: async () => {
+                                      try {
+                                        await api.delete(`/admins/${admin.id}`)
+                                        setAdmins(admins.filter(a => a.id !== admin.id))
+                                        setModal({ show: true, type: 'success', message: '✅ Administrateur supprimé' })
+                                      } catch (err) {
+                                        setModal({ show: true, type: 'error', message: '❌ ' + err.message })
+                                      }
+                                    }
+                                  })
+                                }
+                              }}
+                              title="Supprimer administrateur"
+                            >
+                              🗑️
+                            </button>
                           </td>
                         </tr>
                       ))}
