@@ -6,6 +6,7 @@ import api from '../../services/api'
 import QRCodeConfig from '../../components/admin/QRCodeConfig'
 import QRCode from 'qrcode.react'
 import DashboardModal from '../../components/admin/DashboardModal'
+import { useMaintenanceCheck } from '../../hooks/useMaintenanceCheck'
 
 const DeveloperDashboard = () => {
   const navigate = useNavigate()
@@ -49,6 +50,7 @@ const DeveloperDashboard = () => {
   const [newServiceImage, setNewServiceImage] = useState(null)
   const [newServiceImagePreview, setNewServiceImagePreview] = useState(null)
   const [showNewServiceForm, setShowNewServiceForm] = useState(false)
+  const [editingServiceId, setEditingServiceId] = useState(null)
   
   // ──── MAINTENANCE ADVANCED ────
   const [maintenanceLogs, setMaintenanceLogs] = useState([
@@ -689,14 +691,17 @@ const DeveloperDashboard = () => {
 
   const toggleMaintenance = async () => {
     try {
+      const { toggleMaintenance: toggleMaintenanceMode } = useMaintenanceCheck()
+      
       const endTime = new Date(Date.now() + maintenanceDuration * 60000).toISOString()
+      const newState = !maintenanceMode
       
       // Try to call the endpoint - if it fails, just toggle locally
       try {
         await api.post('/site-settings/maintenance-toggle', {
-          enabled: !maintenanceMode,
+          enabled: newState,
           reason: maintenanceReason,
-          endTime: !maintenanceMode ? endTime : null
+          endTime: newState ? endTime : null
         })
       } catch (apiErr) {
         if (apiErr.response?.status === 404) {
@@ -706,16 +711,61 @@ const DeveloperDashboard = () => {
         }
       }
       
-      setMaintenanceMode(!maintenanceMode)
-      if (!maintenanceMode) setCountdownTime(maintenanceDuration * 60)
+      // Update local state and localStorage/custom event for other tabs
+      setMaintenanceMode(newState)
+      if (newState) setCountdownTime(maintenanceDuration * 60)
+      
+      // Store maintenance info globally
+      localStorage.setItem('maintenanceMode', JSON.stringify({
+        enabled: newState,
+        data: {
+          is_maintenance: newState,
+          reason: maintenanceReason,
+          endTime: newState ? endTime : null
+        }
+      }))
+      
+      // Dispatch custom event for immediate updates in other components
+      window.dispatchEvent(new CustomEvent('maintenanceToggle', {
+        detail: {
+          isMaintenance: newState,
+          data: {
+            is_maintenance: newState,
+            reason: maintenanceReason,
+            endTime: newState ? endTime : null
+          }
+        }
+      }))
+      
+      // Store maintenance info globally
+      localStorage.setItem('maintenanceMode', JSON.stringify({
+        enabled: newState,
+        data: {
+          is_maintenance: newState,
+          reason: maintenanceReason,
+          endTime: newState ? endTime : null
+        }
+      }))
+      
+      // Dispatch custom event for immediate updates in other components
+      window.dispatchEvent(new CustomEvent('maintenanceToggle', {
+        detail: {
+          isMaintenance: newState,
+          data: {
+            is_maintenance: newState,
+            reason: maintenanceReason,
+            endTime: newState ? endTime : null
+          }
+        }
+      }))
       
       setModal({ 
         show: true, 
         type: 'success', 
-        title: maintenanceMode ? '✅ Maintenance Désactivée' : '🔧 Maintenance Activée',
-        message: maintenanceMode 
-          ? 'L\'application revient à la normale'
-          : `Maintenance activée pour ${maintenanceDuration} minutes - Raison: ${maintenanceReason}`,
+        title: newState ? '🔧 Maintenance Activée' : '✅ Maintenance Désactivée',
+        message: newState 
+          ? `Maintenance activée pour ${maintenanceDuration} minutes - Raison: ${maintenanceReason}. Les utilisateurs non-administrateurs verront une page de maintenance.`
+          : 'L\'application revient à la normale. Les utilisateurs peuvent à nouveau accéder au site.',
         onConfirm: () => setModal({show: false, type: 'info', title: '', message: ''})
       })
     } catch (err) {
@@ -731,6 +781,19 @@ const DeveloperDashboard = () => {
   }
 
   const deleteAdmin = async (adminId, adminRole = 'admin') => {
+    // PROTECTION: Prevent deleting yourself
+    const currentAdmin = admins.find(a => a.id === profile?.id)
+    if (adminId === profile?.id) {
+      setModal({
+        show: true,
+        type: 'error',
+        title: '🔒 Action Interdite',
+        message: 'Vous ne pouvez pas vous supprimer vous-même. Contactez un autre administrateur si nécessaire.',
+        onConfirm: () => setModal({show: false, type: 'info', title: '', message: ''})
+      })
+      return
+    }
+
     // PROTECTION: Prevent deleting developer and super admins
     if (adminRole === 'developer' || adminRole === 'super_admin') {
       setModal({
@@ -738,7 +801,7 @@ const DeveloperDashboard = () => {
         type: 'error',
         title: '🔒 Suppression Interdite',
         message: `Les comptes ${adminRole === 'developer' ? 'Développeur' : 'Super Admin'} ne peuvent pas être supprimés pour des raisons de sécurité.`,
-        onConfirm: () => setModal({show: false})
+        onConfirm: () => setModal({show: false, type: 'info', title: '', message: ''})
       })
       return
     }
@@ -752,11 +815,12 @@ const DeveloperDashboard = () => {
         try {
           await api.delete(`/site-settings/admin/${adminId}`)
           setAdmins(admins.filter(a => a.id !== adminId))
-          setModal({ show: true, type: 'success', title: '✅ Admin Supprimé', message: 'L\'administrateur a été supprimé', onConfirm: () => setModal({show: false}) })
+          setModal({ show: true, type: 'success', title: '✅ Admin Supprimé', message: 'L\'administrateur a été supprimé', onConfirm: () => setModal({show: false, type: 'info', title: '', message: ''}) })
         } catch (err) {
-          setModal({ show: true, type: 'error', title: '❌ Erreur', message: 'Erreur lors de la suppression', onConfirm: () => setModal({show: false}) })
+          setModal({ show: true, type: 'error', title: '❌ Erreur', message: 'Erreur lors de la suppression', onConfirm: () => setModal({show: false, type: 'info', title: '', message: ''}) })
         }
-      }
+      },
+      onCancel: () => setModal({show: false, type: 'info', title: '', message: ''})
     })
   }
 
@@ -1029,11 +1093,74 @@ const DeveloperDashboard = () => {
         try {
           await api.delete(`/appointments/${id}`)
           setAppointments(appointments.filter(a => a.id !== id))
-          setModal({ show: true, type: 'success', title: '✅ RDV Supprimé', message: 'Le rendez-vous a été supprimé avec succès' })
+          setModal({ show: true, type: 'success', title: '✅ RDV Supprimé', message: 'Le rendez-vous a été supprimé avec succès', onConfirm: () => setModal({show: false, type: 'info', title: '', message: ''}) })
         } catch (err) {
-          setModal({ show: true, type: 'error', title: '❌ Erreur', message: 'Erreur lors de la suppression: ' + err.message })
+          setModal({ show: true, type: 'error', title: '❌ Erreur', message: 'Erreur lors de la suppression: ' + err.message, onConfirm: () => setModal({show: false, type: 'info', title: '', message: ''}) })
         }
-      }
+      },
+      onCancel: () => setModal({show: false, type: 'info', title: '', message: ''})
+    })
+  }
+
+  const updateAppointmentStatus = async (appointmentId, newStatus) => {
+    try {
+      await api.patch(`/appointments/${appointmentId}/status`, { status: newStatus })
+      setAppointments(appointments.map(a => a.id === appointmentId ? { ...a, status: newStatus } : a))
+      setModal({ 
+        show: true, 
+        type: 'success', 
+        title: '✅ Statut Mis à Jour', 
+        message: `Le rendez-vous est maintenant ${newStatus === 'accepted' ? 'accepté' : newStatus === 'rejected' ? 'refusé' : 'en attente'}`,
+        onConfirm: () => setModal({show: false, type: 'info', title: '', message: ''})
+      })
+    } catch (err) {
+      setModal({ 
+        show: true, 
+        type: 'error', 
+        title: '❌ Erreur', 
+        message: 'Erreur lors de la mise à jour: ' + err.message,
+        onConfirm: () => setModal({show: false, type: 'info', title: '', message: ''})
+      })
+    }
+  }
+
+  const showStatusChangeModal = (apt) => {
+    setModal({
+      show: true,
+      type: 'custom',
+      title: '📝 Changer le Statut',
+      message: `Rendez-vous: ${apt.client_name || 'Anonyme'} - ${new Date(apt.appointment_date).toLocaleDateString('fr-FR')}`,
+      customContent: (
+        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+          <button 
+            onClick={() => {
+              updateAppointmentStatus(apt.id, 'accepted')
+              setModal({show: false, type: 'info', title: '', message: ''})
+            }}
+            style={{flex: 1, padding: '0.75rem', background: '#00d9ff', color: 'white', border: 'none', borderRadius: '0.5rem', fontWeight: 'bold', cursor: 'pointer'}}
+          >
+            ✅ Accepter
+          </button>
+          <button 
+            onClick={() => {
+              updateAppointmentStatus(apt.id, 'rejected')
+              setModal({show: false, type: 'info', title: '', message: ''})
+          }}
+            style={{flex: 1, padding: '0.75rem', background: '#ff6b6b', color: 'white', border: 'none', borderRadius: '0.5rem', fontWeight: 'bold', cursor: 'pointer'}}
+          >
+            ❌ Refuser
+          </button>
+          <button 
+            onClick={() => {
+              updateAppointmentStatus(apt.id, 'pending')
+              setModal({show: false, type: 'info', title: '', message: ''})
+            }}
+            style={{flex: 1, padding: '0.75rem', background: '#ffc107', color: 'black', border: 'none', borderRadius: '0.5rem', fontWeight: 'bold', cursor: 'pointer'}}
+          >
+            ⏳ En Attente
+          </button>
+        </div>
+      )
     })
   }
 
@@ -1047,12 +1174,71 @@ const DeveloperDashboard = () => {
         try {
           await api.delete(`/services/${id}`)
           setServices(services.filter(s => s.id !== id))
-          setModal({ show: true, type: 'success', title: '✅ Service Supprimé', message: 'Le service a été supprimé avec succès' })
+          setModal({ show: true, type: 'success', title: '✅ Service Supprimé', message: 'Le service a été supprimé avec succès', onConfirm: () => setModal({show: false, type: 'info', title: '', message: ''}) })
         } catch (err) {
-          setModal({ show: true, type: 'error', title: '❌ Erreur', message: 'Erreur lors de la suppression: ' + err.message })
+          setModal({ show: true, type: 'error', title: '❌ Erreur', message: 'Erreur lors de la suppression: ' + err.message, onConfirm: () => setModal({show: false, type: 'info', title: '', message: ''}) })
         }
-      }
+      },
+      onCancel: () => setModal({show: false, type: 'info', title: '', message: ''})
     })
+  }
+
+  const editServiceInDatabase = (service) => {
+    // Populate the form with the service data
+    setNewServiceForm({
+      title: service.title || service.name,
+      category: service.category || '',
+      price: service.price || 0,
+      duration: service.duration_minutes || 30,
+      description: service.description || '',
+      active: service.active !== false
+    })
+    setNewServiceImagePreview(service.image_url || null)
+    setEditingServiceId(service.id)
+    setShowNewServiceForm(true)
+  }
+
+  const saveEditedService = async () => {
+    if (!editingServiceId) return
+    
+    try {
+      const payload = {
+        title: newServiceForm.title,
+        category: newServiceForm.category,
+        price: newServiceForm.price,
+        duration_minutes: newServiceForm.duration,
+        description: newServiceForm.description,
+        active: newServiceForm.active,
+        image_url: newServiceImagePreview || ''
+      }
+
+      await api.put(`/services/${editingServiceId}`, payload)
+      
+      // Update local state
+      setServices(services.map(s => s.id === editingServiceId ? { ...s, ...payload } : s))
+      
+      setModal({
+        show: true,
+        type: 'success',
+        title: '✅ Service Mis à Jour',
+        message: 'Le service a été modifié avec succès',
+        onConfirm: () => {
+          setModal({show: false, type: 'info', title: '', message: ''})
+          setEditingServiceId(null)
+          setShowNewServiceForm(false)
+          setNewServiceForm({name: '', category: '', price: 0, duration: 30, description: '', active: true})
+          setNewServiceImagePreview(null)
+        }
+      })
+    } catch (err) {
+      setModal({
+        show: true,
+        type: 'error',
+        title: '❌ Erreur',
+        message: 'Erreur lors de la mise à jour: ' + err.message,
+        onConfirm: () => setModal({show: false, type: 'info', title: '', message: ''})
+      })
+    }
   }
 
   return (
@@ -1743,14 +1929,15 @@ const DeveloperDashboard = () => {
                       <div className="col-12 d-flex gap-2">
                         <button
                           className="btn btn-success flex-grow-1"
-                          onClick={createNewService}
+                          onClick={editingServiceId ? saveEditedService : createNewService}
                         >
-                          ✓ Créer le service
+                          {editingServiceId ? '✓ Mettre à Jour' : '✓ Créer le service'}
                         </button>
                         <button
                           className="btn btn-secondary"
                           onClick={() => {
                             setShowNewServiceForm(false)
+                            setEditingServiceId(null)
                             setNewServiceImage(null)
                             setNewServiceImagePreview(null)
                             setNewServiceForm({name: '', title: '', category: '', price: 0, duration: 30, description: '', active: true})
@@ -1812,9 +1999,7 @@ const DeveloperDashboard = () => {
                           <td>
                             <button 
                               className="btn btn-sm btn-info me-1"
-                              onClick={() => {
-                                setNewServiceForm(prev => !prev)
-                              }}
+                              onClick={() => editServiceInDatabase(service)}
                               title="Éditer service"
                             >
                               ✏️
@@ -1844,26 +2029,10 @@ const DeveloperDashboard = () => {
                           <td>
                             <button 
                               className="btn btn-sm btn-info me-1"
-                              onClick={() => {
-                                setModal({
-                                  show: true,
-                                  type: 'prompt',
-                                  title: '✏️ Éditer Rendez-vous',
-                                  message: `Nouveau statut: (pending/accepted/rejected)`,
-                                  onConfirm: async (value) => {
-                                    if (['pending', 'accepted', 'rejected'].includes(value)) {
-                                      const response = await api.patch(`/appointments/${apt.id}/status`, { status: value })
-                                      setAppointments(appointments.map(a => a.id === apt.id ? { ...a, status: value } : a))
-                                      setModal({ show: true, type: 'success', message: '✅ Mise à jour réussie' })
-                                    } else {
-                                      alert('❌ Statut invalide')
-                                    }
-                                  }
-                                })
-                              }}
-                              title="Éditer rendez-vous"
+                              onClick={() => showStatusChangeModal(apt)}
+                              title="Changer le statut"
                             >
-                              ✏️
+                              📝
                             </button>
                             <button 
                               className="btn btn-sm btn-danger"

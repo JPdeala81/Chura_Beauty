@@ -5,7 +5,7 @@ import { AuthProvider } from './context/AuthContext'
 import { NotificationProvider } from './context/NotificationContext'
 import { ThemeProvider } from './context/ThemeContext'
 import { QRCodeProvider } from './context/QRCodeContext'
-import { SiteSettingsProvider } from './contexts/SiteSettingsContext'
+import { SiteSettingsProvider, useSiteSettings } from './contexts/SiteSettingsContext'
 import ThemeSwitcherFloating from './components/ThemeSwitcherFloating'
 import Home from './pages/Home'
 import Services from './pages/Services'
@@ -25,7 +25,7 @@ import Settings from './pages/admin/Settings'
 import PrivateRoute from './components/PrivateRoute'
 import RoleRoute from './components/RoleRoute'
 import ProtectedLoginRoute from './components/ProtectedLoginRoute'
-import Maintenance from './pages/Maintenance'
+import MaintenancePage from './pages/MaintenancePage'
 import OwnerProfile from './pages/OwnerProfile'
 import DeveloperDashboard from './pages/admin/DeveloperDashboard'
 import { useMaintenanceCheck } from './hooks/useMaintenanceCheck'
@@ -62,7 +62,22 @@ function AdminRedirect() {
 }
 
 function AppRoutes() {
-  const { isMaintenance } = useMaintenanceCheck()
+  const { isMaintenance, maintenanceData } = useMaintenanceCheck()
+  const { admin } = useContext(AuthContext)
+  const siteSettings = useSiteSettings()
+
+  // If under maintenance and user is not admin, show maintenance page
+  if (isMaintenance && (!admin || (admin.role !== 'admin' && admin.role !== 'developer'))) {
+    return (
+      <>
+        <MaintenancePage 
+          maintenanceInfo={maintenanceData || {}}
+          siteSettings={siteSettings}
+          onAdminLogin={() => window.location.href = '/admin/login'}
+        />
+      </>
+    )
+  }
 
   return (
     <>
@@ -104,8 +119,6 @@ function AppRoutes() {
 }
 
 function App() {
-  const { isMaintenance } = useMaintenanceCheck()
-
   // Charger le thème au démarrage de l'app
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') || 'gold'
@@ -120,11 +133,7 @@ function App() {
           <ThemeProvider>
             <QRCodeProvider>
               <SiteSettingsProvider>
-                {isMaintenance ? (
-                  <Maintenance />
-                ) : (
-                  <AppRoutes />
-                )}
+                <AppRoutes />
               </SiteSettingsProvider>
             </QRCodeProvider>
           </ThemeProvider>
