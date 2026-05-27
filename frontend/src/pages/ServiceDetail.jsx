@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Modal, Button } from 'react-bootstrap';
+import { AuthContext } from '../context/AuthContext';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import BookingModal from '../components/public/BookingModal';
@@ -12,6 +13,7 @@ import * as appointmentService from '../services/appointmentService';
 export default function ServiceDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { token, admin } = useContext(AuthContext);
   const [service, setService] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showBookingModal, setShowBookingModal] = useState(false);
@@ -20,6 +22,8 @@ export default function ServiceDetail() {
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedImage, setSelectedImage] = useState(0);
   const [showImageModal, setShowImageModal] = useState(false);
+
+  const isAdminOrDev = token && admin && (admin.role === 'admin' || admin.role === 'developer');
 
   const downloadImage = async (imageUrl) => {
     try {
@@ -43,12 +47,6 @@ export default function ServiceDetail() {
       try {
         setLoading(true);
         const response = await serviceService.getServiceById(id);
-        console.log('📸 Service fetched:', {
-          title: response.data.service?.title,
-          imagesCount: response.data.service?.images?.length,
-          images: response.data.service?.images,
-          main_image_index: response.data.service?.main_image_index
-        });
         setService(response.data.service);
       } catch (error) {
         console.error('Error fetching service:', error);
@@ -61,34 +59,26 @@ export default function ServiceDetail() {
     fetchService();
   }, [id]);
 
-  // Scroll to top when component mounts or id changes
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [id]);
-
-  const handleDateSelect = async (date) => {
-    setSelectedDate(date);
-    try {
-      const response = await appointmentService.getAvailableSlots(id, date);
-      setAvailableSlots(response.data.slots);
-    } catch (error) {
-      console.error('Error fetching slots:', error);
-    }
-  };
 
   if (loading) {
     return (
       <>
         <Navbar />
-        <div className="text-center py-5" style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{
-            width: '60px',
-            height: '60px',
-            border: '3px solid rgba(184,134,11,0.2)',
-            borderTop: '3px solid var(--primary-color)',
-            borderRadius: '50%',
-            animation: 'spin 1s linear infinite'
-          }}></div>
+        <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+            style={{
+              width: '50px',
+              height: '50px',
+              border: '3px solid rgba(255, 215, 0, 0.2)',
+              borderTop: '3px solid #ffd700',
+              borderRadius: '50%'
+            }}
+          />
         </div>
         <Footer />
       </>
@@ -99,23 +89,31 @@ export default function ServiceDetail() {
     return (
       <>
         <Navbar />
-        <div className="container py-5" style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="text-center"
+            style={{ textAlign: 'center' }}
           >
-            <h2 style={{ color: 'var(--primary-color)', fontFamily: 'Playfair Display, serif', marginBottom: '20px' }}>
+            <h2 style={{ color: '#ffd700', fontFamily: 'Playfair Display, serif', marginBottom: '16px', fontSize: 'clamp(1.5rem, 5vw, 2rem)' }}>
               Service non trouvé
             </h2>
-            <p className="text-muted mb-4">Désolé, le service que vous recherchez n'existe pas.</p>
+            <p style={{ color: '#999', marginBottom: '20px', fontSize: 'clamp(14px, 2vw, 16px)' }}>Désolé, le service n'existe pas.</p>
             <motion.button
-              className="btn-luxury-primary"
               onClick={() => navigate('/services')}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              style={{
+                background: 'linear-gradient(135deg, #ffd700, #ffed4e)',
+                color: '#000',
+                border: 'none',
+                padding: '12px 24px',
+                borderRadius: '8px',
+                fontWeight: '700',
+                cursor: 'pointer'
+              }}
             >
-              Retour aux services
+              ← Retour aux services
             </motion.button>
           </motion.div>
         </div>
@@ -129,42 +127,40 @@ export default function ServiceDetail() {
       <Navbar />
 
       {/* Hero Section */}
-      <section style={{ 
-        background: 'var(--gradient-primary)', 
-        padding: 'clamp(40px, 10vw, 60px) 0', 
-        minHeight: 'clamp(30vh, 50vw, 40vh)', 
-        display: 'flex', 
-        alignItems: 'center' 
+      <section style={{
+        background: 'linear-gradient(135deg, #ffd700 0%, #ffed4e 100%)',
+        padding: 'clamp(20px, 6vw, 40px) 20px',
+        textAlign: 'center'
       }}>
         <div className="container">
           <motion.div
-            initial={{ opacity: 0, y: -30 }}
+            initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.5 }}
           >
             <h1 style={{
               fontFamily: 'Playfair Display, serif',
-              fontSize: 'clamp(1.8rem, 6vw, 3rem)',
+              fontSize: 'clamp(1.5rem, 5vw, 2.2rem)',
               fontWeight: '700',
-              color: 'white',
-              textShadow: '0 4px 20px rgba(0,0,0,0.3)',
-              marginBottom: '10px'
+              color: '#000',
+              margin: '0 0 8px 0'
             }}>
               {service.title}
             </h1>
             <p style={{
-              fontSize: 'clamp(0.9rem, 2.5vw, 1.1rem)',
-              color: 'rgba(255,255,255,0.9)',
+              fontSize: 'clamp(12px, 2vw, 14px)',
+              color: 'rgba(0, 0, 0, 0.7)',
               display: 'flex',
-              gap: '15px',
-              alignItems: 'center',
-              flexWrap: 'wrap'
+              gap: '12px',
+              justifyContent: 'center',
+              flexWrap: 'wrap',
+              margin: 0
             }}>
-              <span style={{ background: 'rgba(255,255,255,0.2)', padding: '8px 16px', borderRadius: '20px' }}>
+              <span style={{ background: 'rgba(0, 0, 0, 0.1)', padding: '6px 12px', borderRadius: '20px' }}>
                 {service.category}
               </span>
-              <span style={{ background: 'rgba(255,255,255,0.2)', padding: '8px 16px', borderRadius: '20px' }}>
-                ({service.duration || '-'} min)
+              <span style={{ background: 'rgba(0, 0, 0, 0.1)', padding: '6px 12px', borderRadius: '20px' }}>
+                {service.duration_minutes || service.duration || '-'} min
               </span>
             </p>
           </motion.div>
@@ -172,24 +168,22 @@ export default function ServiceDetail() {
       </section>
 
       {/* Detail Section */}
-      <section style={{ 
-        background: 'white', 
-        padding: 'clamp(30px, 8vw, 60px) 0', 
-        minHeight: '80vh' 
+      <section style={{
+        background: '#fafafa',
+        padding: 'clamp(20px, 6vw, 40px) 20px'
       }}>
-        <div className="container">
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-            gap: 'clamp(20px, 5vw, 40px)', 
-            alignItems: 'start', 
-            marginTop: '30px' 
+        <div className="container" style={{ maxWidth: '1000px' }}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: 'clamp(16px, 4vw, 32px)',
+            alignItems: 'start'
           }}>
-            {/* Images */}
+            {/* Images Column */}
             <motion.div
-              initial={{ opacity: 0, x: -30 }}
+              initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6 }}
+              transition={{ duration: 0.5 }}
             >
               {service.images && service.images.length > 0 ? (
                 <div>
@@ -202,57 +196,59 @@ export default function ServiceDetail() {
                     onClick={() => setShowImageModal(true)}
                     style={{
                       width: '100%',
+                      maxHeight: 'clamp(200px, 50vw, 400px)',
                       borderRadius: '12px',
-                      objectFit: 'contain',
-                      maxHeight: 'clamp(250px, 50vw, 500px)',
-                      marginBottom: '20px',
-                      boxShadow: 'var(--shadow-luxury)',
+                      objectFit: 'cover',
+                      marginBottom: '12px',
+                      boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)',
                       cursor: 'pointer',
-                      transition: 'transform 0.3s, filter 0.3s',
-                      display: 'block',
-                      margin: '0 auto 20px auto'
+                      display: 'block'
                     }}
-                    whileHover={{ filter: 'brightness(0.9)' }}
+                    whileHover={{ scale: 1.02 }}
                   />
-                  <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
-                    <button
-                      onClick={() => downloadImage(service.images[selectedImage])}
-                      style={{
-                        flex: 1,
-                        padding: '10px',
-                        background: 'var(--primary-color)',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        fontWeight: '600',
-                        transition: 'all 0.3s'
-                      }}
-                      onMouseEnter={(e) => e.target.style.background = 'rgba(184,134,11,0.8)'}
-                      onMouseLeave={(e) => e.target.style.background = 'var(--primary-color)'}
-                    >
-                      ⬇️ Télécharger l'image
-                    </button>
-                  </div>
+
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    onClick={() => downloadImage(service.images[selectedImage])}
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      background: '#ffd700',
+                      color: '#000',
+                      border: 'none',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontWeight: '600',
+                      fontSize: 'clamp(12px, 2vw, 13px)',
+                      marginBottom: '12px'
+                    }}
+                  >
+                    ⬇️ Télécharger
+                  </motion.button>
+
                   {service.images.length > 1 && (
-                    <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', marginTop: '15px' }}>
+                    <div style={{
+                      display: 'flex',
+                      gap: '8px',
+                      overflowX: 'auto',
+                      paddingBottom: '8px'
+                    }}>
                       {service.images.map((img, idx) => (
                         <motion.img
                           key={idx}
                           src={img}
                           alt={`Preview ${idx}`}
                           onClick={() => setSelectedImage(idx)}
-                          whileHover={{ scale: 1.05 }}
+                          whileHover={{ scale: 1.1 }}
                           style={{
-                            width: '80px',
-                            height: '80px',
+                            width: 'clamp(60px, 12vw, 80px)',
+                            height: 'clamp(60px, 12vw, 80px)',
                             borderRadius: '8px',
                             objectFit: 'cover',
                             cursor: 'pointer',
-                            border: selectedImage === idx ? '3px solid var(--primary-color)' : '2px solid transparent',
+                            border: selectedImage === idx ? '3px solid #ffd700' : '2px solid #ddd',
                             opacity: selectedImage === idx ? 1 : 0.6,
-                            transition: 'all 0.3s'
+                            flexShrink: 0
                           }}
                         />
                       ))}
@@ -262,161 +258,208 @@ export default function ServiceDetail() {
               ) : (
                 <div style={{
                   width: '100%',
-                  height: '400px',
+                  height: 'clamp(200px, 50vw, 400px)',
                   borderRadius: '12px',
-                  background: 'linear-gradient(135deg, rgba(184,134,11,0.1), rgba(248,200,212,0.1))',
+                  background: 'linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 237, 74, 0.1))',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '4rem'
+                  fontSize: 'clamp(2rem, 8vw, 4rem)'
                 }}>
                   💅
                 </div>
               )}
             </motion.div>
 
-            {/* Details */}
+            {/* Details Column */}
             <motion.div
-              initial={{ opacity: 0, x: 30 }}
+              initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6 }}
+              transition={{ duration: 0.5 }}
             >
-              <div style={{ marginBottom: '30px' }}>
-                <p style={{ color: 'rgba(0,0,0,0.6)', fontSize: 'clamp(11px, 2vw, 14px)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: '600' }}>
-                  Service Premium
-                </p>
-                <h2 style={{
-                  fontFamily: 'Playfair Display, serif',
-                  fontSize: 'clamp(1.5rem, 4vw, 2.2rem)',
-                  fontWeight: '700',
-                  color: '#1a0f08',
-                  margin: '10px 0'
+              {/* Price & Duration Card */}
+              <motion.div
+                whileHover={{ y: -4 }}
+                style={{
+                  background: 'linear-gradient(135deg, #ffd700 0%, #ffed4e 100%)',
+                  padding: 'clamp(16px, 3vw, 20px)',
+                  borderRadius: '12px',
+                  marginBottom: '20px',
+                  color: '#000',
+                  boxShadow: '0 4px 16px rgba(255, 215, 0, 0.3)'
+                }}
+              >
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: '12px'
                 }}>
-                  {service.title}
-                </h2>
-              </div>
-
-              {/* Price & Duration */}
-              <div style={{
-                background: 'var(--gradient-primary)',
-                padding: 'clamp(12px, 3vw, 20px)',
-                borderRadius: '12px',
-                color: 'white',
-                marginBottom: '30px',
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-                gap: 'clamp(12px, 3vw, 20px)'
-              }}>
-                <div>
-                  <p style={{ fontSize: 'clamp(11px, 2vw, 13px)', opacity: 0.9, marginBottom: '5px' }}>TARIF</p>
-                  <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: 'clamp(1.2rem, 4vw, 1.8rem)', margin: 0 }}>
-                    {service.price?.toLocaleString('fr-FR')} FCFA
-                  </h3>
+                  <div>
+                    <p style={{ fontSize: 'clamp(11px, 1.8vw, 12px)', opacity: 0.8, margin: '0 0 4px 0', fontWeight: '600' }}>💰 TARIF</p>
+                    <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: 'clamp(1.1rem, 3vw, 1.4rem)', margin: 0, fontWeight: '700' }}>
+                      {service.price?.toLocaleString('fr-FR')} FCFA
+                    </h3>
+                  </div>
+                  <div>
+                    <p style={{ fontSize: 'clamp(11px, 1.8vw, 12px)', opacity: 0.8, margin: '0 0 4px 0', fontWeight: '600' }}>⏱️ DURÉE</p>
+                    <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: 'clamp(1.1rem, 3vw, 1.4rem)', margin: 0, fontWeight: '700' }}>
+                      {service.duration_minutes || service.duration || '-'} min
+                    </h3>
+                  </div>
                 </div>
-                <div>
-                  <p style={{ fontSize: 'clamp(11px, 2vw, 13px)', opacity: 0.9, marginBottom: '5px' }}>DURÉE</p>
-                  <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: 'clamp(1.2rem, 4vw, 1.8rem)', margin: 0 }}>
-                    {service.duration || '-'} min
-                  </h3>
-                </div>
-              </div>
+              </motion.div>
 
               {/* Description */}
-              <div style={{ marginBottom: '30px' }}>
-                <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: 'clamp(1.1rem, 3vw, 1.3rem)', color: '#1a0f08', marginBottom: '15px' }}>
-                  À propos de ce service
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                style={{ marginBottom: '20px' }}
+              >
+                <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: 'clamp(1rem, 3vw, 1.2rem)', color: '#333', marginBottom: '10px' }}>
+                  📝 Détails
                 </h3>
-                <p style={{ color: 'rgba(0,0,0,0.7)', lineHeight: '1.8', fontSize: 'clamp(13px, 2vw, 15px)' }}>
+                <p style={{
+                  color: '#666',
+                  lineHeight: '1.7',
+                  fontSize: 'clamp(13px, 2vw, 15px)',
+                  margin: 0
+                }}>
                   {service.description}
                 </p>
-              </div>
+              </motion.div>
 
               {/* Availability */}
               {service.availability && service.availability.length > 0 && (
-                <div style={{ marginBottom: '30px', background: 'rgba(184,134,11,0.1)', padding: '20px', borderRadius: '12px' }}>
-                  <h4 style={{ color: 'var(--primary-color)', fontFamily: 'Playfair Display, serif', marginBottom: '15px', fontSize: '1.1rem' }}>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.25 }}
+                  style={{
+                    background: 'rgba(255, 215, 0, 0.1)',
+                    padding: '14px 16px',
+                    borderRadius: '10px',
+                    marginBottom: '16px',
+                    borderLeft: '4px solid #ffd700'
+                  }}
+                >
+                  <h4 style={{ fontSize: 'clamp(12px, 2vw, 13px)', color: '#b8860b', fontWeight: '700', marginBottom: '8px', margin: 0 }}>
                     📅 Disponibilités
                   </h4>
-                  <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                    {service.availability.map((av, idx) => (
-                      <li key={idx} style={{ paddingBottom: '8px', color: 'rgba(0,0,0,0.7)', fontSize: '14px' }}>
-                        <strong>{av.dayOfWeek}:</strong> {av.startTime} - {av.endTime}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                  {service.availability.map((av, idx) => (
+                    <p key={idx} style={{ fontSize: 'clamp(12px, 1.8vw, 13px)', color: '#666', margin: '6px 0' }}>
+                      <strong>{av.dayOfWeek}:</strong> {av.startTime} - {av.endTime}
+                    </p>
+                  ))}
+                </motion.div>
               )}
 
               {/* Options */}
               {service.checkboxOptions && service.checkboxOptions.length > 0 && (
-                <div style={{ marginBottom: '30px', background: 'rgba(248,200,212,0.1)', padding: '20px', borderRadius: '12px' }}>
-                  <h4 style={{ color: 'var(--accent-color)', fontFamily: 'Playfair Display, serif', marginBottom: '15px', fontSize: '1.1rem' }}>
-                    ✨ Options disponibles
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                  style={{
+                    background: 'rgba(200, 150, 255, 0.05)',
+                    padding: '14px 16px',
+                    borderRadius: '10px',
+                    marginBottom: '20px',
+                    borderLeft: '4px solid #9966ff'
+                  }}
+                >
+                  <h4 style={{ fontSize: 'clamp(12px, 2vw, 13px)', color: '#7744cc', fontWeight: '700', margin: '0 0 8px 0' }}>
+                    ✨ Options
                   </h4>
-                  <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                    {service.checkboxOptions.map((option, idx) => (
-                      <li key={idx} style={{ paddingBottom: '8px', color: 'rgba(0,0,0,0.7)', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <span style={{ color: 'var(--primary-color)', fontWeight: 'bold' }}>✓</span> {option}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                  {service.checkboxOptions.map((option, idx) => (
+                    <p key={idx} style={{ fontSize: 'clamp(12px, 1.8vw, 13px)', color: '#666', margin: '6px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ color: '#ffd700', fontWeight: 'bold' }}>✓</span> {option}
+                    </p>
+                  ))}
+                </motion.div>
+              )}
+
+              {/* Admin/Dev Warning */}
+              {isAdminOrDev && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(255, 107, 107, 0.1), rgba(255, 150, 150, 0.1))',
+                    border: '2px solid rgba(255, 107, 107, 0.3)',
+                    padding: '14px 16px',
+                    borderRadius: '10px',
+                    marginBottom: '16px'
+                  }}
+                >
+                  <p style={{ fontSize: 'clamp(12px, 2vw, 13px)', color: '#dc3545', fontWeight: '600', margin: 0 }}>
+                    👑 Vous êtes administrateur/développeur. Vous devez vous déconnecter pour réserver.
+                  </p>
+                </motion.div>
               )}
 
               {/* Action Buttons */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: '10px',
+                marginBottom: '10px'
+              }}>
                 <motion.button
-                  className="btn-luxury-primary"
-                  onClick={() => setShowBookingModal(true)}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={!isAdminOrDev ? { scale: 1.03 } : {}}
+                  whileTap={!isAdminOrDev ? { scale: 0.97 } : {}}
+                  onClick={() => !isAdminOrDev && setShowBookingModal(true)}
+                  disabled={isAdminOrDev}
                   style={{
-                    width: '100%',
-                    padding: 'clamp(12px, 3vw, 16px)',
-                    fontSize: 'clamp(13px, 1.8vw, 15px)',
-                    fontWeight: '600'
+                    padding: 'clamp(10px, 2.5vw, 12px)',
+                    fontSize: 'clamp(12px, 1.8vw, 14px)',
+                    fontWeight: '700',
+                    background: isAdminOrDev ? '#ccc' : '#ffd700',
+                    color: isAdminOrDev ? '#999' : '#000',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: isAdminOrDev ? 'not-allowed' : 'pointer',
+                    opacity: isAdminOrDev ? 0.5 : 1
                   }}
                 >
-                  Réserver 📅
+                  📅 Réserver
                 </motion.button>
 
                 <motion.button
-                  onClick={() => setShowPaymentFlow(true)}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={!isAdminOrDev ? { scale: 1.03 } : {}}
+                  whileTap={!isAdminOrDev ? { scale: 0.97 } : {}}
+                  onClick={() => !isAdminOrDev && setShowPaymentFlow(true)}
+                  disabled={isAdminOrDev}
                   style={{
-                    width: '100%',
-                    padding: 'clamp(12px, 3vw, 16px)',
-                    fontSize: 'clamp(13px, 1.8vw, 15px)',
-                    fontWeight: '600',
-                    background: 'var(--accent-color)',
-                    color: 'white',
+                    padding: 'clamp(10px, 2.5vw, 12px)',
+                    fontSize: 'clamp(12px, 1.8vw, 14px)',
+                    fontWeight: '700',
+                    background: isAdminOrDev ? '#ccc' : '#667eea',
+                    color: '#fff',
                     border: 'none',
                     borderRadius: '8px',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s'
+                    cursor: isAdminOrDev ? 'not-allowed' : 'pointer',
+                    opacity: isAdminOrDev ? 0.5 : 1
                   }}
                 >
-                  Payer 💳
+                  💳 Payer
                 </motion.button>
               </div>
 
               <motion.button
-                onClick={() => navigate('/services')}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
+                onClick={() => navigate('/services')}
                 style={{
                   width: '100%',
-                  padding: 'clamp(12px, 3vw, 14px)',
-                  marginTop: '12px',
-                  border: '2px solid var(--primary-color)',
+                  padding: 'clamp(10px, 2.5vw, 12px)',
+                  border: '2px solid #ffd700',
                   background: 'transparent',
-                  color: 'var(--primary-color)',
+                  color: '#ffd700',
                   borderRadius: '8px',
-                  fontSize: 'clamp(13px, 2vw, 15px)',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s'
+                  fontSize: 'clamp(12px, 1.8vw, 14px)',
+                  fontWeight: '700',
+                  cursor: 'pointer'
                 }}
               >
                 ← Retour
@@ -424,62 +467,67 @@ export default function ServiceDetail() {
             </motion.div>
           </div>
         </div>
-
-        {/* Responsive styling */}
-        <style>{`
-          @media (max-width: 768px) {
-            [style*="display: grid, gridTemplateColumns"] {
-              grid-template-columns: 1fr !important;
-            }
-          }
-        `}</style>
       </section>
 
-      {showBookingModal && (
-        <BookingModal
-          show={showBookingModal}
-          onHide={() => setShowBookingModal(false)}
-          service={service}
-          availableSlots={availableSlots}
-        />
-      )}
+      {/* Modals */}
+      <AnimatePresence>
+        {showBookingModal && (
+          <BookingModal
+            show={showBookingModal}
+            onHide={() => setShowBookingModal(false)}
+            service={service}
+            availableSlots={availableSlots}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Payment Flow Modal */}
-      {showPaymentFlow && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 9999,
-          padding: '1rem'
-        }}>
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            style={{ maxHeight: '90vh', overflowY: 'auto', maxWidth: '600px', width: '100%' }}
-          >
-            <PaymentFlow
-              service={service}
-              onSuccess={() => {
-                setShowPaymentFlow(false)
-                alert('✅ Paiement créé! Référence: Vérifiez vos emails')
+      <AnimatePresence>
+        {showPaymentFlow && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.6)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '20px'
+          }}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              style={{
+                background: '#fff',
+                borderRadius: '12px',
+                maxHeight: '90vh',
+                overflowY: 'auto',
+                maxWidth: '550px',
+                width: '100%',
+                boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2)'
               }}
-              onCancel={() => setShowPaymentFlow(false)}
-            />
-          </motion.div>
-        </div>
-      )}
+            >
+              <PaymentFlow
+                service={service}
+                onSuccess={() => {
+                  setShowPaymentFlow(false)
+                  alert('✅ Paiement réussi!')
+                }}
+                onCancel={() => setShowPaymentFlow(false)}
+              />
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Image Modal */}
       <Modal show={showImageModal} onHide={() => setShowImageModal(false)} size="lg" centered>
-        <Modal.Header closeButton style={{ borderBottom: 'none' }}>
-          <Modal.Title>{service?.title}</Modal.Title>
+        <Modal.Header closeButton style={{ borderBottom: 'none', background: '#f9f9f9' }}>
+          <Modal.Title style={{ fontSize: 'clamp(14px, 3vw, 16px)' }}>{service?.title}</Modal.Title>
         </Modal.Header>
         <Modal.Body style={{ padding: '20px' }}>
           {service?.images && service.images[selectedImage] && (
@@ -488,33 +536,13 @@ export default function ServiceDetail() {
               alt={service.title}
               style={{
                 width: '100%',
-                maxWidth: '90%',
-                borderRadius: '12px',
+                borderRadius: '8px',
                 objectFit: 'contain',
-                maxHeight: '80vh',
-                margin: '0 auto',
-                display: 'block'
+                maxHeight: '70vh'
               }}
             />
           )}
         </Modal.Body>
-        <Modal.Footer style={{ borderTop: '1px solid #ddd' }}>
-          <Button
-            variant="light"
-            onClick={() => setShowImageModal(false)}
-          >
-            Fermer
-          </Button>
-          <Button
-            style={{ background: 'var(--primary-color)', border: 'none' }}
-            onClick={() => {
-              downloadImage(service.images[selectedImage]);
-              setShowImageModal(false);
-            }}
-          >
-            ⬇️ Télécharger
-          </Button>
-        </Modal.Footer>
       </Modal>
 
       <Footer />

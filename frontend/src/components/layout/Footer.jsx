@@ -5,7 +5,19 @@ import { useSiteSettings } from '../../contexts/SiteSettingsContext'
 import { motion } from 'framer-motion'
 
 const Footer = () => {
+  const [isHidden, setIsHidden] = useState(false)
   const siteSettings = useSiteSettings()
+
+  useEffect(() => {
+    const hidden = localStorage.getItem('footerHidden') === 'true'
+    setIsHidden(hidden)
+  }, [])
+
+  const toggleFooter = () => {
+    const newState = !isHidden
+    setIsHidden(newState)
+    localStorage.setItem('footerHidden', newState)
+  }
 
   const adminInfo = {
     salonName: siteSettings.companyName || siteSettings.appName || 'Chura Beauty Salon',
@@ -36,13 +48,72 @@ const Footer = () => {
   };
 
   return (
-    <footer style={{
-      background: 'linear-gradient(135deg, rgba(20, 20, 30, 0.95) 0%, rgba(40, 30, 50, 0.95) 100%)',
-      borderTop: '1px solid rgba(255, 215, 0, 0.1)',
-      color: '#e0e0e0',
-      position: 'relative',
-      overflow: 'hidden'
-    }}>
+    <>
+      {isHidden && (
+        <motion.button
+          onClick={toggleFooter}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          whileHover={{ scale: 1.1 }}
+          style={{
+            position: 'fixed',
+            bottom: '20px',
+            right: '20px',
+            zIndex: 1000,
+            width: '50px',
+            height: '50px',
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, #ffd700, #ffed4e)',
+            border: 'none',
+            color: '#000',
+            fontSize: '20px',
+            cursor: 'pointer',
+            boxShadow: '0 4px 20px rgba(255, 215, 0, 0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontWeight: '700'
+          }}
+          title="Afficher le pied de page"
+        >
+          ↑
+        </motion.button>
+      )}
+
+      {!isHidden && (
+        <footer style={{
+          background: 'linear-gradient(135deg, rgba(20, 20, 30, 0.95) 0%, rgba(40, 30, 50, 0.95) 100%)',
+          borderTop: '1px solid rgba(255, 215, 0, 0.1)',
+          color: '#e0e0e0',
+          position: 'relative',
+          overflow: 'hidden'
+        }}>
+          {/* Toggle Button */}
+          <motion.button
+            onClick={toggleFooter}
+            whileHover={{ scale: 1.1 }}
+            style={{
+              position: 'absolute',
+              top: '16px',
+              right: '16px',
+              zIndex: 100,
+              background: 'rgba(255, 215, 0, 0.2)',
+              border: '1px solid rgba(255, 215, 0, 0.4)',
+              color: '#ffd700',
+              width: '40px',
+              height: '40px',
+              borderRadius: '50%',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '18px',
+              fontWeight: '700'
+            }}
+            title="Masquer le pied de page"
+          >
+            ↓
+          </motion.button>
       {/* Animated Background Elements */}
       <motion.div
         animate={{ opacity: [0.3, 0.6, 0.3] }}
@@ -397,6 +468,8 @@ const Footer = () => {
         </motion.div>
       </div>
     </footer>
+      )}
+    </>
   )
 }
 
