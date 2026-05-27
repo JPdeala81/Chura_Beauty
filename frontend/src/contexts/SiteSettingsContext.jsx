@@ -28,7 +28,14 @@ export const SiteSettingsProvider = ({ children }) => {
     footer_company_name: '',
     footer_address: '',
     privacy_policy: '',
-    terms_of_service: ''
+    terms_of_service: '',
+    // Design tokens
+    primary_color: '#ffd700',
+    secondary_color: '#764ba2',
+    card_border_radius: '16',
+    card_shadow_blur: '24',
+    animation_enabled: true,
+    theme_name: 'gold'
   })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -40,14 +47,15 @@ export const SiteSettingsProvider = ({ children }) => {
       console.log('📦 Loading site settings from API...')
       const response = await api.get('/site-settings')
       const settingsData = response.data || {}
-      
+
       console.log('✅ Site settings loaded:', {
         app_name: settingsData.app_name,
         hasLogo: !!settingsData.app_logo,
         hasHeroBg: !!settingsData.hero_background_image,
-        footer_phone: settingsData.footer_phone
+        footer_phone: settingsData.footer_phone,
+        primary_color: settingsData.primary_color
       })
-      
+
       setSettings(prev => ({
         ...prev,
         ...settingsData
@@ -89,7 +97,14 @@ export const SiteSettingsProvider = ({ children }) => {
     footerFacebook: settings.footer_facebook,
     footerTwitter: settings.footer_twitter,
     companyName: settings.footer_company_name,
-    address: settings.footer_address
+    address: settings.footer_address,
+    // Design tokens
+    primaryColor: settings.primary_color || '#ffd700',
+    secondaryColor: settings.secondary_color || '#764ba2',
+    cardBorderRadius: settings.card_border_radius || '16',
+    cardShadowBlur: settings.card_shadow_blur || '24',
+    animationEnabled: settings.animation_enabled !== false,
+    themeName: settings.theme_name || 'gold'
   }
 
   return (

@@ -580,11 +580,11 @@ const generateNewAppointmentNotification = (appointment) => {
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 👤 *Client* : ${appointment.client_name}
-📱 *WhatsApp* : ${appointment.clientWhatsapp}
+📱 *WhatsApp* : ${appointment.client_whatsapp}
 💅 *Service* : ${appointment.service.title}
 💰 *Prix* : ${appointment.service.price} FCFA
 
-📅 *Date Demandée* : ${new Date(appointment.desired_date).toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+📅 *Date Demandée* : ${new Date(appointment.appointment_date || appointment.desired_date).toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
 ⏰ *Heure* : ${appointment.slot_start} - ${appointment.slot_end}
 
 ${appointment.custom_description ? `📝 *Notes du client* :\n${appointment.custom_description}\n` : ''}━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -595,9 +595,14 @@ ${appointment.custom_description ? `📝 *Notes du client* :\n${appointment.cust
 
 const generateAppointmentMessage = (appointment, isAccepted) => {
   if (isAccepted) {
-    return `🎉 Bonjour ${appointment.client_name}!\n\nVotre rendez-vous pour *${appointment.services.title}* a été ✅ *CONFIRMÉ*!\n\n📅 *Date* : ${new Date(appointment.desired_date).toLocaleDateString('fr-FR')}\n⏰ *Heure* : ${appointment.slot_start} - ${appointment.slot_end}\n💰 *Prix* : ${appointment.services.price} FCFA\n\nMerci de confirmer votre présence. À très bientôt! 💆‍♀️✨`
+    const svcTitle = appointment.service?.title || appointment.services?.title || 'le service'
+    const svcPrice = appointment.service?.price || appointment.services?.price || ''
+    const apptDate = appointment.appointment_date || appointment.desired_date
+    return `🎉 Bonjour ${appointment.client_name}!\n\nVotre rendez-vous pour *${svcTitle}* a été ✅ *CONFIRMÉ*!\n\n📅 *Date* : ${new Date(apptDate).toLocaleDateString('fr-FR')}\n⏰ *Heure* : ${appointment.slot_start} - ${appointment.slot_end}\n💰 *Prix* : ${svcPrice} FCFA\n\nMerci de confirmer votre présence. À très bientôt! 💆‍♀️✨`
   } else {
-    return `Bonjour ${appointment.client_name},\n\nNous sommes désolés, votre demande de RDV pour *${appointment.services.title}* n'a pas pu être acceptée pour le ${new Date(appointment.desired_date).toLocaleDateString('fr-FR')} à ${appointment.slot_start}.\n\nN'hésitez pas à visiter notre site pour choisir un autre créneau. Merci de votre compréhension!`
+    const svcTitle = appointment.service?.title || appointment.services?.title || 'le service'
+    const apptDate = appointment.appointment_date || appointment.desired_date
+    return `Bonjour ${appointment.client_name},\n\nNous sommes désolés, votre demande de RDV pour *${svcTitle}* n'a pas pu être acceptée pour le ${new Date(apptDate).toLocaleDateString('fr-FR')} à ${appointment.slot_start}.\n\nN'hésitez pas à visiter notre site pour choisir un autre créneau. Merci de votre compréhension!`
   }
 }
 

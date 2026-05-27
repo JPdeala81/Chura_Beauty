@@ -10,8 +10,7 @@ const floatingEmojis = ['💆‍♀️', '✨', '💅', '🌸', '💄', '👑', 
 const HeroSection = ({ onScrollToServices }) => {
   const { token, admin } = useContext(AuthContext)
   const siteSettings = useSiteSettings()
-  
-  // Use site settings with fallbacks
+
   const adminInfo = {
     salonName: siteSettings.companyName || siteSettings.appName || 'Chura Beauty Salon',
     bio: siteSettings.heroSubtitle || 'Votre destination beauté à Libreville',
@@ -20,22 +19,70 @@ const HeroSection = ({ onScrollToServices }) => {
     heroSubtitle: siteSettings.heroSubtitle || 'Des soins d\'exception pour sublimer votre beauté'
   }
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1024)
-  
-  // Check if user is admin or developer
+
   const isAdminOrDeveloper = token && admin && (admin.role === 'admin' || admin.role === 'developer')
 
-  // Handle window resize for responsive padding
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth)
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  // Responsive padding based on screen size
   const getResponsivePadding = () => {
-    if (windowWidth < 576) return '20px'      // Mobile - navbar accounts for most spacing
-    if (windowWidth < 768) return '30px'      // Tablet
-    return '40px'                             // Desktop
+    if (windowWidth < 576) return '20px'
+    if (windowWidth < 768) return '30px'
+    return '40px'
+  }
+
+  // Counter component
+  const AnimatedCounter = ({ value, label, emoji }) => {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6 }}
+        style={{
+          textAlign: 'center',
+          padding: '20px'
+        }}
+      >
+        <motion.div
+          initial={{ scale: 0 }}
+          whileInView={{ scale: 1 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.2, type: 'spring', stiffness: 100 }}
+          style={{
+            fontSize: '40px',
+            marginBottom: '8px'
+          }}
+        >
+          {emoji}
+        </motion.div>
+        <motion.div
+          style={{
+            fontSize: '32px',
+            fontWeight: '700',
+            background: 'linear-gradient(135deg, #ffd700, #ffed4e)',
+            backgroundClip: 'text',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            marginBottom: '4px'
+          }}
+        >
+          {value}+
+        </motion.div>
+        <div style={{
+          fontSize: '12px',
+          color: '#999',
+          textTransform: 'uppercase',
+          letterSpacing: '0.5px',
+          fontWeight: '600'
+        }}>
+          {label}
+        </div>
+      </motion.div>
+    )
   }
 
   return (
@@ -91,7 +138,15 @@ const HeroSection = ({ onScrollToServices }) => {
             >
               <motion.span
                 className="d-inline-block mb-3 px-4 py-2 rounded-pill"
-                style={{ background: 'rgba(var(--primary-color), 0.1)', border: '1px solid var(--primary-color)', color: 'var(--primary-color)', fontSize: '14px', fontWeight: '600', letterSpacing: '2px', textTransform: 'uppercase' }}
+                style={{
+                  background: 'rgba(255, 215, 0, 0.15)',
+                  border: '1px solid rgba(255, 215, 0, 0.4)',
+                  color: '#ffd700',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  letterSpacing: '2px',
+                  textTransform: 'uppercase'
+                }}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
@@ -101,14 +156,20 @@ const HeroSection = ({ onScrollToServices }) => {
 
               <motion.h1
                 className="hero-title mb-4"
-                style={{ color: 'var(--text-color)', textShadow: '0 4px 20px rgba(0,0,0,0.3)' }}
+                style={{
+                  color: '#fff',
+                  textShadow: '0 4px 20px rgba(0,0,0,0.3)',
+                  fontSize: 'clamp(32px, 8vw, 64px)',
+                  fontWeight: '800',
+                  lineHeight: '1.2'
+                }}
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4, duration: 0.8 }}
               >
                 {adminInfo.heroTitle || 'Révélez Votre'}{' '}
                 <span style={{
-                  background: 'var(--gradient-primary)',
+                  background: 'linear-gradient(135deg, #ffd700, #ffed4e)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text'
@@ -119,7 +180,12 @@ const HeroSection = ({ onScrollToServices }) => {
 
               <motion.p
                 className="hero-subtitle mb-5"
-                style={{ color: 'var(--text-secondary)', fontSize: '1.2rem', lineHeight: '1.8', maxWidth: '500px' }}
+                style={{
+                  color: 'rgba(255, 255, 255, 0.85)',
+                  fontSize: 'clamp(16px, 3vw, 20px)',
+                  lineHeight: '1.8',
+                  maxWidth: '500px'
+                }}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6 }}
@@ -133,24 +199,66 @@ const HeroSection = ({ onScrollToServices }) => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.8 }}
               >
-                <button className="btn-luxury-primary" onClick={onScrollToServices}>
-                  Découvrir nos services
+                <button
+                  className="btn-luxury-primary"
+                  onClick={onScrollToServices}
+                  style={{
+                    padding: '14px 32px',
+                    background: 'linear-gradient(135deg, #ffd700, #ffed4e)',
+                    color: '#000',
+                    fontSize: '14px',
+                    fontWeight: '700',
+                    textTransform: 'uppercase',
+                    letterSpacing: '1px',
+                    border: 'none',
+                    borderRadius: '12px',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease'
+                  }}
+                >
+                  Découvrir nos services ✨
                 </button>
                 {isAdminOrDeveloper ? (
-                  <motion.button 
+                  <motion.button
                     className="btn-luxury-outline"
                     disabled
                     style={{
                       opacity: 0.5,
-                      cursor: 'not-allowed'
+                      cursor: 'not-allowed',
+                      padding: '14px 32px',
+                      border: '2px solid rgba(255, 255, 255, 0.3)',
+                      color: '#fff',
+                      fontSize: '14px',
+                      fontWeight: '700',
+                      textTransform: 'uppercase',
+                      letterSpacing: '1px',
+                      background: 'transparent',
+                      borderRadius: '12px'
                     }}
                     title="Vous êtes administrateur - action non autorisée"
                   >
                     🚫 Prendre rendez-vous
                   </motion.button>
                 ) : (
-                  <Link to="/services" className="btn-luxury-outline">
-                    Prendre rendez-vous
+                  <Link
+                    to="/services"
+                    className="btn-luxury-outline"
+                    style={{
+                      display: 'inline-block',
+                      padding: '14px 32px',
+                      border: '2px solid rgba(255, 255, 255, 0.3)',
+                      color: '#fff',
+                      fontSize: '14px',
+                      fontWeight: '700',
+                      textTransform: 'uppercase',
+                      letterSpacing: '1px',
+                      background: 'transparent',
+                      borderRadius: '12px',
+                      textDecoration: 'none',
+                      transition: 'all 0.3s ease'
+                    }}
+                  >
+                    Prendre rendez-vous 📅
                   </Link>
                 )}
               </motion.div>
@@ -167,19 +275,28 @@ const HeroSection = ({ onScrollToServices }) => {
               <motion.div
                 className="floating-element hero-glass-card"
                 style={{
-                  background: 'var(--glass-bg)',
-                  border: '1px solid var(--glass-gold-light)',
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 215, 0, 0.3)',
                   borderRadius: '30px',
                   padding: '40px',
-                  backdropFilter: 'blur(10px)',
+                  backdropFilter: 'blur(20px)',
                   textAlign: 'center'
                 }}
               >
                 <div style={{ fontSize: '80px', lineHeight: 1 }}>💆‍♀️</div>
-                <h4 className="hero-salon-name" style={{ marginTop: '20px' }}>
+                <h4 style={{
+                  marginTop: '20px',
+                  fontSize: '20px',
+                  fontWeight: '700',
+                  color: '#fff'
+                }}>
                   {adminInfo.salonName}
                 </h4>
-                <p className="hero-subtitle" style={{ fontSize: '14px', marginTop: '10px' }}>
+                <p style={{
+                  fontSize: '14px',
+                  marginTop: '10px',
+                  color: 'rgba(255, 255, 255, 0.7)'
+                }}>
                   Libreville, Gabon
                 </p>
                 <div className="d-flex justify-content-center gap-3 mt-3">
@@ -198,6 +315,31 @@ const HeroSection = ({ onScrollToServices }) => {
             </motion.div>
           </div>
         </div>
+
+        {/* Stats Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+          style={{
+            background: 'rgba(255, 255, 255, 0.05)',
+            backdropFilter: 'blur(10px)',
+            borderRadius: '20px',
+            border: '1px solid rgba(255, 215, 0, 0.1)',
+            padding: '40px',
+            marginTop: '60px',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+            gap: '20px',
+            marginBottom: '60px'
+          }}
+        >
+          <AnimatedCounter value="500" label="Clients satisfaits" emoji="😊" />
+          <AnimatedCounter value="50" label="Services" emoji="💅" />
+          <AnimatedCounter value="100" label="Avis positifs" emoji="⭐" />
+          <AnimatedCounter value="10" label="Années d'expérience" emoji="👑" />
+        </motion.div>
       </div>
 
       {/* Scroll indicator */}
@@ -221,7 +363,10 @@ const HeroSection = ({ onScrollToServices }) => {
         whileHover={{ scale: 1.15 }}
         whileTap={{ scale: 0.9 }}
       >
-        <i className="bi bi-chevron-double-down scroll-indicator-icon" style={{ fontSize: 'clamp(20px, 5vw, 28px)' }}></i>
+        <i className="bi bi-chevron-double-down scroll-indicator-icon" style={{
+          fontSize: 'clamp(20px, 5vw, 28px)',
+          color: '#ffd700'
+        }}></i>
       </motion.div>
     </section>
   )

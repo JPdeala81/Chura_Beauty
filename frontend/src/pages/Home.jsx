@@ -50,12 +50,12 @@ const Home = () => {
   const checkMaintenanceMode = async () => {
     try {
       const response = await api.get('/site-settings')
-      if (response.data && response.data.app_closure_enabled) {
+      if (response.data && response.data.is_maintenance) {
         setMaintenanceMode(true)
         setMaintenanceInfo({
-          reason: response.data.app_closure_reason || 'Maintenance en cours',
-          reopenDate: response.data.app_closure_reopen_date || '',
-          reopenTime: response.data.app_closure_reopen_time || '09:00'
+          reason: response.data.maintenance_reason || 'Maintenance en cours',
+          reopenDate: response.data.maintenance_end ? new Date(response.data.maintenance_end).toISOString().split('T')[0] : '',
+          reopenTime: response.data.maintenance_end ? new Date(response.data.maintenance_end).toTimeString().slice(0, 5) : '09:00'
         })
       } else {
         setMaintenanceMode(false)

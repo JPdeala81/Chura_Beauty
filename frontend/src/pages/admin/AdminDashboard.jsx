@@ -56,7 +56,7 @@ const AdminDashboard = () => {
         api.get('/notifications/unread-count')
       ])
       if (statsRes.status === 'fulfilled') setStats(statsRes.value.data || {})
-      if (adminRes.status === 'fulfilled') setAdminInfo(adminRes.value.data)
+      if (adminRes.status === 'fulfilled') setAdminInfo(adminRes.value.data?.admin || adminRes.value.data)
       if (notifRes.status === 'fulfilled') setUnreadCount(notifRes.value.data?.count || 0)
     } catch (e) {}
   }
@@ -64,7 +64,8 @@ const AdminDashboard = () => {
   const checkFirstLogin = async () => {
     try {
       const res = await api.get('/auth/profile')
-      if (!res.data?.secret_question || !res.data?.recovery_email) {
+      const adminData = res.data?.admin || res.data
+      if (!adminData?.secret_question || !adminData?.recovery_email) {
         setIsFirstLogin(true)
       }
     } catch (e) {}
@@ -96,7 +97,7 @@ const AdminDashboard = () => {
       case 'revenue': return <Revenue />
       case 'notifications': return <NotificationPanel />
       case 'site': return <SiteSettings onUpdate={fetchDashboardData} />
-      case 'profile': return <ProfileSettings onUpdate={fetchDashboardData} />
+      case 'profile': return <ProfileSettings admin={adminInfo} onUpdate={fetchDashboardData} />
       case 'security': return <SecuritySettings isFirstLogin={isFirstLogin} onComplete={() => setIsFirstLogin(false)} />
       default: return null
     }

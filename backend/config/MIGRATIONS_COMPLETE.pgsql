@@ -1,5 +1,6 @@
 -- ============================================
--- CHURA SITE - CompleteMigration for New Features
+-- CHURA SITE - Complete Migration for New Features
+-- PostgreSQL / Supabase syntax
 -- Execute in Supabase SQL Editor
 -- ============================================
 

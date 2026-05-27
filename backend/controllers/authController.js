@@ -309,6 +309,11 @@ export const updateAdmin = async (req, res) => {
     if (navbar_cta_text !== undefined) updateData.navbar_cta_text = navbar_cta_text
     if (admin_btn_text !== undefined) updateData.admin_btn_text = admin_btn_text
 
+    // Fichiers uploadés via Cloudinary (multer-storage-cloudinary)
+    if (req.files?.cover_photo?.[0]) updateData.cover_photo = req.files.cover_photo[0].path
+    if (req.files?.profile_photo?.[0]) updateData.profile_photo = req.files.profile_photo[0].path
+    if (req.files?.favicon_image?.[0]) updateData.favicon_image = req.files.favicon_image[0].path
+
     // Si email est fourni, ajouter
     if (email !== undefined && email !== '') {
       updateData.email = email

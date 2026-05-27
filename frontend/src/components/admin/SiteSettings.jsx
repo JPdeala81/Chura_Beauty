@@ -22,7 +22,14 @@ const initialState = {
   heroCta: 'Découvrir maintenant',
   heroCtaSecondary: 'Consulter',
   navbarCta: 'Réserver',
-  adminBtnText: 'Bon marché'
+  adminBtnText: 'Bon marché',
+  // Design tokens
+  primaryColor: '#ffd700',
+  secondaryColor: '#764ba2',
+  cardBorderRadius: '16',
+  cardShadowBlur: '24',
+  animationEnabled: true,
+  themeName: 'gold'
 };
 
 const SiteSettings = ({ onUpdate }) => {
@@ -40,31 +47,39 @@ const SiteSettings = ({ onUpdate }) => {
   const fetchProfile = async () => {
     try {
       const res = await api.get('/auth/profile');
-      if (res.data) {
+      const d = res.data?.admin || res.data;
+      if (d) {
         setForm({
-          salonName: res.data.salon_name || '',
-          heroTitle: res.data.hero_title || '',
-          heroSubtitle: res.data.hero_subtitle || '',
-          bio: res.data.bio || '',
-          phone: res.data.phone || '',
-          whatsapp: res.data.whatsapp || '',
-          address: res.data.address || '',
-          instagram: res.data.instagram || '',
-          facebook: res.data.facebook || '',
-          heroBgColor: res.data.hero_bg_color || '#2c1810',
-          heroTextColor: res.data.hero_text_color || '#f8c8d4',
-          coverPhoto: res.data.cover_photo || '',
-          profilePhoto: res.data.profile_photo || '',
-          faviconEmoji: res.data.favicon_emoji || '💆‍♀️',
-          faviconImage: res.data.favicon_image || '',
-          heroAnimation: res.data.hero_animation || 'particles',
-          heroCta: res.data.hero_cta_text || 'Découvrir maintenant',
-          heroCtaSecondary: res.data.hero_cta2_text || 'Consulter',
-          navbarCta: res.data.navbar_cta_text || 'Réserver',
-          adminBtnText: res.data.admin_btn_text || 'Bon marché'
+          salonName: d.salon_name || '',
+          heroTitle: d.hero_title || '',
+          heroSubtitle: d.hero_subtitle || '',
+          bio: d.bio || '',
+          phone: d.phone || '',
+          whatsapp: d.whatsapp || '',
+          address: d.address || '',
+          instagram: d.instagram || '',
+          facebook: d.facebook || '',
+          heroBgColor: d.hero_bg_color || '#2c1810',
+          heroTextColor: d.hero_text_color || '#f8c8d4',
+          coverPhoto: d.cover_photo || '',
+          profilePhoto: d.profile_photo || '',
+          faviconEmoji: d.favicon_emoji || '💆‍♀️',
+          faviconImage: d.favicon_image || '',
+          heroAnimation: d.hero_animation || 'particles',
+          heroCta: d.hero_cta_text || 'Découvrir maintenant',
+          heroCtaSecondary: d.hero_cta2_text || 'Consulter',
+          navbarCta: d.navbar_cta_text || 'Réserver',
+          adminBtnText: d.admin_btn_text || 'Bon marché',
+          // Design tokens
+          primaryColor: d.primary_color || '#ffd700',
+          secondaryColor: d.secondary_color || '#764ba2',
+          cardBorderRadius: d.card_border_radius || '16',
+          cardShadowBlur: d.card_shadow_blur || '24',
+          animationEnabled: d.animation_enabled !== false,
+          themeName: d.theme_name || 'gold'
         });
-        setCoverPreview(res.data.cover_photo || '');
-        setProfilePreview(res.data.profile_photo || '');
+        setCoverPreview(d.cover_photo || '');
+        setProfilePreview(d.profile_photo || '');
       }
     } catch (e) {}
   };
@@ -114,10 +129,17 @@ const SiteSettings = ({ onUpdate }) => {
       data.append('hero_cta2_text', form.heroCtaSecondary);
       data.append('navbar_cta_text', form.navbarCta);
       data.append('admin_btn_text', form.adminBtnText);
+      // Design tokens
+      data.append('primary_color', form.primaryColor);
+      data.append('secondary_color', form.secondaryColor);
+      data.append('card_border_radius', form.cardBorderRadius);
+      data.append('card_shadow_blur', form.cardShadowBlur);
+      data.append('animation_enabled', form.animationEnabled);
+      data.append('theme_name', form.themeName);
       if (form.coverPhoto instanceof File) data.append('cover_photo', form.coverPhoto);
       if (form.profilePhoto instanceof File) data.append('profile_photo', form.profilePhoto);
       if (form.faviconImage instanceof File) data.append('favicon_image', form.faviconImage);
-      await api.put('/auth/profile', data, { headers: { 'Content-Type': 'multipart/form-data' } });
+      await api.put('/auth/profile', data);
       setMessage({ type: 'success', text: '✅ Paramètres du site sauvegardés !' });
       if (onUpdate) onUpdate();
     } catch (err) {
@@ -306,6 +328,82 @@ const SiteSettings = ({ onUpdate }) => {
               <label style={labelStyle}>Image Favicon (optionnel)</label>
               <input type="file" accept="image/*" onChange={e => handleFileChange(e, 'favicon')} style={inputStyle} />
               {faviconPreview && <img src={faviconPreview} alt="favicon" style={{ width: '60px', height: '60px', objectFit: 'contain', marginTop: '8px' }} />}
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Design Tokens Section */}
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }} style={{ background: 'linear-gradient(135deg, rgba(102,126,234,0.04), rgba(118,75,162,0.02))', borderRadius: '16px', padding: '20px', marginTop: '20px', border: '1px solid rgba(102,126,234,0.1)' }}>
+          <h6 style={{ fontFamily: 'Playfair Display, serif', color: '#2c1810', marginBottom: '16px', fontSize: '1.1rem' }}>🎨 Jetons de Design</h6>
+          <div className="row g-3">
+            <div className="col-md-6">
+              <label style={labelStyle}>Couleur Principale</label>
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                <input type="color" name="primaryColor" value={form.primaryColor} onChange={handleChange} style={{ ...inputStyle, width: '60px', height: '48px', padding: '0 8px' }} />
+                <input type="text" name="primaryColor" value={form.primaryColor} onChange={handleChange} style={{ ...inputStyle, flex: 1 }} />
+              </div>
+            </div>
+            <div className="col-md-6">
+              <label style={labelStyle}>Couleur Secondaire</label>
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                <input type="color" name="secondaryColor" value={form.secondaryColor} onChange={handleChange} style={{ ...inputStyle, width: '60px', height: '48px', padding: '0 8px' }} />
+                <input type="text" name="secondaryColor" value={form.secondaryColor} onChange={handleChange} style={{ ...inputStyle, flex: 1 }} />
+              </div>
+            </div>
+            <div className="col-md-6">
+              <label style={labelStyle}>Rayon des Coins Cartes (px)</label>
+              <input type="number" name="cardBorderRadius" value={form.cardBorderRadius} onChange={handleChange} min="0" max="50" style={inputStyle} />
+            </div>
+            <div className="col-md-6">
+              <label style={labelStyle}>Flou Ombre Cartes (px)</label>
+              <input type="number" name="cardShadowBlur" value={form.cardShadowBlur} onChange={handleChange} min="0" max="50" style={inputStyle} />
+            </div>
+            <div className="col-md-6">
+              <label style={labelStyle}>Thème</label>
+              <select name="themeName" value={form.themeName} onChange={handleChange} style={inputStyle}>
+                <option value="gold">Or</option>
+                <option value="dark">Sombre</option>
+                <option value="rose">Rose</option>
+                <option value="green">Vert</option>
+                <option value="blue">Bleu</option>
+              </select>
+            </div>
+            <div className="col-md-6">
+              <label style={labelStyle}>Animations</label>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setForm(f => ({ ...f, animationEnabled: true }))}
+                  style={{
+                    flex: 1,
+                    padding: '10px',
+                    background: form.animationEnabled ? 'linear-gradient(135deg, #667eea, #764ba2)' : 'white',
+                    border: form.animationEnabled ? 'none' : '2px solid rgba(102,126,234,0.2)',
+                    color: form.animationEnabled ? 'white' : '#2c1810',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontWeight: '600'
+                  }}
+                >
+                  ✅ Activé
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setForm(f => ({ ...f, animationEnabled: false }))}
+                  style={{
+                    flex: 1,
+                    padding: '10px',
+                    background: !form.animationEnabled ? '#f0f0f0' : 'white',
+                    border: !form.animationEnabled ? '2px solid #999' : '2px solid rgba(0,0,0,0.1)',
+                    color: '#2c1810',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontWeight: '600'
+                  }}
+                >
+                  ⏸️ Désactivé
+                </button>
+              </div>
             </div>
           </div>
         </motion.div>
