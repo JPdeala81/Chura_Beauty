@@ -83,6 +83,24 @@ const Navbar = () => {
           </ul>
 
           <div className="d-flex align-items-center gap-3">
+            {/* Test Deployment Button */}
+            <motion.div
+              animate={{ scale: [1, 1.1, 1], backgroundColor: ['#00ff00', '#00cc00', '#00ff00'] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+              style={{
+                padding: '8px 16px',
+                borderRadius: '20px',
+                background: '#00ff00',
+                color: '#000',
+                fontWeight: '700',
+                fontSize: '12px',
+                boxShadow: '0 0 20px rgba(0, 255, 0, 0.6)',
+                border: '2px solid #00ff00'
+              }}
+            >
+              ✅ Déploiement a fonctionné ✅
+            </motion.div>
+
             {/* Time Badge - Animated */}
             <motion.div
               animate={{ scale: [1, 1.05, 1] }}
