@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Modal, Button, Form, Card, Alert } from 'react-bootstrap';
+import { motion, AnimatePresence } from 'framer-motion';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import * as appointmentService from '../../services/appointmentService';
 
-// Generate time slots (every 30 minutes from 8h to 18h)
 const generateTimeSlots = () => {
   const slots = [];
   for (let hour = 8; hour < 18; hour++) {
@@ -13,7 +13,7 @@ const generateTimeSlots = () => {
       const startMin = String(min).padStart(2, '0');
       const endHour = String(min === 30 ? hour + 1 : hour).padStart(2, '0');
       const endMin = String(min === 30 ? 0 : 30).padStart(2, '0');
-      
+
       slots.push({
         start: `${startHour}:${startMin}`,
         end: `${endHour}:${endMin}`
@@ -69,7 +69,7 @@ export default function BookingModal({ show, onHide, service, availableSlots = [
     setFormData((prev) => ({
       ...prev,
       desiredDate: date,
-      desiredTimeSlot: null, // Reset time slot when date changes
+      desiredTimeSlot: null,
     }));
   };
 
@@ -78,7 +78,6 @@ export default function BookingModal({ show, onHide, service, availableSlots = [
       setLoading(true);
       setError('');
 
-      // Format date as YYYY-MM-DD (local date, not UTC)
       const formatDateToLocalString = (date) => {
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -99,19 +98,6 @@ export default function BookingModal({ show, onHide, service, availableSlots = [
         custom_description: formData.customDescription,
       };
 
-      console.log('📝 Submitting appointment:', appointmentData);
-      console.log('🔍 Checking submitted data:', {
-        has_client_name: appointmentData.client_name ? '✓ YES' : '❌ NO',
-        has_client_phone: appointmentData.client_phone ? '✓ YES' : '❌ NO', 
-        has_client_email: appointmentData.client_email ? '✓ YES' : '❌ NO',
-        has_client_whatsapp: appointmentData.client_whatsapp ? '✓ YES' : '❌ NO',
-        actual_values: {
-          client_name: appointmentData.client_name,
-          client_phone: appointmentData.client_phone,
-          client_email: appointmentData.client_email,
-          client_whatsapp: appointmentData.client_whatsapp
-        }
-      });
       await appointmentService.createAppointment(appointmentData);
       setSuccess('Rendez-vous demandé avec succès !');
 
@@ -142,231 +128,319 @@ export default function BookingModal({ show, onHide, service, availableSlots = [
     setSuccess('');
   };
 
-  const canProceedToStep2 =
-    formData.desiredDate && formData.desiredTimeSlot;
+  const canProceedToStep2 = formData.desiredDate && formData.desiredTimeSlot;
   const canProceedToStep3 = true;
-  const canProceedToStep4 =
-    formData.clientName &&
-    formData.clientPhone &&
-    formData.clientEmail &&
-    formData.clientWhatsapp;
+  const canProceedToStep4 = formData.clientName && formData.clientPhone && formData.clientEmail && formData.clientWhatsapp;
 
   const handleClose = () => {
     resetForm();
     onHide();
   };
 
+  const stepVariants = {
+    hidden: { opacity: 0, x: 20 },
+    visible: { opacity: 1, x: 0, transition: { duration: 0.4 } },
+    exit: { opacity: 0, x: -20, transition: { duration: 0.3 } }
+  };
+
+  const inputStyle = {
+    border: '2px solid rgba(255, 215, 0, 0.15)',
+    borderRadius: '10px',
+    padding: '12px 16px',
+    fontSize: '14px',
+    transition: 'all 0.3s ease'
+  };
+
   return (
-    <Modal show={show} onHide={handleClose} size="lg" centered>
-      <Modal.Header closeButton>
-        <Modal.Title>Réserver {service?.title}</Modal.Title>
+    <Modal show={show} onHide={handleClose} size="lg" centered backdrop="static" keyboard={false}>
+      <Modal.Header style={{
+        background: 'linear-gradient(135deg, #ffd700 0%, #ffed4e 100%)',
+        border: 'none',
+        color: '#000'
+      }} closeButton>
+        <Modal.Title style={{ fontWeight: '700', fontSize: '18px' }}>
+          📅 Réserver: {service?.title}
+        </Modal.Title>
       </Modal.Header>
 
-      <Modal.Body>
-        {error && <Alert variant="danger">{error}</Alert>}
-        {success && <Alert variant="success">{success}</Alert>}
-
-        {step === 1 && (
-          <div>
-            <h6>Étape 1 : Choisir date et créneau</h6>
-            <Form.Group className="mb-3">
-              <Form.Label>Date souhaitée</Form.Label>
-              <DatePicker
-                selected={formData.desiredDate}
-                onChange={handleDateChange}
-                minDate={new Date()}
-                inline
+      <Modal.Body style={{ padding: '32px', background: '#fafafa' }}>
+        {/* Progress Bar */}
+        <div style={{ marginBottom: '24px' }}>
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+            {[1, 2, 3, 4].map((s) => (
+              <motion.div
+                key={s}
+                style={{
+                  flex: 1,
+                  height: '6px',
+                  borderRadius: '3px',
+                  background: step >= s ? 'linear-gradient(135deg, #ffd700, #ffed4e)' : '#e0e0e0'
+                }}
+                animate={{ scaleX: step >= s ? 1 : 0.8 }}
               />
-            </Form.Group>
+            ))}
+          </div>
+          <p style={{ fontSize: '12px', color: '#999', margin: 0 }}>
+            Étape {step} sur 4
+          </p>
+        </div>
 
-            {formData.desiredDate && (
-              <Form.Group className="mb-3">
-                <Form.Label>Créneau horaire souhaité</Form.Label>
-                <p style={{ fontSize: '12px', color: '#666', marginBottom: '10px' }}>
-                  Sélectionnez votre créneau préféré. L'administrateur confirmera la disponibilité.
-                </p>
-                <div style={{ 
-                  display: 'grid', 
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
-                  gap: '10px',
-                  maxHeight: '300px',
-                  overflowY: 'auto',
-                  padding: '10px',
-                  border: '1px solid #ddd',
-                  borderRadius: '8px',
-                  background: '#f9f9f9'
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <Alert variant="danger" dismissible onClose={() => setError('')} style={{
+              background: 'rgba(220, 53, 69, 0.1)',
+              border: '1px solid rgba(220, 53, 69, 0.3)',
+              color: '#dc3545',
+              marginBottom: '16px'
+            }}>
+              {error}
+            </Alert>
+          </motion.div>
+        )}
+
+        {success && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+          >
+            <Alert variant="success" dismissible onClose={() => setSuccess('')} style={{
+              background: 'rgba(40, 167, 69, 0.1)',
+              border: '1px solid rgba(40, 167, 69, 0.3)',
+              color: '#28a745',
+              marginBottom: '16px'
+            }}>
+              ✅ {success}
+            </Alert>
+          </motion.div>
+        )}
+
+        <AnimatePresence mode="wait">
+          {step === 1 && (
+            <motion.div key="step1" variants={stepVariants} initial="hidden" animate="visible" exit="exit">
+              <h6 style={{ fontWeight: '700', marginBottom: '16px', color: '#333' }}>📅 Choisir date et créneau</h6>
+
+              <Form.Group className="mb-4">
+                <Form.Label style={{ fontWeight: '600', marginBottom: '12px', display: 'block' }}>Date souhaitée</Form.Label>
+                <div style={{
+                  background: 'white',
+                  borderRadius: '12px',
+                  padding: '16px',
+                  border: '2px solid rgba(255, 215, 0, 0.15)'
                 }}>
-                  {TIME_SLOTS.map((slot) => (
-                    <label key={slot.start} style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      padding: '10px',
-                      border: formData.desiredTimeSlot?.start === slot.start 
-                        ? '2px solid var(--primary-color)' 
-                        : '1px solid #ddd',
-                      borderRadius: '6px',
-                      background: formData.desiredTimeSlot?.start === slot.start 
-                        ? 'rgba(184,134,11,0.1)' 
-                        : 'white',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      fontSize: '13px',
-                      fontWeight: formData.desiredTimeSlot?.start === slot.start ? '600' : '400'
-                    }}>
-                      <input
-                        type="radio"
-                        style={{ marginRight: '8px', cursor: 'pointer' }}
-                        checked={formData.desiredTimeSlot?.start === slot.start}
-                        onChange={() => setFormData((prev) => ({
-                          ...prev,
-                          desiredTimeSlot: slot,
-                        }))}
-                      />
-                      <span>{slot.start} - {slot.end}</span>
-                    </label>
-                  ))}
+                  <DatePicker
+                    selected={formData.desiredDate}
+                    onChange={handleDateChange}
+                    minDate={new Date()}
+                    inline
+                    calendarClassName="custom-calendar"
+                  />
                 </div>
               </Form.Group>
-            )}
-          </div>
-        )}
 
-        {step === 2 && (
-          <div>
-            <h6>Étape 2 : Options et description</h6>
+              {formData.desiredDate && (
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                  <Form.Group>
+                    <Form.Label style={{ fontWeight: '600', marginBottom: '12px', display: 'block' }}>Créneau horaire</Form.Label>
+                    <p style={{ fontSize: '13px', color: '#999', marginBottom: '12px' }}>
+                      Sélectionnez votre créneau préféré
+                    </p>
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
+                      gap: '8px',
+                      maxHeight: '280px',
+                      overflowY: 'auto',
+                      padding: '12px',
+                      background: 'white',
+                      borderRadius: '12px',
+                      border: '2px solid rgba(255, 215, 0, 0.15)'
+                    }}>
+                      {TIME_SLOTS.map((slot, idx) => (
+                        <motion.label
+                          key={slot.start}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '10px',
+                            border: formData.desiredTimeSlot?.start === slot.start
+                              ? '2px solid #ffd700'
+                              : '2px solid rgba(255, 215, 0, 0.1)',
+                            borderRadius: '8px',
+                            background: formData.desiredTimeSlot?.start === slot.start
+                              ? 'linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 237, 74, 0.1))'
+                              : 'white',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            fontSize: '12px',
+                            fontWeight: '600',
+                            color: formData.desiredTimeSlot?.start === slot.start ? '#b8860b' : '#666'
+                          }}
+                        >
+                          <input
+                            type="radio"
+                            style={{ display: 'none' }}
+                            checked={formData.desiredTimeSlot?.start === slot.start}
+                            onChange={() => setFormData((prev) => ({
+                              ...prev,
+                              desiredTimeSlot: slot,
+                            }))}
+                          />
+                          {slot.start}
+                        </motion.label>
+                      ))}
+                    </div>
+                  </Form.Group>
+                </motion.div>
+              )}
+            </motion.div>
+          )}
 
-            {service?.checkboxOptions && service.checkboxOptions.length > 0 && (
-              <Form.Group className="mb-3">
-                <Form.Label>Options</Form.Label>
-                {service.checkboxOptions.map((option) => (
-                  <Form.Check
-                    key={option}
-                    type="checkbox"
-                    id={`option-${option}`}
-                    label={option}
-                    value={option}
-                    onChange={handleInputChange}
-                  />
-                ))}
+          {step === 2 && (
+            <motion.div key="step2" variants={stepVariants} initial="hidden" animate="visible" exit="exit">
+              <h6 style={{ fontWeight: '700', marginBottom: '16px', color: '#333' }}>⭐ Options et description</h6>
+
+              {service?.checkboxOptions && service.checkboxOptions.length > 0 && (
+                <Form.Group className="mb-4" style={{ background: 'white', padding: '16px', borderRadius: '12px' }}>
+                  <Form.Label style={{ fontWeight: '600', marginBottom: '12px' }}>Options disponibles</Form.Label>
+                  {service.checkboxOptions.map((option) => (
+                    <Form.Check
+                      key={option}
+                      type="checkbox"
+                      id={`option-${option}`}
+                      label={option}
+                      value={option}
+                      onChange={handleInputChange}
+                      style={{ marginBottom: '8px' }}
+                    />
+                  ))}
+                </Form.Group>
+              )}
+
+              <Form.Group style={{ background: 'white', padding: '16px', borderRadius: '12px' }}>
+                <Form.Label style={{ fontWeight: '600', marginBottom: '12px', display: 'block' }}>Description personnalisée</Form.Label>
+                <Form.Control
+                  as="textarea"
+                  rows={3}
+                  name="customDescription"
+                  value={formData.customDescription}
+                  onChange={handleInputChange}
+                  placeholder="Informations supplémentaires..."
+                  style={inputStyle}
+                />
               </Form.Group>
-            )}
+            </motion.div>
+          )}
 
-            <Form.Group className="mb-3">
-              <Form.Label>Description personnalisée</Form.Label>
-              <Form.Control
-                as="textarea"
-                rows={3}
-                name="customDescription"
-                value={formData.customDescription}
-                onChange={handleInputChange}
-                placeholder="Informations supplémentaires..."
-              />
-            </Form.Group>
-          </div>
-        )}
+          {step === 3 && (
+            <motion.div key="step3" variants={stepVariants} initial="hidden" animate="visible" exit="exit">
+              <h6 style={{ fontWeight: '700', marginBottom: '16px', color: '#333' }}>👤 Vos coordonnées</h6>
 
-        {step === 3 && (
-          <div>
-            <h6>Étape 3 : Coordonnées</h6>
+              <div style={{ background: 'white', padding: '20px', borderRadius: '12px' }}>
+                <Form.Group className="mb-3">
+                  <Form.Label style={{ fontWeight: '600', marginBottom: '8px', display: 'block', fontSize: '13px' }}>Prénom Nom *</Form.Label>
+                  <Form.Control
+                    type="text"
+                    name="clientName"
+                    value={formData.clientName}
+                    onChange={handleInputChange}
+                    placeholder="Jean Dupont"
+                    style={inputStyle}
+                    required
+                  />
+                </Form.Group>
 
-            <Form.Group className="mb-3">
-              <Form.Label>Prénom Nom</Form.Label>
-              <Form.Control
-                type="text"
-                name="clientName"
-                value={formData.clientName}
-                onChange={handleInputChange}
-                required
-              />
-            </Form.Group>
+                <Form.Group className="mb-3">
+                  <Form.Label style={{ fontWeight: '600', marginBottom: '8px', display: 'block', fontSize: '13px' }}>Téléphone *</Form.Label>
+                  <Form.Control
+                    type="tel"
+                    name="clientPhone"
+                    value={formData.clientPhone}
+                    onChange={handleInputChange}
+                    placeholder="+241 06 XX XX XX"
+                    style={inputStyle}
+                    required
+                  />
+                </Form.Group>
 
-            <Form.Group className="mb-3">
-              <Form.Label>Téléphone</Form.Label>
-              <Form.Control
-                type="tel"
-                name="clientPhone"
-                value={formData.clientPhone}
-                onChange={handleInputChange}
-                required
-              />
-            </Form.Group>
+                <Form.Group className="mb-3">
+                  <Form.Label style={{ fontWeight: '600', marginBottom: '8px', display: 'block', fontSize: '13px' }}>Email *</Form.Label>
+                  <Form.Control
+                    type="email"
+                    name="clientEmail"
+                    value={formData.clientEmail}
+                    onChange={handleInputChange}
+                    placeholder="jean@exemple.com"
+                    style={inputStyle}
+                    required
+                  />
+                </Form.Group>
 
-            <Form.Group className="mb-3">
-              <Form.Label>Email</Form.Label>
-              <Form.Control
-                type="email"
-                name="clientEmail"
-                value={formData.clientEmail}
-                onChange={handleInputChange}
-                required
-              />
-            </Form.Group>
+                <Form.Group>
+                  <Form.Label style={{ fontWeight: '600', marginBottom: '8px', display: 'block', fontSize: '13px' }}>WhatsApp *</Form.Label>
+                  <Form.Control
+                    type="tel"
+                    name="clientWhatsapp"
+                    value={formData.clientWhatsapp}
+                    onChange={handleInputChange}
+                    placeholder="+241 06 XX XX XX"
+                    style={inputStyle}
+                    required
+                  />
+                </Form.Group>
+              </div>
+            </motion.div>
+          )}
 
-            <Form.Group className="mb-3">
-              <Form.Label>WhatsApp</Form.Label>
-              <Form.Control
-                type="tel"
-                name="clientWhatsapp"
-                value={formData.clientWhatsapp}
-                onChange={handleInputChange}
-                required
-              />
-            </Form.Group>
-          </div>
-        )}
+          {step === 4 && (
+            <motion.div key="step4" variants={stepVariants} initial="hidden" animate="visible" exit="exit">
+              <h6 style={{ fontWeight: '700', marginBottom: '16px', color: '#333' }}>✅ Récapitulatif</h6>
 
-        {step === 4 && (
-          <div>
-            <h6>Étape 4 : Récapitulatif</h6>
+              <Card style={{
+                background: 'linear-gradient(135deg, rgba(255, 215, 0, 0.05), rgba(255, 237, 74, 0.05))',
+                border: '2px solid rgba(255, 215, 0, 0.2)',
+                borderRadius: '12px'
+              }}>
+                <Card.Body>
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ staggerChildren: 0.05 }}>
+                    <h6 style={{ color: '#b8860b', marginBottom: '16px', fontWeight: '700' }}>📌 {service?.title}</h6>
 
-            <Card className="mb-3">
-              <Card.Body>
-                <h6>{service?.title}</h6>
-                <p>
-                  <strong>Date :</strong>{' '}
-                  {formData.desiredDate?.toLocaleDateString('fr-FR')}
-                </p>
-                <p>
-                  <strong>Heure :</strong> {formData.desiredTimeSlot?.start} -{' '}
-                  {formData.desiredTimeSlot?.end}
-                </p>
-                <p>
-                  <strong>Nom :</strong> {formData.clientName}
-                </p>
-                <p>
-                  <strong>Téléphone :</strong> {formData.clientPhone}
-                </p>
-                <p>
-                  <strong>Email :</strong> {formData.clientEmail}
-                </p>
-                <p>
-                  <strong>WhatsApp :</strong> {formData.clientWhatsapp}
-                </p>
-                {formData.customDescription && (
-                  <p>
-                    <strong>Description :</strong> {formData.customDescription}
-                  </p>
-                )}
-              </Card.Body>
-            </Card>
-          </div>
-        )}
+                    <div style={{ fontSize: '14px', lineHeight: '1.8', color: '#333' }}>
+                      <p><strong>📅 Date :</strong> {formData.desiredDate?.toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                      <p><strong>🕐 Créneau :</strong> {formData.desiredTimeSlot?.start} - {formData.desiredTimeSlot?.end}</p>
+                      <p><strong>👤 Nom :</strong> {formData.clientName}</p>
+                      <p><strong>📞 Téléphone :</strong> {formData.clientPhone}</p>
+                      <p><strong>📧 Email :</strong> {formData.clientEmail}</p>
+                      <p><strong>💬 WhatsApp :</strong> {formData.clientWhatsapp}</p>
+                      {formData.customDescription && <p><strong>📝 Description :</strong> {formData.customDescription}</p>}
+                    </div>
+                  </motion.div>
+                </Card.Body>
+              </Card>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </Modal.Body>
 
-      <Modal.Footer>
+      <Modal.Footer style={{ background: '#f5f5f5', border: 'none', padding: '16px 32px' }}>
         {step > 1 && (
           <Button
-            variant="secondary"
+            variant="outline-secondary"
             onClick={() => setStep(step - 1)}
             disabled={loading}
+            style={{ borderRadius: '8px' }}
           >
-            Précédent
+            ← Précédent
           </Button>
         )}
 
         {step < 4 && (
           <Button
-            variant="primary"
             onClick={() => setStep(step + 1)}
             disabled={
               loading ||
@@ -374,22 +448,46 @@ export default function BookingModal({ show, onHide, service, availableSlots = [
               (step === 2 && !canProceedToStep3) ||
               (step === 3 && !canProceedToStep4)
             }
+            style={{
+              background: 'linear-gradient(135deg, #ffd700, #ffed4e)',
+              border: 'none',
+              color: '#000',
+              fontWeight: '600',
+              borderRadius: '8px'
+            }}
           >
-            Suivant
+            Suivant →
           </Button>
         )}
 
         {step === 4 && (
-          <Button
-            variant="success"
-            onClick={handleSubmit}
-            disabled={loading}
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
-            {loading ? 'En cours...' : '✅ Envoyer ma demande'}
-          </Button>
+            <Button
+              onClick={handleSubmit}
+              disabled={loading}
+              style={{
+                background: 'linear-gradient(135deg, #28a745, #20c997)',
+                border: 'none',
+                color: 'white',
+                fontWeight: '600',
+                borderRadius: '8px',
+                padding: '10px 24px'
+              }}
+            >
+              {loading ? '⏳ En cours...' : '✅ Envoyer ma demande'}
+            </Button>
+          </motion.div>
         )}
 
-        <Button variant="outline-secondary" onClick={handleClose} disabled={loading}>
+        <Button
+          variant="outline-secondary"
+          onClick={handleClose}
+          disabled={loading}
+          style={{ borderRadius: '8px' }}
+        >
           Fermer
         </Button>
       </Modal.Footer>

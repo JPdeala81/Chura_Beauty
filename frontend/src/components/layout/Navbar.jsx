@@ -8,7 +8,6 @@ const Navbar = () => {
   const [scrolled, setScrolled] = useState(false)
   const [salonName, setSalonName] = useState('Chura Beauty Salon')
   const [menuOpen, setMenuOpen] = useState(false)
-  const [currentTime, setCurrentTime] = useState(new Date())
   const location = useLocation()
   const { token, logout, admin } = useContext(AuthContext)
   
@@ -19,11 +18,6 @@ const Navbar = () => {
     const handleScroll = () => setScrolled(window.scrollY > 50)
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
-
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000)
-    return () => clearInterval(timer)
   }, [])
 
   useEffect(() => {
@@ -83,35 +77,6 @@ const Navbar = () => {
           </ul>
 
           <div className="d-flex align-items-center gap-3">
-            {/* Test Deployment Button */}
-            <motion.div
-              animate={{ scale: [1, 1.1, 1], backgroundColor: ['#00ff00', '#00cc00', '#00ff00'] }}
-              transition={{ duration: 1.5, repeat: Infinity }}
-              style={{
-                padding: '8px 16px',
-                borderRadius: '20px',
-                background: '#00ff00',
-                color: '#000',
-                fontWeight: '700',
-                fontSize: '12px',
-                boxShadow: '0 0 20px rgba(0, 255, 0, 0.6)',
-                border: '2px solid #00ff00'
-              }}
-            >
-              ✅ Déploiement a fonctionné ✅
-            </motion.div>
-
-            {/* Time Badge - Animated */}
-            <motion.div
-              animate={{ scale: [1, 1.05, 1] }}
-              transition={{ duration: 2, repeat: Infinity }}
-              className="navbar-time-badge"
-              style={{ fontSize: 'clamp(11px, 2vw, 16px)' }}
-            >
-              <span style={{ fontSize: '1em' }}>🕐</span>
-              <span>{currentTime.toLocaleTimeString('fr-FR')}</span>
-            </motion.div>
-
             {/* Book Appointment Button - DISABLED FOR ADMIN/DEVELOPER */}
             {isAdminOrDeveloper ? (
               <motion.div

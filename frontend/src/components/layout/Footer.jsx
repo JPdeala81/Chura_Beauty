@@ -206,14 +206,11 @@ const Footer = () => {
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.color = '#ffd700';
-                      e.currentTarget.style.paddingLeft = '8px';
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.color = '#b0b0b0';
-                      e.currentTarget.style.paddingLeft = '0';
                     }}
                   >
-                    <span>→</span>
                     {service}
                   </Link>
                 </motion.li>
@@ -260,14 +257,11 @@ const Footer = () => {
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.color = '#ffd700';
-                      e.currentTarget.style.paddingLeft = '8px';
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.color = '#b0b0b0';
-                      e.currentTarget.style.paddingLeft = '0';
                     }}
                   >
-                    <span>→</span>
                     {item.label}
                   </Link>
                 </motion.li>
