@@ -176,9 +176,9 @@ const DeveloperDashboard = () => {
 
   useEffect(() => {
     fetchAllData()
-    // Only refetch if not in edit mode
+    // Only refetch if not in edit mode (optimized to 30s for performance)
     if (editingProfile || editingSiteSettings) return
-    const interval = setInterval(fetchAllData, 5000)
+    const interval = setInterval(fetchAllData, 30000) // Reduced from 5000 to 30000ms
     return () => clearInterval(interval)
   }, [editingProfile, editingSiteSettings])
 

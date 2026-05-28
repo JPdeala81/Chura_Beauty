@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Form, Button, Card, Alert } from 'react-bootstrap';
 import * as serviceService from '../../services/serviceService';
-import { useFormValidation, validators } from '../../hooks/useFormValidation';
+import { useFormValidation } from '../../hooks/useFormValidation';
 
 export default function ServiceForm({ service, onClose }) {
   const [categories, setCategories] = useState([]);

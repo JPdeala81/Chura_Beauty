@@ -41,12 +41,34 @@ const SecuritySettings = ({ isFirstLogin, onComplete }) => {
 
   const handlePasswordChange = async (e) => {
     e.preventDefault()
-    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      return setMessagePassword({ type: 'error', text: 'Les mots de passe ne correspondent pas' })
+    setMessagePassword(null)
+
+    // Validation stricte
+    if (!passwordForm.currentPassword) {
+      return setMessagePassword({ type: 'error', text: 'Mot de passe actuel requis' })
+    }
+    if (!passwordForm.newPassword) {
+      return setMessagePassword({ type: 'error', text: 'Nouveau mot de passe requis' })
     }
     if (passwordForm.newPassword.length < 8) {
       return setMessagePassword({ type: 'error', text: 'Le mot de passe doit avoir au moins 8 caractères' })
     }
+    if (!/[A-Z]/.test(passwordForm.newPassword)) {
+      return setMessagePassword({ type: 'error', text: 'Le mot de passe doit contenir au moins une majuscule' })
+    }
+    if (!/[a-z]/.test(passwordForm.newPassword)) {
+      return setMessagePassword({ type: 'error', text: 'Le mot de passe doit contenir au moins une minuscule' })
+    }
+    if (!/[0-9]/.test(passwordForm.newPassword)) {
+      return setMessagePassword({ type: 'error', text: 'Le mot de passe doit contenir au moins un chiffre' })
+    }
+    if (!/[!@#$%^&*]/.test(passwordForm.newPassword)) {
+      return setMessagePassword({ type: 'error', text: 'Le mot de passe doit contenir un caractère spécial (!@#$%^&*)' })
+    }
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      return setMessagePassword({ type: 'error', text: 'Les mots de passe ne correspondent pas' })
+    }
+
     setLoadingPassword(true)
     try {
       await api.put('/auth/change-password', {

@@ -133,10 +133,10 @@ const SuperAdminDashboard = () => {
     fetchAllData()
   }, []);
 
-  // Stop auto-refetch when editing forms
+  // Optimized auto-refetch: only every 30 seconds and stop when editing
   useEffect(() => {
     if (editingProfile || editingSiteSettings) return
-    const interval = setInterval(fetchAllData, 5000)
+    const interval = setInterval(fetchAllData, 30000) // Reduced from 5000 to 30000ms for performance
     return () => clearInterval(interval)
   }, [editingProfile, editingSiteSettings])
 
