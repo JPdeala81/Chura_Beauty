@@ -35,18 +35,16 @@ const Home = () => {
     }
   }, [location.state])
 
-  useEffect(() => { 
-    // Check maintenance mode on mount
+  useEffect(() => {
     checkMaintenanceMode()
-    fetchServices() 
+    fetchServices()
   }, [])
 
-  useEffect(() => { 
+  useEffect(() => {
     filterServices()
     setCurrentPage(1)
   }, [services, activeCategory, searchQuery, priceRange])
 
-  // Check if maintenance mode is active
   const checkMaintenanceMode = async () => {
     try {
       const response = await api.get('/site-settings')
@@ -66,7 +64,6 @@ const Home = () => {
     }
   }
 
-  // Update countdown timer for maintenance
   useEffect(() => {
     if (!maintenanceMode || !maintenanceInfo?.reopenDate) return
 
@@ -77,7 +74,7 @@ const Home = () => {
 
       if (diff <= 0) {
         setTimeRemaining('Prochainement...')
-        checkMaintenanceMode() // Re-check if maintenance is over
+        checkMaintenanceMode()
         return
       }
 
@@ -90,24 +87,23 @@ const Home = () => {
 
     updateTimer()
     const interval = setInterval(updateTimer, 1000)
-
     return () => clearInterval(interval)
   }, [maintenanceMode, maintenanceInfo])
 
   const fetchServices = async () => {
     try {
-      setLoading(true);
-      const response = await api.get('/services');
-      const data = response.data.services || response.data || [];
-      setServices(Array.isArray(data) ? data : []);
+      setLoading(true)
+      const response = await api.get('/services')
+      const data = response.data.services || response.data || []
+      setServices(Array.isArray(data) ? data : [])
       const cats = ['Tous', ...new Set(data.map(s => s.category).filter(Boolean))]
-      setCategories(cats);
+      setCategories(cats)
     } catch (error) {
-      console.error('Erreur chargement services:', error);
-      setServices([]);
-      setCategories(['Tous']);
+      console.error('Erreur chargement services:', error)
+      setServices([])
+      setCategories(['Tous'])
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
   }
 
@@ -131,7 +127,6 @@ const Home = () => {
     setFiltered(result)
   }
 
-  // Pagination logic
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE)
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
   const endIndex = startIndex + ITEMS_PER_PAGE
@@ -147,491 +142,333 @@ const Home = () => {
     servicesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
-  return (
-    <>
-      {/* Maintenance Mode Display */}
-      {maintenanceMode && (
+  // Maintenance Mode Screen
+  if (maintenanceMode) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        style={{
+          minHeight: '100vh',
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 'clamp(20px, 5vw, 40px)',
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 9999
+        }}
+      >
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
+          initial={{ scale: 0.9, opacity: 0, y: 20 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
           style={{
-            minHeight: '100vh',
-            background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '2rem',
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            zIndex: 9999
+            textAlign: 'center',
+            maxWidth: '600px',
+            color: 'white',
+            background: 'rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(20px)',
+            borderRadius: '20px',
+            padding: 'clamp(30px, 8vw, 60px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            boxShadow: '0 8px 32px rgba(31, 38, 135, 0.37)'
           }}
         >
           <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
+            animate={{ scale: [1, 1.15, 1] }}
+            transition={{ duration: 2, repeat: Infinity }}
+            style={{ fontSize: 'clamp(80px, 15vw, 120px)', marginBottom: '20px' }}
+          >
+            🔧
+          </motion.div>
+
+          <h1 style={{
+            fontSize: 'clamp(2rem, 6vw, 3.5rem)',
+            fontWeight: '800',
+            marginBottom: '16px',
+            background: 'linear-gradient(135deg, #ffd700, #ffed4e)',
+            backgroundClip: 'text',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            margin: '0 0 16px 0'
+          }}>
+            Maintenance en Cours
+          </h1>
+
+          <p style={{
+            fontSize: 'clamp(15px, 2.5vw, 18px)',
+            marginBottom: '24px',
+            color: 'rgba(255, 255, 255, 0.9)',
+            lineHeight: '1.7'
+          }}>
+            {maintenanceInfo?.reason || 'Nous effectuons une maintenance programmée pour améliorer votre expérience.'}
+          </p>
+
+          {timeRemaining && (
+            <motion.div
+              initial={{ y: -20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              style={{
+                background: 'rgba(255, 215, 0, 0.15)',
+                border: '2px solid #ffd700',
+                borderRadius: '16px',
+                padding: 'clamp(20px, 4vw, 30px)',
+                marginBottom: '24px'
+              }}
+            >
+              <p style={{ margin: 0, color: '#ffed4e', fontSize: 'clamp(12px, 2vw, 14px)', marginBottom: '8px', fontWeight: '600' }}>
+                ⏱️ Réouverture dans
+              </p>
+              <h2 style={{
+                margin: 0,
+                fontSize: 'clamp(28px, 6vw, 42px)',
+                fontWeight: 'bold',
+                fontFamily: 'monospace',
+                color: '#ffd700',
+                letterSpacing: '2px'
+              }}>
+                {timeRemaining}
+              </h2>
+            </motion.div>
+          )}
+
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.3 }}
             style={{
-              textAlign: 'center',
-              maxWidth: '600px',
-              color: 'white'
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              borderRadius: '16px',
+              padding: 'clamp(20px, 4vw, 30px)',
+              marginBottom: '24px',
+              textAlign: 'left'
             }}
           >
-            {/* Main Icon */}
-            <motion.div
-              animate={{ scale: [1, 1.1, 1] }}
-              transition={{ duration: 2, repeat: Infinity }}
-              style={{ fontSize: '120px', marginBottom: '2rem' }}
-            >
-              🔧
-            </motion.div>
-
-            {/* Title */}
-            <h1 style={{
-              fontSize: 'clamp(2rem, 5vw, 3.5rem)',
-              fontWeight: 'bold',
-              marginBottom: '1rem',
-              background: 'linear-gradient(135deg, #ffc107, #ff9800)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text'
+            <h3 style={{ marginTop: 0, marginBottom: '12px', color: 'white', fontSize: 'clamp(14px, 2vw, 16px)', fontWeight: '700' }}>
+              ✨ Pendant la maintenance
+            </h3>
+            <ul style={{
+              listStyle: 'none',
+              padding: 0,
+              margin: 0,
+              fontSize: 'clamp(13px, 2vw, 15px)'
             }}>
-              Maintenance en Cours
-            </h1>
-
-            {/* Reason */}
-            <p style={{
-              fontSize: '1.2rem',
-              marginBottom: '2rem',
-              color: '#e0e0e0',
-              lineHeight: '1.6'
-            }}>
-              {maintenanceInfo?.reason || 'Nous effectuons une maintenance programmée pour améliorer votre expérience.'}
-            </p>
-
-            {/* Countdown */}
-            {timeRemaining && (
-              <motion.div
-                initial={{ y: -20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                style={{
-                  background: 'rgba(255, 193, 7, 0.15)',
-                  border: '2px solid #ffc107',
-                  borderRadius: '12px',
-                  padding: '2rem',
-                  marginBottom: '2rem'
-                }}
-              >
-                <p style={{ margin: 0, color: '#ffc107', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
-                  Temps avant la réouverture
-                </p>
-                <h2 style={{
-                  margin: 0,
-                  fontSize: '2.5rem',
-                  fontWeight: 'bold',
-                  fontFamily: 'monospace',
-                  color: '#ffc107'
-                }}>
-                  {timeRemaining}
-                </h2>
-              </motion.div>
-            )}
-
-            {/* Additional Info */}
-            <div style={{
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: '12px',
-              padding: '2rem',
-              marginBottom: '2rem'
-            }}>
-              <h3 style={{ marginTop: 0, marginBottom: '1rem', color: '#e0e0e0' }}>
-                Pendant la maintenance
-              </h3>
-              <ul style={{
-                listStyle: 'none',
-                padding: 0,
-                margin: 0,
-                textAlign: 'left'
-              }}>
-                <li style={{ marginBottom: '0.5rem' }}>✓ Les réservations seront rouvertes après la maintenance</li>
-                <li style={{ marginBottom: '0.5rem' }}>✓ Nous améliorons continuellement notre plateforme</li>
-                <li>✓ Veuillez nous remercier de votre patience</li>
-              </ul>
-            </div>
-
-            {/* Contact Info */}
-            <p style={{ color: '#999', fontSize: '0.9rem' }}>
-              Besoin d'aide? Contactez-nous à{' '}
-              <a href="mailto:support@chura.com" style={{ color: '#ffc107', textDecoration: 'none' }}>
-                support@chura.com
-              </a>
-            </p>
+              <li style={{ marginBottom: '8px', color: 'rgba(255, 255, 255, 0.8)' }}>✓ Les réservations rouvriront après</li>
+              <li style={{ marginBottom: '8px', color: 'rgba(255, 255, 255, 0.8)' }}>✓ Nous améliorons continuellement</li>
+              <li style={{ color: 'rgba(255, 255, 255, 0.8)' }}>✓ Merci de votre patience!</li>
+            </ul>
           </motion.div>
-        </motion.div>
-      )}
 
-      {/* Normal Page Content - Hidden during maintenance */}
-      {!maintenanceMode && (
-        <>
-          <Navbar />
-          <ErrorToast message={errorMessage} onClose={() => setErrorMessage('')} />
-          
-          <HeroSection onScrollToServices={scrollToServices} />
+          <p style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: 'clamp(12px, 2vw, 14px)', margin: 0 }}>
+            Besoin d'aide?{' '}
+            <a href="mailto:support@chura.com" style={{ color: '#ffd700', textDecoration: 'none', fontWeight: '600' }}>
+              Contactez-nous
+            </a>
+          </p>
+        </motion.div>
+      </motion.div>
+    )
+  }
+
+  return (
+    <>
+      <Navbar />
+      <ErrorToast message={errorMessage} onClose={() => setErrorMessage('')} />
+
+      <HeroSection onScrollToServices={scrollToServices} />
 
       {/* Services Section */}
       <section
         ref={servicesRef}
-        style={{ 
-          background: 'linear-gradient(135deg, var(--light-color) 0%, var(--light-medium) 100%)',
+        style={{
+          background: 'linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%)',
           minHeight: '70vh',
           paddingTop: 'clamp(40px, 8vw, 80px)',
           paddingBottom: 'clamp(40px, 10vw, 100px)',
-          position: 'relative',
-          overflow: 'hidden'
+          position: 'relative'
         }}
       >
-        {/* Decorative elements */}
-        <div style={{
-          position: 'absolute',
-          top: -80,
-          right: -150,
-          width: 400,
-          height: 400,
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(184,134,11,0.06) 0%, transparent 70%)',
-          pointerEvents: 'none'
-        }}></div>
+        {/* Background animation */}
+        <motion.div
+          animate={{ opacity: [0.3, 0.6, 0.3] }}
+          transition={{ duration: 6, repeat: Infinity }}
+          style={{
+            position: 'absolute',
+            top: 0,
+            right: '10%',
+            width: '300px',
+            height: '300px',
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(255, 215, 0, 0.1), transparent)',
+            zIndex: 0
+          }}
+        />
 
-        <div className="container" style={{ position: 'relative', zIndex: 2 }}>
+        <div className="container" style={{ position: 'relative', zIndex: 1 }}>
           {/* Section Header */}
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-            className="text-center mb-5"
-            style={{ paddingBottom: '20px' }}
-          >
-            <span style={{
-              background: 'rgba(184,134,11,0.1)',
-              color: 'var(--primary-color)',
-              padding: '8px 24px',
-              borderRadius: '20px',
-              fontSize: '13px',
-              fontWeight: '700',
-              letterSpacing: '2px',
-              textTransform: 'uppercase',
-              border: '1px solid rgba(184,134,11,0.2)',
-              display: 'inline-block',
-              marginBottom: '20px'
-            }}>
-              ✨ Nos Prestations
-            </span>
-            <h2 className="section-title centered" style={{ display: 'block', marginBottom: '12px' }}>
-              Découvrez Nos Services
-            </h2>
-            <p className="text-muted mt-3" style={{ 
-              maxWidth: '520px', 
-              margin: '16px auto 0', 
-              lineHeight: '1.8', 
-              fontSize: 'clamp(14px, 2.5vw, 16px)' 
-            }}>
-              Des soins de beauté personnalisés pour révéler votre éclat naturel avec nos expertes qualifiées
-            </p>
-          </motion.div>
-
-          {/* Search and Filters */}
-          <div style={{ marginBottom: '40px' }}>
-            <SearchBar onSearch={setSearchQuery} />
-            <div style={{ marginTop: '24px' }}>
-              <CategoryFilter
-                categories={categories}
-                selectedCategory={activeCategory}
-                onSelect={setActiveCategory}
-              />
-            </div>
-          </div>
-
-          {/* Services Grid */}
-          <AnimatePresence mode="wait">
-            {loading ? (
-              <motion.div
-                key="loading"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="text-center py-5"
-              >
-                <div style={{
-                  width: '60px',
-                  height: '60px',
-                  border: '3px solid rgba(184,134,11,0.2)',
-                  borderTop: '3px solid var(--primary-color)',
-                  borderRadius: '50%',
-                  animation: 'spin 1s linear infinite',
-                  margin: '0 auto 20px'
-                }}></div>
-                <p className="text-muted">Chargement des services...</p>
-              </motion.div>
-            ) : filtered.length === 0 ? (
-              <motion.div
-                key="empty"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0 }}
-                className="text-center py-5"
-              >
-                <motion.div
-                  animate={{ rotate: [0, 10, -10, 0] }}
-                  transition={{ duration: 1, repeat: Infinity, repeatDelay: 2 }}
-                  style={{ fontSize: '5rem', marginBottom: '20px' }}
-                >
-                  🔍
-                </motion.div>
-                <h4 style={{ color: 'var(--primary-color)', fontFamily: 'Playfair Display, serif' }}>
-                  Aucun service trouvé
-                </h4>
-                <p className="text-muted mb-4">Essayez une autre recherche ou catégorie</p>
-                <motion.button
-                  className="btn-luxury-primary"
-                  onClick={() => { setSearchQuery(''); setActiveCategory('Tous') }}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  Voir tous les services
-                </motion.button>
-              </motion.div>
-            ) : (
-              <>
-                <motion.div
-                  key="services"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="row g-4"
-                >
-                  {paginatedServices.map((service, index) => (
-                    <motion.div
-                      key={service.id || service._id || index}
-                      className="col-lg-4 col-md-6"
-                      initial={{ opacity: 0, y: 40 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.5, delay: Math.min(index * 0.08, 0.4) }}
-                      viewport={{ once: true, margin: '-50px' }}
-                    >
-                      <ServiceCard service={service} />
-                    </motion.div>
-                  ))}
-                </motion.div>
-
-                {/* Pagination Info and Controls */}
-                {filtered.length > ITEMS_PER_PAGE && (
-                  <div style={{
-                    marginTop: '60px',
-                    paddingTop: '40px',
-                    borderTop: '2px solid rgba(184,134,11,0.2)',
-                    textAlign: 'center'
-                  }}>
-                    <p className="text-muted mb-4" style={{ fontSize: '14px', fontWeight: '600', marginBottom: '20px' }}>
-                      📊 Affichage {startIndex + 1}-{Math.min(endIndex, filtered.length)} sur {filtered.length} services
-                    </p>
-
-                    {totalPages > 1 && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="d-flex justify-content-center align-items-center gap-3"
-                        style={{ 
-                          flexWrap: 'wrap',
-                          marginTop: '20px'
-                        }}
-                      >
-                        <motion.button
-                          onClick={() => goToPage(currentPage - 1)}
-                          disabled={currentPage === 1}
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          style={{
-                            padding: '10px 16px',
-                            borderRadius: '8px',
-                            border: '1px solid var(--primary-color)',
-                            background: currentPage === 1 ? 'rgba(184,134,11,0.1)' : 'var(--primary-color)',
-                            color: currentPage === 1 ? 'var(--primary-color)' : 'white',
-                            cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
-                            fontWeight: '600',
-                            opacity: currentPage === 1 ? 0.5 : 1
-                          }}
-                        >
-                          ← Précédent
-                        </motion.button>
-
-                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                          {Array.from({ length: Math.min(totalPages, 5) }).map((_, i) => {
-                            let pageNum;
-                            if (totalPages <= 5) {
-                              pageNum = i + 1;
-                            } else if (currentPage <= 3) {
-                              pageNum = i + 1;
-                            } else if (currentPage >= totalPages - 2) {
-                              pageNum = totalPages - 4 + i;
-                            } else {
-                              pageNum = currentPage - 2 + i;
-                            }
-
-                            if (pageNum < 1 || pageNum > totalPages) return null;
-
-                            return (
-                              <motion.button
-                                key={pageNum}
-                                onClick={() => goToPage(pageNum)}
-                                whileHover={{ scale: 1.1 }}
-                                whileTap={{ scale: 0.95 }}
-                                style={{
-                                  width: '40px',
-                                  height: '40px',
-                                  borderRadius: '6px',
-                                  border: currentPage === pageNum ? 'none' : '1px solid var(--primary-color)',
-                                  background: currentPage === pageNum ? 'var(--primary-color)' : 'transparent',
-                                  color: currentPage === pageNum ? 'white' : 'var(--primary-color)',
-                                  fontWeight: '600',
-                                  cursor: 'pointer',
-                                  fontSize: '14px'
-                                }}
-                              >
-                                {pageNum}
-                              </motion.button>
-                            );
-                          })}
-                        </div>
-
-                        <motion.button
-                          onClick={() => goToPage(currentPage + 1)}
-                          disabled={currentPage === totalPages}
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          style={{
-                            padding: '10px 16px',
-                            borderRadius: '8px',
-                            border: '1px solid var(--primary-color)',
-                            background: currentPage === totalPages ? 'rgba(184,134,11,0.1)' : 'var(--primary-color)',
-                            color: currentPage === totalPages ? 'var(--primary-color)' : 'white',
-                            cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
-                            fontWeight: '600',
-                            opacity: currentPage === totalPages ? 0.5 : 1
-                          }}
-                        >
-                          Suivant →
-                        </motion.button>
-
-                        <span
-                          style={{
-                            color: 'var(--primary-color)',
-                            fontWeight: '600',
-                            marginLeft: '16px',
-                            fontSize: '14px',
-                            background: 'rgba(184,134,11,0.1)',
-                            padding: '6px 12px',
-                            borderRadius: '6px'
-                          }}
-                        >
-                          Page {currentPage} / {totalPages}
-                        </span>
-                      </motion.div>
-                    )}
-                  </div>
-                )}
-              </>
-            )}
-          </AnimatePresence>
-        </div>
-      </section>
-
-      {/* Why Us Section */}
-      <section style={{ background: 'linear-gradient(135deg, #ffffff 0%, var(--light-medium) 100%)', padding: '100px 0', position: 'relative', overflow: 'hidden' }}>
-        {/* Decorative background */}
-        <div style={{
-          position: 'absolute',
-          bottom: -100,
-          left: -100,
-          width: 400,
-          height: 400,
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(248,200,212,0.08) 0%, transparent 70%)',
-          pointerEvents: 'none'
-        }}></div>
-
-        <div className="container" style={{ position: 'relative', zIndex: 2 }}>
-          <motion.div
-            className="text-center mb-5"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            style={{ marginBottom: '60px' }}
+            style={{ textAlign: 'center', marginBottom: 'clamp(30px, 5vw, 50px)' }}
           >
-            <span style={{
-              background: 'rgba(184,134,11,0.1)',
-              color: 'var(--primary-color)',
-              padding: '8px 24px',
-              borderRadius: '20px',
-              fontSize: '13px',
-              fontWeight: '700',
-              letterSpacing: '2px',
-              textTransform: 'uppercase',
-              border: '1px solid rgba(184,134,11,0.2)',
-              display: 'inline-block',
-              marginBottom: '20px'
+            <h2 style={{
+              fontSize: 'clamp(2rem, 6vw, 3rem)',
+              fontFamily: 'Playfair Display, serif',
+              color: '#333',
+              fontWeight: '800',
+              margin: 0,
+              marginBottom: '12px'
             }}>
-              ⭐ Nos Avantages
-            </span>
-            <h2 className="section-title centered" style={{ display: 'block', marginBottom: '16px' }}>
-              Pourquoi Nous Choisir
+              ✨ Nos Services Magnifiques
             </h2>
-            <p className="text-muted" style={{ maxWidth: '520px', margin: '0 auto', lineHeight: '1.8', fontSize: '16px' }}>
-              Découvrez les raisons pour lesquelles nos clientes nous font confiance et reviennent à chaque visite
+            <p style={{
+              fontSize: 'clamp(14px, 2.5vw, 16px)',
+              color: '#999',
+              margin: 0,
+              maxWidth: '500px',
+              margin: '0 auto'
+            }}>
+              Découvrez notre collection exclusive de services beauté haut de gamme
             </p>
           </motion.div>
-          
-          <div className="row g-5">
-            {[
-              { icon: '👑', title: 'Expertise Premium', desc: 'Des années de formation et de passion pour la beauté intemporelle' },
-              { icon: '🌿', title: 'Produits Naturels', desc: 'Nous utilisons uniquement des produits de qualité supérieure et naturels' },
-              { icon: '💝', title: 'Service Personnalisé', desc: 'Chaque cliente est unique et mérite une attention particulière' },
-              { icon: '📅', title: 'Réservation Facile', desc: 'Prenez rendez-vous en ligne en quelques clics, 24h/24' }
-            ].map((item, i) => (
-              <div key={i} className="col-md-6 col-lg-3">
-                <motion.div
-                  className="why-card"
-                  initial={{ opacity: 0, y: 40 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.12, duration: 0.6 }}
-                  viewport={{ once: true }}
-                  style={{ height: '100%' }}
+
+          {/* Filters */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+            style={{
+              background: 'white',
+              borderRadius: '16px',
+              padding: 'clamp(20px, 4vw, 30px)',
+              marginBottom: 'clamp(30px, 5vw, 50px)',
+              boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)',
+              border: '1px solid rgba(255, 215, 0, 0.1)'
+            }}
+          >
+            <div style={{ marginBottom: '20px' }}>
+              <SearchBar value={searchQuery} onChange={setSearchQuery} />
+            </div>
+
+            <CategoryFilter
+              categories={categories}
+              activeCategory={activeCategory}
+              onCategoryChange={setActiveCategory}
+            />
+          </motion.div>
+
+          {/* Loading State */}
+          {loading && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                minHeight: '300px'
+              }}
+            >
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                style={{
+                  width: '50px',
+                  height: '50px',
+                  border: '3px solid rgba(255, 215, 0, 0.2)',
+                  borderTop: '3px solid #ffd700',
+                  borderRadius: '50%'
+                }}
+              />
+            </motion.div>
+          )}
+
+          {/* Services Grid */}
+          {!loading && paginatedServices.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(clamp(280px, 30vw, 320px), 1fr))',
+                gap: 'clamp(20px, 3vw, 30px)',
+                marginBottom: 'clamp(30px, 5vw, 50px)'
+              }}
+            >
+              {paginatedServices.map((service, idx) => (
+                <ServiceCard key={service.id} service={service} index={idx} />
+              ))}
+            </motion.div>
+          )}
+
+          {/* No Services Message */}
+          {!loading && paginatedServices.length === 0 && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              style={{
+                textAlign: 'center',
+                padding: 'clamp(40px, 8vw, 60px)',
+                background: 'rgba(255, 215, 0, 0.05)',
+                borderRadius: '16px',
+                border: '2px dashed rgba(255, 215, 0, 0.2)'
+              }}
+            >
+              <p style={{ fontSize: 'clamp(16px, 3vw, 18px)', color: '#999', margin: 0 }}>
+                Aucun service ne correspond à votre recherche. Essayez d'autres critères! 🔍
+              </p>
+            </motion.div>
+          )}
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              style={{
+                display: 'flex',
+                justifyContent: 'center',
+                gap: '8px',
+                flexWrap: 'wrap'
+              }}
+            >
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                <motion.button
+                  key={page}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => goToPage(page)}
+                  style={{
+                    padding: '10px 14px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: page === currentPage ? '#ffd700' : 'white',
+                    color: page === currentPage ? '#000' : '#333',
+                    fontWeight: page === currentPage ? '700' : '600',
+                    cursor: 'pointer',
+                    fontSize: 'clamp(12px, 2vw, 14px)',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                    transition: 'all 0.3s ease'
+                  }}
                 >
-                  <div className="why-icon">{item.icon}</div>
-                  <h5 style={{ fontFamily: 'Playfair Display, serif', color: 'var(--dark-color)', marginBottom: '12px', fontSize: '18px', fontWeight: '700' }}>
-                    {item.title}
-                  </h5>
-                  <p style={{ color: 'var(--text-muted)', fontSize: '15px', lineHeight: '1.8', margin: 0 }}>
-                    {item.desc}
-                  </p>
-                </motion.div>
-              </div>
-            ))}
-          </div>
+                  {page}
+                </motion.button>
+              ))}
+            </motion.div>
+          )}
         </div>
       </section>
 
       <Footer />
-
-      <style>{`
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
-        </>
-      )}
     </>
   )
 }
