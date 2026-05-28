@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import api from '../../services/api';
+import { compressImage, isFileSizeAcceptable } from '../../utils/imageCompression';
+import { sanitizeObject, isValidHexColor } from '../../utils/dataSanitization';
 
 const initialState = {
   salonName: '',
@@ -92,17 +94,35 @@ const SiteSettings = ({ onUpdate }) => {
   const handleFileChange = async (e, type) => {
     const file = e.target.files[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      if (type === 'cover') setCoverPreview(reader.result);
-      if (type === 'profile') setProfilePreview(reader.result);
-      if (type === 'favicon') setFaviconPreview(reader.result);
-    };
-    reader.readAsDataURL(file);
-    setForm(f => ({ 
-      ...f, 
-      [type === 'cover' ? 'coverPhoto' : type === 'profile' ? 'profilePhoto' : 'faviconImage']: file 
-    }));
+
+    // Check file size before processing
+    if (!isFileSizeAcceptable(file, 5)) {
+      setMessage({ type: 'error', text: `Fichier trop volumineux (max 5MB). Taille actuelle: ${(file.size / 1024 / 1024).toFixed(2)}MB` });
+      return;
+    }
+
+    try {
+      // Compress image if it's an image file
+      let processedFile = file;
+      if (file.type.startsWith('image/')) {
+        processedFile = await compressImage(file, 1920, 1080, 0.85);
+        setMessage({ type: 'success', text: `✅ Image compressée de ${(file.size / 1024).toFixed(2)}KB à ${(processedFile.size / 1024).toFixed(2)}KB` });
+      }
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (type === 'cover') setCoverPreview(reader.result);
+        if (type === 'profile') setProfilePreview(reader.result);
+        if (type === 'favicon') setFaviconPreview(reader.result);
+      };
+      reader.readAsDataURL(processedFile);
+      setForm(f => ({
+        ...f,
+        [type === 'cover' ? 'coverPhoto' : type === 'profile' ? 'profilePhoto' : 'faviconImage']: processedFile
+      }));
+    } catch (err) {
+      setMessage({ type: 'error', text: `Erreur traitement image: ${err.message}` });
+    }
   };
 
   const handleSubmit = async e => {
@@ -198,25 +218,42 @@ const SiteSettings = ({ onUpdate }) => {
     }
 
     try {
+      // Sanitize all text fields
+      const sanitizedForm = sanitizeObject({
+        salonName: form.salonName,
+        heroTitle: form.heroTitle,
+        heroSubtitle: form.heroSubtitle,
+        bio: form.bio,
+        phone: form.phone,
+        whatsapp: form.whatsapp,
+        address: form.address,
+        instagram: form.instagram,
+        facebook: form.facebook,
+        heroCta: form.heroCta,
+        heroCtaSecondary: form.heroCtaSecondary,
+        navbarCta: form.navbarCta,
+        adminBtnText: form.adminBtnText
+      });
+
       // Prepare form data for file upload
       const data = new FormData();
-      data.append('salon_name', form.salonName);
-      data.append('hero_title', form.heroTitle);
-      data.append('hero_subtitle', form.heroSubtitle);
-      data.append('bio', form.bio);
-      data.append('phone', form.phone);
-      data.append('whatsapp', form.whatsapp);
-      data.append('address', form.address);
-      data.append('instagram', form.instagram);
-      data.append('facebook', form.facebook);
+      data.append('salon_name', sanitizedForm.salonName);
+      data.append('hero_title', sanitizedForm.heroTitle);
+      data.append('hero_subtitle', sanitizedForm.heroSubtitle);
+      data.append('bio', sanitizedForm.bio);
+      data.append('phone', sanitizedForm.phone);
+      data.append('whatsapp', sanitizedForm.whatsapp);
+      data.append('address', sanitizedForm.address);
+      data.append('instagram', sanitizedForm.instagram);
+      data.append('facebook', sanitizedForm.facebook);
       data.append('hero_bg_color', form.heroBgColor);
       data.append('hero_text_color', form.heroTextColor);
       data.append('favicon_emoji', form.faviconEmoji);
       data.append('hero_animation', form.heroAnimation);
-      data.append('hero_cta_text', form.heroCta);
-      data.append('hero_cta2_text', form.heroCtaSecondary);
-      data.append('navbar_cta_text', form.navbarCta);
-      data.append('admin_btn_text', form.adminBtnText);
+      data.append('hero_cta_text', sanitizedForm.heroCta);
+      data.append('hero_cta2_text', sanitizedForm.heroCtaSecondary);
+      data.append('navbar_cta_text', sanitizedForm.navbarCta);
+      data.append('admin_btn_text', sanitizedForm.adminBtnText);
       // Design tokens
       data.append('primary_color', form.primaryColor);
       data.append('secondary_color', form.secondaryColor);
@@ -224,14 +261,28 @@ const SiteSettings = ({ onUpdate }) => {
       data.append('card_shadow_blur', form.cardShadowBlur);
       data.append('animation_enabled', form.animationEnabled);
       data.append('theme_name', form.themeName);
-      if (form.coverPhoto instanceof File) data.append('cover_photo', form.coverPhoto);
-      if (form.profilePhoto instanceof File) data.append('profile_photo', form.profilePhoto);
-      if (form.faviconImage instanceof File) data.append('favicon_image', form.faviconImage);
+
+      // Add images with proper handling
+      if (form.coverPhoto instanceof File) {
+        data.append('cover_photo', form.coverPhoto);
+      }
+      if (form.profilePhoto instanceof File) {
+        data.append('profile_photo', form.profilePhoto);
+      }
+      if (form.faviconImage instanceof File) {
+        data.append('favicon_image', form.faviconImage);
+      }
+
       await api.put('/auth/profile', data);
       setMessage({ type: 'success', text: '✅ Paramètres du site sauvegardés !' });
       if (onUpdate) onUpdate();
     } catch (err) {
-      setMessage({ type: 'error', text: err.response?.data?.message || 'Erreur lors de la sauvegarde' });
+      const errorMsg = err.response?.data?.message || err.message || 'Erreur lors de la sauvegarde';
+      if (err.response?.status === 413) {
+        setMessage({ type: 'error', text: '❌ Données trop volumineux. Réduisez la taille des images.' });
+      } else {
+        setMessage({ type: 'error', text: errorMsg });
+      }
     } finally {
       setLoading(false);
     }

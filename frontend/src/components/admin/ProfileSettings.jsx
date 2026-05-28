@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Form, Button, Card, Alert } from 'react-bootstrap';
 import { useFormValidation } from '../../hooks/useFormValidation';
+import { sanitizeObject } from '../../utils/dataSanitization';
 import * as authService from '../../services/authService';
 
 export default function ProfileSettings({ admin, onUpdate }) {
@@ -80,16 +81,29 @@ export default function ProfileSettings({ admin, onUpdate }) {
   const handleSubmit = form.handleSubmit(async (values) => {
     setSuccess('');
     try {
-      const updateData = {
+      // Sanitize all user inputs
+      const sanitizedValues = sanitizeObject({
         email: values.email,
-        salon_name: values.salonName,
-        owner_name: values.ownerName,
+        salonName: values.salonName,
+        ownerName: values.ownerName,
         phone: values.phone,
         whatsapp: values.whatsapp,
         address: values.address,
         bio: values.bio,
         instagram: values.instagram,
         facebook: values.facebook,
+      });
+
+      const updateData = {
+        email: sanitizedValues.email,
+        salon_name: sanitizedValues.salonName,
+        owner_name: sanitizedValues.ownerName,
+        phone: sanitizedValues.phone,
+        whatsapp: sanitizedValues.whatsapp,
+        address: sanitizedValues.address,
+        bio: sanitizedValues.bio,
+        instagram: sanitizedValues.instagram,
+        facebook: sanitizedValues.facebook,
       };
 
       await authService.updateAdmin(updateData);
