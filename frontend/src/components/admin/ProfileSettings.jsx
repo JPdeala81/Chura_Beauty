@@ -1,238 +1,399 @@
-import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
-import api from '../../services/api'
+import { useState, useEffect } from 'react';
+import { Form, Button, Card, Alert } from 'react-bootstrap';
+import * as authService from '../../services/authService';
 
-const ProfileSettings = ({ admin, onUpdate }) => {
+export default function ProfileSettings({ admin, onUpdate }) {
   const [formData, setFormData] = useState({
     email: admin?.email || '',
-    salon_name: admin?.salon_name || '',
-    owner_name: admin?.owner_name || '',
+    salonName: admin?.salon_name || '',
+    ownerName: admin?.owner_name || '',
     phone: admin?.phone || '',
     whatsapp: admin?.whatsapp || '',
     address: admin?.address || '',
-  })
-  const [passwordForm, setPasswordForm] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: '',
-  })
-  const [showPassword, setShowPassword] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [message, setMessage] = useState('')
+    bio: admin?.bio || '',
+    instagram: admin?.social_links?.instagram || admin?.instagram || '',
+    facebook: admin?.social_links?.facebook || admin?.facebook || '',
+  });
 
+  // Update form when admin data changes
   useEffect(() => {
     if (admin) {
       setFormData({
         email: admin.email || '',
-        salon_name: admin.salon_name || '',
-        owner_name: admin.owner_name || '',
+        salonName: admin.salon_name || '',
+        ownerName: admin.owner_name || '',
         phone: admin.phone || '',
         whatsapp: admin.whatsapp || '',
         address: admin.address || '',
-      })
+        bio: admin.bio || '',
+        instagram: admin.social_links?.instagram || admin.instagram || '',
+        facebook: admin.social_links?.facebook || admin.facebook || '',
+      });
     }
-  }, [admin])
+  }, [admin]);
 
-  const handleSaveProfile = async () => {
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
+
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handlePasswordChange = (e) => {
+    const { name, value } = e.target;
+    setPasswordForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+
+    if (!formData.email) {
+      setError('L\'adresse email est requise');
+      return;
+    }
+
     try {
-      setLoading(true)
-      await api.put('/auth/profile', formData)
-      setMessage({ type: 'success', text: 'Profil mis à jour!' })
-      onUpdate?.()
-      setTimeout(() => setMessage(''), 3000)
-    } catch (error) {
-      setMessage({ type: 'error', text: 'Erreur: ' + error.message })
+      setLoading(true);
+      const updateData = {
+        email: formData.email,
+        salon_name: formData.salonName,
+        owner_name: formData.ownerName,
+        phone: formData.phone,
+        whatsapp: formData.whatsapp,
+        address: formData.address,
+        bio: formData.bio,
+        instagram: formData.instagram,
+        facebook: formData.facebook,
+      };
+      
+      await authService.updateAdmin(updateData);
+      setSuccess('Profil mis à jour avec succès !');
+      if (onUpdate) {
+        setTimeout(() => onUpdate(), 500);
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Erreur lors de la mise à jour du profil');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  const handleChangePassword = async () => {
+  const handlePasswordSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      setMessage({ type: 'error', text: 'Les mots de passe ne correspondent pas' })
-      return
+      setError('Les mots de passe ne correspondent pas');
+      return;
     }
+
     try {
-      setLoading(true)
-      await api.put('/auth/change-password', {
-        currentPassword: passwordForm.currentPassword,
-        newPassword: passwordForm.newPassword,
-      })
-      setMessage({ type: 'success', text: 'Mot de passe changé!' })
-      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
-      setTimeout(() => setMessage(''), 3000)
-    } catch (error) {
-      setMessage({ type: 'error', text: 'Erreur: ' + error.message })
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      await authService.updatePassword(
+        passwordForm.currentPassword,
+        passwordForm.newPassword,
+        token
+      );
+      setSuccess('Mot de passe modifié avec succès !');
+      setPasswordForm({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+      });
+    } catch (err) {
+      setError(err.response?.data?.message || 'Erreur');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
-
-  const inputStyle = {
-    padding: 'clamp(10px, 1.5vw, 12px) clamp(12px, 2vw, 16px)',
-    borderRadius: '8px',
-    border: '1px solid #e0e0e0',
-    fontSize: 'clamp(12px, 1.8vw, 14px)',
-    width: '100%',
-  }
-
-  const sectionStyle = {
-    background: 'white',
-    borderRadius: '12px',
-    padding: 'clamp(20px, 4vw, 30px)',
-    border: '2px solid #f0f0f0',
-    marginBottom: 'clamp(20px, 3vw, 30px)',
-  }
+  };
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-      {message && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          style={{
-            background: message.type === 'success' ? '#d4edda' : '#f8d7da',
-            color: message.type === 'success' ? '#155724' : '#721c24',
-            padding: '12px 16px',
-            borderRadius: '8px',
-            marginBottom: '20px',
-            fontWeight: '600',
-          }}
-        >
-          {message.text}
-        </motion.div>
-      )}
+    <div>
+      {error && <Alert variant="danger" style={{ borderRadius: '12px' }}>{error}</Alert>}
+      {success && <Alert variant="success" style={{ borderRadius: '12px' }}>{success}</Alert>}
 
-      {/* Profile Section */}
-      <div style={sectionStyle}>
-        <h3 style={{ margin: '0 0 24px 0', fontSize: 'clamp(1.2rem, 2.5vw, 1.4rem)', fontWeight: '700', color: '#333' }}>
-          👤 Informations Personnelles
-        </h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 'clamp(12px, 2vw, 16px)', marginBottom: '20px' }}>
-          <div>
-            <label style={{ display: 'block', fontWeight: '600', color: '#333', marginBottom: '8px', fontSize: 'clamp(12px, 1.8vw, 13px)' }}>
-              Email
-            </label>
-            <input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} style={inputStyle} />
+      <Card className="admin-settings-card mb-4">
+        <Card.Header>
+          <div className="admin-settings-title">
+            👤 Profil du salon
           </div>
-          <div>
-            <label style={{ display: 'block', fontWeight: '600', color: '#333', marginBottom: '8px', fontSize: 'clamp(12px, 1.8vw, 13px)' }}>
-              Nom du Salon
-            </label>
-            <input type="text" value={formData.salon_name} onChange={(e) => setFormData({ ...formData, salon_name: e.target.value })} style={inputStyle} />
-          </div>
-          <div>
-            <label style={{ display: 'block', fontWeight: '600', color: '#333', marginBottom: '8px', fontSize: 'clamp(12px, 1.8vw, 13px)' }}>
-              Votre Nom
-            </label>
-            <input type="text" value={formData.owner_name} onChange={(e) => setFormData({ ...formData, owner_name: e.target.value })} style={inputStyle} />
-          </div>
-          <div>
-            <label style={{ display: 'block', fontWeight: '600', color: '#333', marginBottom: '8px', fontSize: 'clamp(12px, 1.8vw, 13px)' }}>
-              Téléphone
-            </label>
-            <input type="tel" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} style={inputStyle} />
-          </div>
-          <div>
-            <label style={{ display: 'block', fontWeight: '600', color: '#333', marginBottom: '8px', fontSize: 'clamp(12px, 1.8vw, 13px)' }}>
-              WhatsApp
-            </label>
-            <input type="tel" value={formData.whatsapp} onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })} style={inputStyle} />
-          </div>
-          <div>
-            <label style={{ display: 'block', fontWeight: '600', color: '#333', marginBottom: '8px', fontSize: 'clamp(12px, 1.8vw, 13px)' }}>
-              Adresse
-            </label>
-            <input type="text" value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} style={inputStyle} />
-          </div>
-        </div>
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={handleSaveProfile}
-          disabled={loading}
-          style={{
-            background: 'linear-gradient(135deg, #667eea, #764ba2)',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            padding: 'clamp(10px, 1.5vw, 12px) clamp(20px, 4vw, 30px)',
-            fontWeight: '700',
-            cursor: 'pointer',
-            fontSize: 'clamp(12px, 1.8vw, 14px)',
-            opacity: loading ? 0.7 : 1,
-          }}
-        >
-          💾 Enregistrer Profil
-        </motion.button>
-      </div>
+        </Card.Header>
+        <Card.Body>
+          {!formData.whatsapp && (
+            <Alert variant="warning" style={{ borderRadius: '10px', marginBottom: '20px' }}>
+              <strong>⚠️ Important :</strong> Configurez votre numéro WhatsApp pour recevoir les demandes de réservation en temps réel !
+            </Alert>
+          )}
+          <Form onSubmit={handleSubmit}>
+            {/* Email */}
+            <Form.Group className="mb-4">
+              <Form.Label className="form-label-luxury">
+                📧 Email *
+              </Form.Label>
+              <Form.Control
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                required
+                className="form-control-luxury"
+                placeholder="admin@salon.com"
+                style={{ borderRadius: '10px', padding: '12px 16px' }}
+              />
+              <small style={{ color: '#6c757d', marginTop: '6px', display: 'block' }}>
+                Utilisé pour les notifications et la récupération de compte
+              </small>
+            </Form.Group>
 
-      {/* Password Section */}
-      <div style={sectionStyle}>
-        <h3 style={{ margin: '0 0 24px 0', fontSize: 'clamp(1.2rem, 2.5vw, 1.4rem)', fontWeight: '700', color: '#333' }}>
-          🔐 Changer le Mot de Passe
-        </h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 'clamp(12px, 2vw, 16px)', marginBottom: '20px' }}>
-          <div>
-            <label style={{ display: 'block', fontWeight: '600', color: '#333', marginBottom: '8px', fontSize: 'clamp(12px, 1.8vw, 13px)' }}>
-              Mot de passe actuel
-            </label>
-            <input
-              type={showPassword ? 'text' : 'password'}
-              value={passwordForm.currentPassword}
-              onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
-              style={inputStyle}
-            />
+            {/* Nom du salon */}
+            <Form.Group className="mb-4">
+              <Form.Label className="form-label-luxury">
+                💆‍♀️ Nom du salon
+              </Form.Label>
+              <Form.Control
+                type="text"
+                name="salonName"
+                value={formData.salonName}
+                onChange={handleChange}
+                className="form-control-luxury"
+                placeholder="Chura Beauty"
+                style={{ borderRadius: '10px', padding: '12px 16px' }}
+              />
+            </Form.Group>
+
+            {/* Nom du propriétaire */}
+            <Form.Group className="mb-4">
+              <Form.Label style={{ fontWeight: '700', color: '#1a0f08', fontSize: '14px' }}>
+                👤 Nom du propriétaire
+              </Form.Label>
+              <Form.Control
+                type="text"
+                name="ownerName"
+                value={formData.ownerName}
+                onChange={handleChange}
+                className="form-control-luxury"
+                style={{ borderRadius: '10px', padding: '12px 16px' }}
+              />
+            </Form.Group>
+
+            {/* Contact Information */}
+            <div style={{ backgroundColor: 'rgba(184,134,11,0.03)', padding: '16px', borderRadius: '12px', marginBottom: '20px', border: '1px solid rgba(184,134,11,0.1)' }}>
+              <h5 style={{ marginBottom: '16px', fontWeight: '700', color: '#1a0f08', fontSize: '14px' }}>
+                📞 Coordonnées
+              </h5>
+              
+              <Form.Group className="mb-4">
+                <Form.Label style={{ fontWeight: '700', color: '#1a0f08', fontSize: '13px' }}>
+                  ☎️ Téléphone
+                </Form.Label>
+                <Form.Control
+                  type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  className="form-control-luxury"
+                  placeholder="+226 XX XX XXXX"
+                  style={{ borderRadius: '10px', padding: '12px 16px' }}
+                />
+              </Form.Group>
+
+              <Form.Group className="mb-4">
+                <Form.Label style={{ fontWeight: '700', color: '#1a0f08', fontSize: '13px' }}>
+                  💬 WhatsApp
+                </Form.Label>
+                <Form.Control
+                  type="tel"
+                  name="whatsapp"
+                  value={formData.whatsapp}
+                  onChange={handleChange}
+                  className="form-control-luxury"
+                  placeholder="+226 XX XX XXXX"
+                  style={{ borderRadius: '10px', padding: '12px 16px' }}
+                />
+              </Form.Group>
+
+              <Form.Group className="mb-0">
+                <Form.Label style={{ fontWeight: '700', color: '#1a0f08', fontSize: '13px' }}>
+                  📍 Adresse
+                </Form.Label>
+                <Form.Control
+                  type="text"
+                  name="address"
+                  value={formData.address}
+                  onChange={handleChange}
+                  className="form-control-luxury"
+                  placeholder="Votre adresse complète"
+                  style={{ borderRadius: '10px', padding: '12px 16px' }}
+                />
+              </Form.Group>
+            </div>
+
+            {/* Biographie */}
+            <Form.Group className="mb-4">
+              <Form.Label style={{ fontWeight: '700', color: '#1a0f08', fontSize: '14px' }}>
+                ✒️ Biographie
+              </Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={3}
+                name="bio"
+                value={formData.bio}
+                onChange={handleChange}
+                className="form-control-luxury"
+                placeholder="Présentez votre salon et vos services..."
+                style={{ borderRadius: '10px', padding: '12px 16px' }}
+              />
+            </Form.Group>
+
+            {/* Social Links */}
+            <div style={{ backgroundColor: 'rgba(212,165,116,0.03)', padding: '16px', borderRadius: '12px', marginBottom: '20px', border: '1px solid rgba(212,165,116,0.1)' }}>
+              <h5 style={{ marginBottom: '16px', fontWeight: '700', color: '#1a0f08', fontSize: '14px' }}>
+                📱 Réseaux sociaux
+              </h5>
+              
+              <Form.Group className="mb-4">
+                <Form.Label style={{ fontWeight: '700', color: '#1a0f08', fontSize: '13px' }}>
+                  📸 Instagram
+                </Form.Label>
+                <Form.Control
+                  type="text"
+                  name="instagram"
+                  value={formData.instagram}
+                  onChange={handleChange}
+                  className="form-control-luxury"
+                  placeholder="@votre_compte"
+                  style={{ borderRadius: '10px', padding: '12px 16px' }}
+                />
+              </Form.Group>
+
+              <Form.Group className="mb-0">
+                <Form.Label style={{ fontWeight: '700', color: '#1a0f08', fontSize: '13px' }}>
+                  👍 Facebook
+                </Form.Label>
+                <Form.Control
+                  type="text"
+                  name="facebook"
+                  value={formData.facebook}
+                  onChange={handleChange}
+                  className="form-control-luxury"
+                  placeholder="Votre page Facebook"
+                  style={{ borderRadius: '10px', padding: '12px 16px' }}
+                />
+              </Form.Group>
+            </div>
+
+            <Button 
+              variant="primary" 
+              type="submit" 
+              disabled={loading}
+              style={{ 
+                borderRadius: '10px',
+                fontWeight: '700',
+                background: 'var(--gradient-primary)',
+                border: 'none',
+                padding: '11px 24px'
+              }}
+            >
+              {loading ? '⏳ Enregistrement...' : '✓ Enregistrer les modifications'}
+            </Button>
+          </Form>
+        </Card.Body>
+      </Card>
+
+      <Card style={{ borderRadius: '16px', border: '1px solid rgba(184,134,11,0.1)' }}>
+        <Card.Header style={{ 
+          background: 'linear-gradient(135deg, rgba(220,53,69,0.08), rgba(255,107,107,0.08))',
+          borderBottom: '1px solid rgba(220,53,69,0.1)',
+          borderRadius: '16px 16px 0 0'
+        }}>
+          <div style={{ fontSize: '16px', fontWeight: '700', color: '#c82333', fontFamily: 'Playfair Display, serif' }}>
+            🔐 Modifier le mot de passe
           </div>
-          <div>
-            <label style={{ display: 'block', fontWeight: '600', color: '#333', marginBottom: '8px', fontSize: 'clamp(12px, 1.8vw, 13px)' }}>
-              Nouveau mot de passe
-            </label>
-            <input
-              type={showPassword ? 'text' : 'password'}
-              value={passwordForm.newPassword}
-              onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
-              style={inputStyle}
-            />
-          </div>
-          <div>
-            <label style={{ display: 'block', fontWeight: '600', color: '#333', marginBottom: '8px', fontSize: 'clamp(12px, 1.8vw, 13px)' }}>
-              Confirmer le mot de passe
-            </label>
-            <input
-              type={showPassword ? 'text' : 'password'}
-              value={passwordForm.confirmPassword}
-              onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
-              style={inputStyle}
-            />
-          </div>
-        </div>
-        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', marginBottom: '20px', fontWeight: '600', fontSize: 'clamp(12px, 1.8vw, 13px)' }}>
-          <input type="checkbox" checked={showPassword} onChange={(e) => setShowPassword(e.target.checked)} style={{ width: '18px', height: '18px', cursor: 'pointer' }} />
-          Afficher les mots de passe
-        </label>
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={handleChangePassword}
-          disabled={loading}
-          style={{
-            background: 'linear-gradient(135deg, #667eea, #764ba2)',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            padding: 'clamp(10px, 1.5vw, 12px) clamp(20px, 4vw, 30px)',
-            fontWeight: '700',
-            cursor: 'pointer',
-            fontSize: 'clamp(12px, 1.8vw, 14px)',
-            opacity: loading ? 0.7 : 1,
-          }}
-        >
-          🔐 Changer le Mot de Passe
-        </motion.button>
-      </div>
-    </motion.div>
-  )
+        </Card.Header>
+        <Card.Body>
+          <Form onSubmit={handlePasswordSubmit}>
+            <Form.Group className="mb-4">
+              <Form.Label style={{ fontWeight: '700', color: '#1a0f08', fontSize: '14px' }}>
+                🔑 Mot de passe actuel
+              </Form.Label>
+              <Form.Control
+                type="password"
+                name="currentPassword"
+                value={passwordForm.currentPassword}
+                onChange={handlePasswordChange}
+                className="form-control-luxury"
+                required
+                style={{ borderRadius: '10px', padding: '12px 16px' }}
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-4">
+              <Form.Label style={{ fontWeight: '700', color: '#1a0f08', fontSize: '14px' }}>
+                ✨ Nouveau mot de passe
+              </Form.Label>
+              <Form.Control
+                type="password"
+                name="newPassword"
+                value={passwordForm.newPassword}
+                onChange={handlePasswordChange}
+                className="form-control-luxury"
+                required
+                style={{ borderRadius: '10px', padding: '12px 16px' }}
+              />
+              <small style={{ color: '#6c757d', marginTop: '6px', display: 'block' }}>
+                💡 Minimum 8 caractères, avec majuscule et chiffre
+              </small>
+            </Form.Group>
+
+            <Form.Group className="mb-4">
+              <Form.Label style={{ fontWeight: '700', color: '#1a0f08', fontSize: '14px' }}>
+                ✓ Confirmer le mot de passe
+              </Form.Label>
+              <Form.Control
+                type="password"
+                name="confirmPassword"
+                value={passwordForm.confirmPassword}
+                onChange={handlePasswordChange}
+                className="form-control-luxury"
+                required
+                style={{ borderRadius: '10px', padding: '12px 16px' }}
+              />
+            </Form.Group>
+
+            <Button 
+              variant="danger" 
+              type="submit" 
+              disabled={loading}
+              style={{ 
+                borderRadius: '10px',
+                fontWeight: '700',
+                padding: '11px 24px'
+              }}
+            >
+              {loading ? '⏳ Modification...' : '🔄 Modifier le mot de passe'}
+            </Button>
+          </Form>
+        </Card.Body>
+      </Card>
+    </div>
+  );
 }
 
-export default ProfileSettings

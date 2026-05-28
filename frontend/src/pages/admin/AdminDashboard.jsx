@@ -1,6 +1,6 @@
 import { useState, useEffect, useContext } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { AuthContext } from '../../context/AuthContext'
 import api from '../../services/api'
 import ManageServices from './ManageServices'
@@ -11,6 +11,7 @@ import ProfileSettings from '../../components/admin/ProfileSettings'
 import SecuritySettings from '../../components/admin/SecuritySettings'
 import SiteSettings from '../../components/admin/SiteSettings'
 import NotificationPanel from '../../components/admin/NotificationPanel'
+import RevenueChart from '../../components/admin/RevenueChart'
 
 const tabs = [
   { id: 'home', label: 'Accueil', icon: '🏠' },
@@ -28,6 +29,7 @@ const AdminDashboard = () => {
   const [stats, setStats] = useState({ services: 0, appointments: 0, pending: 0, revenue: 0 })
   const [adminInfo, setAdminInfo] = useState(null)
   const [unreadCount, setUnreadCount] = useState(0)
+  const [isFirstLogin, setIsFirstLogin] = useState(false)
   const [screenWidth, setScreenWidth] = useState(window.innerWidth)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const { logout } = useContext(AuthContext)
@@ -35,10 +37,16 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     fetchDashboardData()
+    checkFirstLogin()
     const handleResize = () => setScreenWidth(window.innerWidth)
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [])
+
+  const isXS = screenWidth < 480
+  const isSM = screenWidth < 768
+  const isMD = screenWidth < 992
+  const showTextInTab = screenWidth >= 640
 
   const fetchDashboardData = async () => {
     try {
@@ -50,24 +58,36 @@ const AdminDashboard = () => {
       if (statsRes.status === 'fulfilled') setStats(statsRes.value.data || {})
       if (adminRes.status === 'fulfilled') setAdminInfo(adminRes.value.data?.admin || adminRes.value.data)
       if (notifRes.status === 'fulfilled') setUnreadCount(notifRes.value.data?.count || 0)
-    } catch (e) {
-      console.error('Dashboard fetch error:', e)
-    }
+    } catch (e) {}
   }
 
-  const handleLogout = () => {
-    logout()
-    navigate('/')
+  const checkFirstLogin = async () => {
+    try {
+      const res = await api.get('/auth/profile')
+      const adminData = res.data?.admin || res.data
+      if (!adminData?.secret_question || !adminData?.recovery_email) {
+        setIsFirstLogin(true)
+      }
+    } catch (e) {}
   }
 
-  const isMobile = screenWidth < 768
-  const isTablet = screenWidth < 1024
+  const handleLogout = () => { logout(); navigate('/') }
 
   const kpiCards = [
-    { label: 'Services actifs', value: stats.services || 0, icon: '💅', color: '#ffd700', trend: '+12%' },
-    { label: 'RDV ce mois', value: stats.appointments || 0, icon: '📅', color: '#20c997', trend: '+8%' },
-    { label: 'En attente', value: stats.pending || 0, icon: '⏳', color: '#ff6b6b', trend: '-2%' },
-    { label: 'CA (FCFA)', value: (stats.revenue || 0).toLocaleString(), icon: '💰', color: '#667eea', trend: '+24%' },
+    { label: 'Services actifs', value: stats.services || 0, icon: '💅', color: '#b8860b', bg: 'rgba(184,134,11,0.1)' },
+    { label: 'RDV ce mois', value: stats.appointments || 0, icon: '📅', color: '#20c997', bg: 'rgba(32,201,151,0.1)' },
+    { label: 'En attente', value: stats.pending || 0, icon: '⏳', color: '#fd7e14', bg: 'rgba(253,126,20,0.1)', urgent: true },
+    { label: 'CA (FCFA)', value: (stats.revenue || 0).toLocaleString(), icon: '💰', color: '#6f42c1', bg: 'rgba(111,66,193,0.1)' }
+  ]
+
+  const quickActions = [
+    { id: 'services', label: 'Mes services', icon: '💅', desc: 'Gérer vos prestations', color: '#b8860b' },
+    { id: 'appointments', label: 'Rendez-vous', icon: '📅', desc: 'Accepter ou refuser', color: '#20c997', badge: stats.pending },
+    { id: 'revenue', label: 'Revenus', icon: '📊', desc: 'Statistiques CA', color: '#6f42c1' },
+    { id: 'notifications', label: 'Notifications', icon: '🔔', desc: 'Vos alertes', color: '#fd7e14', badge: unreadCount },
+    { id: 'site', label: 'Mon site', icon: '🌐', desc: 'Personnaliser', color: '#e83e8c' },
+    { id: 'profile', label: 'Profil', icon: '👤', desc: 'Mes infos', color: '#17a2b8' },
+    { id: 'security', label: 'Sécurité', icon: '🔒', desc: 'Mot de passe', color: '#28a745' },
   ]
 
   const renderContent = () => {
@@ -78,273 +98,452 @@ const AdminDashboard = () => {
       case 'notifications': return <NotificationPanel />
       case 'site': return <SiteSettings onUpdate={fetchDashboardData} />
       case 'profile': return <ProfileSettings admin={adminInfo} onUpdate={fetchDashboardData} />
-      case 'security': return <SecuritySettings />
-      default: return renderHomeContent()
+      case 'security': return <SecuritySettings isFirstLogin={isFirstLogin} onComplete={() => setIsFirstLogin(false)} />
+      default: return null
     }
   }
 
-  const renderHomeContent = () => (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      style={{ padding: 'clamp(20px, 5vw, 40px)' }}
-    >
-      {/* Welcome Section */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.1 }}
-        style={{
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          borderRadius: '16px',
-          padding: 'clamp(20px, 4vw, 40px)',
-          color: 'white',
-          marginBottom: 'clamp(30px, 5vw, 50px)',
-          boxShadow: '0 8px 32px rgba(102, 126, 234, 0.3)'
-        }}
-      >
-        <h1 style={{ fontSize: 'clamp(1.8rem, 5vw, 2.5rem)', margin: '0 0 8px 0', fontWeight: '800' }}>
-          Bienvenue, {adminInfo?.salon_name || 'Admin'} 👑
-        </h1>
-        <p style={{ margin: 0, fontSize: 'clamp(14px, 2vw, 16px)', opacity: 0.9 }}>
-          Gérez votre salon avec élégance. Tous les outils à votre portée.
-        </p>
-      </motion.div>
-
-      {/* KPI Cards Grid */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(clamp(240px, 22vw, 280px), 1fr))',
-        gap: 'clamp(16px, 3vw, 24px)',
-        marginBottom: 'clamp(30px, 5vw, 50px)'
-      }}>
-        {kpiCards.map((card, idx) => (
-          <motion.div
-            key={idx}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: idx * 0.1 }}
-            whileHover={{ y: -4, boxShadow: '0 12px 32px rgba(0, 0, 0, 0.15)' }}
-            style={{
-              background: 'white',
-              borderRadius: '14px',
-              padding: 'clamp(16px, 3vw, 24px)',
-              border: `2px solid rgba(${card.color === '#ffd700' ? '255, 215, 0' : '0, 0, 0'}, 0.1)`,
-              cursor: 'pointer',
-              transition: 'all 0.3s ease'
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
-              <span style={{ fontSize: 'clamp(1.8rem, 4vw, 2.2rem)' }}>{card.icon}</span>
-              <span style={{ fontSize: '12px', fontWeight: '600', color: '#20c997' }}>{card.trend}</span>
-            </div>
-            <h3 style={{ fontSize: 'clamp(12px, 1.8vw, 13px)', color: '#999', margin: '0 0 8px 0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              {card.label}
-            </h3>
-            <p style={{ fontSize: 'clamp(1.6rem, 4vw, 2rem)', fontWeight: '700', color: '#333', margin: 0 }}>
-              {card.value}
-            </p>
-          </motion.div>
-        ))}
-      </div>
-
-      {/* Quick Actions */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.4 }}
-      >
-        <h2 style={{ fontSize: 'clamp(1.4rem, 3vw, 1.8rem)', color: '#333', marginBottom: '16px', fontWeight: '700' }}>
-          Actions rapides
-        </h2>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(clamp(180px, 20vw, 240px), 1fr))',
-          gap: 'clamp(12px, 2vw, 16px)'
-        }}>
-          {[
-            { id: 'services', label: '💅 Services', desc: 'Gérer vos prestations' },
-            { id: 'appointments', label: '📅 Rendez-vous', desc: 'Voir les demandes' },
-            { id: 'revenue', label: '📊 Revenus', desc: 'Statistiques' },
-            { id: 'notifications', label: '🔔 Notifs', desc: `${unreadCount} non lues` },
-            { id: 'site', label: '🌐 Mon site', desc: 'Personnaliser' },
-            { id: 'profile', label: '👤 Profil', desc: 'Mes infos' },
-          ].map((action) => (
-            <motion.button
-              key={action.id}
-              onClick={() => setActiveTab(action.id)}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              style={{
-                background: 'white',
-                border: '2px solid #f0f0f0',
-                borderRadius: '12px',
-                padding: '16px',
-                cursor: 'pointer',
-                textAlign: 'left',
-                transition: 'all 0.3s ease'
-              }}
-            >
-              <div style={{ fontSize: '24px', marginBottom: '8px' }}>
-                {action.label.split(' ')[0]}
-              </div>
-              <div style={{ fontSize: '13px', fontWeight: '600', color: '#333', marginBottom: '4px' }}>
-                {action.label.split(' ')[1]}
-              </div>
-              <div style={{ fontSize: '12px', color: '#999' }}>
-                {action.desc}
-              </div>
-            </motion.button>
-          ))}
-        </div>
-      </motion.div>
-    </motion.div>
-  )
-
   return (
-    <div style={{ minHeight: '100vh', background: '#f9f9f9' }}>
-      {/* Navbar */}
-      <motion.nav
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        style={{
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          borderBottom: '2px solid rgba(255, 215, 0, 0.2)',
-          position: 'sticky',
-          top: 0,
-          zIndex: 1000,
-          boxShadow: '0 4px 20px rgba(102, 126, 234, 0.2)',
-          padding: 'clamp(12px, 2vw, 20px) clamp(16px, 4vw, 32px)'
-        }}
-      >
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          gap: '16px'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
-            <span style={{ fontSize: '28px' }}>💆‍♀️</span>
-            <div style={{ minWidth: 0 }}>
-              <div style={{
-                fontSize: 'clamp(14px, 2.5vw, 16px)',
-                fontWeight: '700',
-                color: 'white',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis'
-              }}>
-                {adminInfo?.salon_name || 'Chura Beauty'}
-              </div>
-              <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.7)' }}>
-                Dashboard
-              </div>
-            </div>
-          </div>
+    <div style={{ minHeight: '100vh', background: 'var(--light-medium)' }}>
 
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            {unreadCount > 0 && (
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                onClick={() => setActiveTab('notifications')}
+      {/* ===== NAVBAR ADMIN RESPONSIVE ===== */}
+      <nav style={{
+        background: 'var(--gradient-dark)',
+        borderBottom: '1px solid var(--glass-dark-border)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 1000,
+        boxShadow: '0 4px 30px rgba(0,0,0,0.3)'
+      }}>
+        <div style={{ padding: '0 16px' }}>
+
+          {/* Ligne principale navbar */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            height: isXS ? '52px' : '60px',
+            gap: '8px'
+          }}>
+
+            {/* Logo — toujours visible */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: isXS ? '6px' : '10px', flexShrink: 0 }}>
+              <span style={{ fontSize: isXS ? '20px' : '24px' }}>💆‍♀️</span>
+              {!isXS && (
+                <div>
+                  <div style={{
+                    fontFamily: 'Playfair Display, serif',
+                    background: 'var(--gradient-primary)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                    fontSize: isSM ? '14px' : '17px',
+                    fontWeight: '700',
+                    lineHeight: 1,
+                    whiteSpace: 'nowrap'
+                  }}>
+                    {adminInfo?.salon_name || 'Chura Beauty'}
+                  </div>
+                  {!isSM && (
+                    <div style={{ color: 'rgba(248,200,212,0.4)', fontSize: '10px', marginTop: '2px' }}>
+                      Dashboard Admin
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Tabs desktop (>=992px) — icônes + textes */}
+            {!isMD && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '2px', flex: 1, justifyContent: 'center', flexWrap: 'nowrap', overflow: 'hidden' }}>
+                {tabs.map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    style={{
+                      background: activeTab === tab.id ? 'rgba(184,134,11,0.2)' : 'transparent',
+                      border: activeTab === tab.id ? '1px solid rgba(184,134,11,0.4)' : '1px solid transparent',
+                      color: activeTab === tab.id ? '#d4a574' : 'rgba(248,200,212,0.6)',
+                      borderRadius: '10px',
+                      padding: '7px 12px',
+                      fontSize: '13px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      whiteSpace: 'nowrap',
+                      fontFamily: 'Nunito, sans-serif',
+                      flexShrink: 0,
+                      position: 'relative'
+                    }}
+                  >
+                    <span style={{ fontSize: '14px' }}>{tab.icon}</span>
+                    <span>{tab.label}</span>
+                    {tab.id === 'notifications' && unreadCount > 0 && (
+                      <span style={{ background: '#dc3545', color: 'white', borderRadius: '50%', width: '16px', height: '16px', fontSize: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700' }}>
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Tabs tablette (640-992px) — icônes seulement */}
+            {isMD && !isSM && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flex: 1, justifyContent: 'center' }}>
+                {tabs.map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    title={tab.label}
+                    style={{
+                      background: activeTab === tab.id ? 'rgba(184,134,11,0.25)' : 'transparent',
+                      border: activeTab === tab.id ? '1px solid rgba(184,134,11,0.5)' : '1px solid transparent',
+                      color: activeTab === tab.id ? '#d4a574' : 'rgba(248,200,212,0.6)',
+                      borderRadius: '10px',
+                      width: '38px',
+                      height: '38px',
+                      fontSize: '18px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      position: 'relative',
+                      flexShrink: 0
+                    }}
+                  >
+                    {tab.icon}
+                    {tab.id === 'notifications' && unreadCount > 0 && (
+                      <span style={{ position: 'absolute', top: '-2px', right: '-2px', background: '#dc3545', color: 'white', borderRadius: '50%', width: '14px', height: '14px', fontSize: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700' }}>
+                        {unreadCount > 9 ? '+' : unreadCount}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Actions droite */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: isXS ? '4px' : '8px', flexShrink: 0 }}>
+              {/* Burger menu mobile (<768px) */}
+              {isSM && (
+                <button
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  style={{
+                    background: 'rgba(212,165,116,0.1)',
+                    border: '1px solid rgba(212,165,116,0.2)',
+                    color: 'var(--secondary-color)',
+                    borderRadius: '8px',
+                    width: '36px',
+                    height: '36px',
+                    fontSize: '18px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  {mobileMenuOpen ? '✕' : '☰'}
+                </button>
+              )}
+
+              {/* Voir le site */}
+              <Link to="/"
+                title="Voir le site"
                 style={{
-                  background: 'rgba(255, 215, 0, 0.2)',
-                  border: '2px solid #ffd700',
-                  color: '#ffd700',
+                  color: 'rgba(248,200,212,0.7)',
+                  textDecoration: 'none',
+                  fontSize: isXS ? '16px' : '13px',
+                  padding: isXS ? '8px' : '7px 12px',
                   borderRadius: '8px',
-                  padding: '6px 12px',
-                  cursor: 'pointer',
-                  fontSize: '12px',
-                  fontWeight: '600'
+                  border: '1px solid rgba(248,200,212,0.15)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  fontFamily: 'Nunito, sans-serif'
                 }}
               >
-                🔔 {unreadCount}
-              </motion.button>
-            )}
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleLogout}
-              style={{
-                background: 'rgba(255, 255, 255, 0.1)',
-                border: '2px solid rgba(255, 255, 255, 0.3)',
-                color: 'white',
-                borderRadius: '8px',
-                padding: 'clamp(8px, 1.5vw, 10px) clamp(12px, 2vw, 16px)',
-                cursor: 'pointer',
-                fontSize: 'clamp(12px, 1.8vw, 14px)',
-                fontWeight: '600',
-                transition: 'all 0.3s ease'
-              }}
-            >
-              {isMobile ? '🚪' : '🚪 Déconnexion'}
-            </motion.button>
+                🌐 {!isXS && !isSM && <span>Voir le site</span>}
+              </Link>
+
+              {/* Déconnexion */}
+              <button
+                onClick={handleLogout}
+                title="Déconnexion"
+                style={{
+                  background: 'rgba(220,53,69,0.15)',
+                  border: '1px solid rgba(220,53,69,0.3)',
+                  color: '#ff6b6b',
+                  borderRadius: '8px',
+                  padding: isXS ? '8px' : '7px 12px',
+                  fontSize: isXS ? '16px' : '13px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  fontFamily: 'Nunito, sans-serif'
+                }}
+              >
+                🚪 {!isXS && !isSM && <span>Déco</span>}
+              </button>
+            </div>
           </div>
-        </div>
-      </motion.nav>
 
-      {/* Tabs Navigation */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.1 }}
-        style={{
-          background: 'white',
-          borderBottom: '2px solid #f0f0f0',
-          overflowX: 'auto',
-          overflowY: 'hidden',
-          scrollBehavior: 'smooth'
-        }}
-      >
-        <div style={{
-          display: 'flex',
-          gap: '4px',
-          padding: '0 clamp(12px, 3vw, 24px)',
-          minHeight: 'clamp(48px, 8vw, 64px)',
-          alignItems: 'center',
-          flexShrink: 0
-        }}>
-          {tabs.map((tab, idx) => (
-            <motion.button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              whileHover={{ y: -2 }}
-              whileTap={{ y: 0 }}
+          {/* Menu mobile déroulant (<768px) */}
+          <AnimatePresence>
+            {isSM && mobileMenuOpen && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                style={{ overflow: 'hidden', borderTop: '1px solid rgba(212,165,116,0.1)', paddingBottom: '8px' }}
+              >
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(4, 1fr)',
+                  gap: '6px',
+                  padding: '12px 0'
+                }}>
+                  {tabs.map(tab => (
+                    <button
+                      key={tab.id}
+                      onClick={() => { setActiveTab(tab.id); setMobileMenuOpen(false) }}
+                      style={{
+                        background: activeTab === tab.id ? 'rgba(184,134,11,0.2)' : 'rgba(255,255,255,0.03)',
+                        border: activeTab === tab.id ? '1px solid rgba(184,134,11,0.4)' : '1px solid rgba(255,255,255,0.06)',
+                        color: activeTab === tab.id ? '#d4a574' : 'rgba(248,200,212,0.65)',
+                        borderRadius: '10px',
+                        padding: '10px 6px',
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '4px',
+                        fontFamily: 'Nunito, sans-serif',
+                        position: 'relative'
+                      }}
+                    >
+                      <span style={{ fontSize: '20px' }}>{tab.icon}</span>
+                      <span style={{ fontSize: '10px', lineHeight: 1 }}>{tab.label}</span>
+                      {tab.id === 'notifications' && unreadCount > 0 && (
+                        <span style={{ position: 'absolute', top: '6px', right: '8px', background: '#dc3545', color: 'white', borderRadius: '50%', width: '14px', height: '14px', fontSize: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          {unreadCount > 9 ? '+' : unreadCount}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Actions mobile */}
+                <div style={{ display: 'flex', gap: '8px', paddingTop: '8px', borderTop: '1px solid rgba(212,165,116,0.08)' }}>
+                  <Link to="/" style={{ flex: 1, background: 'rgba(248,200,212,0.06)', border: '1px solid rgba(248,200,212,0.1)', color: 'rgba(248,200,212,0.7)', borderRadius: '10px', padding: '10px', textAlign: 'center', fontSize: '13px', textDecoration: 'none', fontFamily: 'Nunito, sans-serif' }}>
+                    🌐 Voir le site
+                  </Link>
+                  <button onClick={handleLogout} style={{ flex: 1, background: 'rgba(220,53,69,0.1)', border: '1px solid rgba(220,53,69,0.2)', color: '#ff6b6b', borderRadius: '10px', padding: '10px', fontSize: '13px', cursor: 'pointer', fontWeight: '600', fontFamily: 'Nunito, sans-serif' }}>
+                    🚪 Déconnexion
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </nav>
+
+      {/* ===== CONTENU PRINCIPAL ===== */}
+      <div style={{ padding: isXS ? '12px' : isSM ? '16px' : '24px', maxWidth: '1400px', margin: '0 auto' }}>
+
+        {/* Alerte premier login */}
+        <AnimatePresence>
+          {isFirstLogin && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
               style={{
-                background: activeTab === tab.id ? 'linear-gradient(135deg, #667eea, #764ba2)' : 'transparent',
-                color: activeTab === tab.id ? 'white' : '#666',
-                border: 'none',
-                padding: 'clamp(8px, 2vw, 12px) clamp(12px, 3vw, 16px)',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontSize: 'clamp(12px, 1.8vw, 14px)',
-                fontWeight: activeTab === tab.id ? '700' : '600',
-                whiteSpace: 'nowrap',
-                transition: 'all 0.3s ease'
+                background: 'linear-gradient(135deg, rgba(255,193,7,0.12), rgba(253,126,20,0.08))',
+                border: '1px solid rgba(255,193,7,0.35)',
+                borderRadius: '14px',
+                padding: isXS ? '12px' : '16px 20px',
+                marginBottom: '20px',
+                display: 'flex',
+                alignItems: isSM ? 'flex-start' : 'center',
+                gap: '12px',
+                flexDirection: isSM ? 'column' : 'row'
               }}
             >
-              <span>{tab.icon}</span>
-              {!isMobile && <span style={{ marginLeft: '6px' }}>{tab.label}</span>}
-            </motion.button>
-          ))}
-        </div>
-      </motion.div>
-
-      {/* Content */}
-      <div style={{ padding: 'clamp(20px, 4vw, 40px)' }}>
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
-          >
-            {renderContent()}
-          </motion.div>
+              <span style={{ fontSize: '22px' }}>⚠️</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: '700', color: '#fd7e14', fontFamily: 'Playfair Display, serif', fontSize: isXS ? '14px' : '16px' }}>
+                  Configuration requise
+                </div>
+                <div style={{ fontSize: '13px', color: '#6c757d', marginTop: '2px' }}>
+                  Définissez vos méthodes de récupération de mot de passe.
+                </div>
+              </div>
+              <button
+                onClick={() => setActiveTab('security')}
+                style={{ background: 'linear-gradient(135deg, #fd7e14, #ffc107)', border: 'none', borderRadius: '10px', color: 'white', padding: '8px 16px', fontWeight: '700', cursor: 'pointer', fontSize: '13px', whiteSpace: 'nowrap', alignSelf: isSM ? 'stretch' : 'auto', fontFamily: 'Nunito, sans-serif' }}
+              >
+                Configurer →
+              </button>
+            </motion.div>
+          )}
         </AnimatePresence>
+
+        {activeTab === 'home' ? (
+          <>
+            {/* Salutation */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: '20px' }}>
+              <h2 style={{ fontFamily: 'Playfair Display, serif', color: '#2c1810', fontSize: isXS ? '1.4rem' : isSM ? '1.6rem' : '2rem', marginBottom: '4px' }}>
+                Bonjour {adminInfo?.owner_name?.split(' ')[0] || 'Admin'} 👋
+              </h2>
+              <p style={{ color: '#6c757d', fontSize: isXS ? '12px' : '14px' }}>
+                {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+              </p>
+            </motion.div>
+
+            {/* KPI Cards */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: isXS ? 'repeat(2, 1fr)' : isSM ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
+              gap: isXS ? '10px' : '16px',
+              marginBottom: '28px'
+            }}>
+              {kpiCards.map((kpi, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.08 }}
+                  whileHover={{ y: -4 }}
+                  style={{
+                    background: 'white',
+                    borderRadius: isXS ? '14px' : '18px',
+                    padding: isXS ? '14px' : isSM ? '16px' : '22px',
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
+                    border: `1px solid ${kpi.bg}`,
+                    position: 'relative',
+                    overflow: 'hidden'
+                  }}
+                >
+                  <div style={{ position: 'absolute', top: '-15px', right: '-15px', width: '60px', height: '60px', borderRadius: '50%', background: kpi.bg }} />
+                  <div style={{ fontSize: isXS ? '1.4rem' : '1.8rem', marginBottom: '8px' }}>{kpi.icon}</div>
+                  <div style={{ fontFamily: 'Playfair Display, serif', fontSize: isXS ? '1.3rem' : '1.8rem', fontWeight: '700', color: kpi.color, lineHeight: 1 }}>
+                    {kpi.value}
+                  </div>
+                  <div style={{ color: '#6c757d', fontSize: isXS ? '10px' : '12px', marginTop: '4px', fontWeight: '500' }}>
+                    {kpi.label}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Quick Actions */}
+            <h5 style={{ fontFamily: 'Playfair Display, serif', color: '#2c1810', marginBottom: '14px', fontSize: isXS ? '1rem' : '1.2rem' }}>
+              ✨ Actions rapides
+            </h5>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: isXS ? 'repeat(2, 1fr)' : isSM ? 'repeat(3, 1fr)' : isMD ? 'repeat(4, 1fr)' : 'repeat(4, 1fr)',
+              gap: isXS ? '10px' : '14px',
+              marginBottom: '28px'
+            }}>
+              {quickActions.map((action, i) => (
+                <motion.div
+                  key={action.id}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.1 * i + 0.3 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => setActiveTab(action.id)}
+                  style={{
+                    background: 'white',
+                    borderRadius: isXS ? '14px' : '18px',
+                    padding: isXS ? '14px 10px' : isSM ? '16px 12px' : '22px 16px',
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+                    border: `1px solid ${action.color}18`,
+                    cursor: 'pointer',
+                    textAlign: 'center',
+                    position: 'relative'
+                  }}
+                >
+                  {action.badge > 0 && (
+                    <span style={{ position: 'absolute', top: '8px', right: '8px', background: '#dc3545', color: 'white', borderRadius: '50%', width: '18px', height: '18px', fontSize: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700' }}>
+                      {action.badge > 9 ? '9+' : action.badge}
+                    </span>
+                  )}
+                  <div style={{ fontSize: isXS ? '1.8rem' : '2.2rem', marginBottom: '8px' }}>{action.icon}</div>
+                  <div style={{ fontFamily: 'Playfair Display, serif', color: '#2c1810', fontSize: isXS ? '11px' : '13px', fontWeight: '700', marginBottom: isXS ? '0' : '4px' }}>
+                    {action.label}
+                  </div>
+                  {!isXS && (
+                    <div style={{ color: '#6c757d', fontSize: '11px', lineHeight: '1.3' }}>
+                      {action.desc}
+                    </div>
+                  )}
+                  <div style={{ marginTop: isXS ? '6px' : '10px', background: `${action.color}12`, color: action.color, borderRadius: '6px', padding: '4px', fontSize: '11px', fontWeight: '700' }}>
+                    Ouvrir →
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Graphique CA */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              style={{ background: 'white', borderRadius: '20px', padding: isXS ? '16px' : '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}
+            >
+              <RevenueChart compact={isSM} />
+            </motion.div>
+          </>
+        ) : (
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -16 }}
+              transition={{ duration: 0.25 }}
+            >
+              <button
+                onClick={() => setActiveTab('home')}
+                style={{
+                  background: 'transparent',
+                  border: '1px solid rgba(184,134,11,0.25)',
+                  color: '#b8860b',
+                  borderRadius: '10px',
+                  padding: isXS ? '6px 12px' : '8px 16px',
+                  fontSize: isXS ? '12px' : '13px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  marginBottom: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontFamily: 'Nunito, sans-serif'
+                }}
+              >
+                ← Tableau de bord
+              </button>
+              {renderContent()}
+            </motion.div>
+          </AnimatePresence>
+        )}
       </div>
+
+      <style>{`
+        @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.3); } }
+        * { -webkit-tap-highlight-color: transparent; }
+        button { touch-action: manipulation; }
+      `}</style>
     </div>
   )
 }
