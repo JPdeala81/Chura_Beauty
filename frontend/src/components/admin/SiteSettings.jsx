@@ -109,6 +109,94 @@ const SiteSettings = ({ onUpdate }) => {
     e.preventDefault();
     setLoading(true);
     setMessage(null);
+
+    // Validation stricte
+    const errors = [];
+
+    // Salon name
+    if (!form.salonName || form.salonName.trim().length < 2) {
+      errors.push('Nom du salon: minimum 2 caractères requis');
+    }
+    if (form.salonName.length > 100) {
+      errors.push('Nom du salon: maximum 100 caractères');
+    }
+
+    // Hero title
+    if (!form.heroTitle || form.heroTitle.trim().length < 3) {
+      errors.push('Titre principal: minimum 3 caractères requis');
+    }
+    if (form.heroTitle.length > 150) {
+      errors.push('Titre principal: maximum 150 caractères');
+    }
+
+    // Hero subtitle
+    if (form.heroSubtitle && form.heroSubtitle.length > 200) {
+      errors.push('Sous-titre: maximum 200 caractères');
+    }
+
+    // Bio
+    if (form.bio && form.bio.length > 500) {
+      errors.push('Bio: maximum 500 caractères');
+    }
+
+    // Phone validation
+    if (!form.phone || !/^[+]?[\d\s\-()]{7,}$/.test(form.phone.replace(/\s/g, ''))) {
+      errors.push('Téléphone: format invalide (minimum 7 chiffres)');
+    }
+
+    // WhatsApp validation
+    if (!form.whatsapp || !/^[+]?[\d\s\-()]{7,}$/.test(form.whatsapp.replace(/\s/g, ''))) {
+      errors.push('WhatsApp: format invalide (minimum 7 chiffres)');
+    }
+
+    // Address
+    if (!form.address || form.address.trim().length < 3) {
+      errors.push('Adresse: minimum 3 caractères requis');
+    }
+    if (form.address.length > 200) {
+      errors.push('Adresse: maximum 200 caractères');
+    }
+
+    // Social media handles
+    if (form.instagram && form.instagram.length > 100) {
+      errors.push('Instagram: maximum 100 caractères');
+    }
+    if (form.facebook && form.facebook.length > 100) {
+      errors.push('Facebook: maximum 100 caractères');
+    }
+
+    // Color validation
+    if (!/^#[0-9A-F]{6}$/i.test(form.heroBgColor)) {
+      errors.push('Couleur de fond: format hex invalide (#RRGGBB)');
+    }
+    if (!/^#[0-9A-F]{6}$/i.test(form.heroTextColor)) {
+      errors.push('Couleur du texte: format hex invalide (#RRGGBB)');
+    }
+    if (!/^#[0-9A-F]{6}$/i.test(form.primaryColor)) {
+      errors.push('Couleur primaire: format hex invalide (#RRGGBB)');
+    }
+    if (!/^#[0-9A-F]{6}$/i.test(form.secondaryColor)) {
+      errors.push('Couleur secondaire: format hex invalide (#RRGGBB)');
+    }
+
+    // Border radius validation
+    const borderRadius = parseInt(form.cardBorderRadius);
+    if (isNaN(borderRadius) || borderRadius < 0 || borderRadius > 50) {
+      errors.push('Rayon des bordures: doit être entre 0 et 50px');
+    }
+
+    // Shadow blur validation
+    const shadowBlur = parseInt(form.cardShadowBlur);
+    if (isNaN(shadowBlur) || shadowBlur < 0 || shadowBlur > 100) {
+      errors.push('Flou des ombres: doit être entre 0 et 100px');
+    }
+
+    if (errors.length > 0) {
+      setMessage({ type: 'error', text: errors.join(' | ') });
+      setLoading(false);
+      return;
+    }
+
     try {
       // Prepare form data for file upload
       const data = new FormData();
