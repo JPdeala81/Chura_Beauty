@@ -4197,6 +4197,28 @@ const SuperAdminDashboard = () => {
       )}
 
       <div style={{ height: '2rem' }} />
+
+      <style>{`
+        .super-admin-dashboard * { -webkit-tap-highlight-color: transparent; }
+        .super-admin-dashboard button { touch-action: manipulation; }
+        .super-admin-dashboard input, .super-admin-dashboard textarea, .super-admin-dashboard select {
+          transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .super-admin-dashboard input:focus, .super-admin-dashboard textarea:focus, .super-admin-dashboard select:focus {
+          box-shadow: 0 0 0 3px rgba(184, 134, 11, 0.1) !important;
+        }
+        .super-admin-dashboard-card {
+          background: linear-gradient(135deg, #ffffff 0%, #f9f9f9 100%);
+          border-radius: 16px;
+          box-shadow: 0 6px 24px rgba(0, 0, 0, 0.06);
+          border: 1px solid rgba(184, 134, 11, 0.08);
+          transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .super-admin-dashboard-card:hover {
+          box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+          border-color: rgba(184, 134, 11, 0.16);
+        }
+      `}</style>
     </div>
   )
 }
