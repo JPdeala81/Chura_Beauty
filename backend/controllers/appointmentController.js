@@ -575,34 +575,89 @@ export const deleteAppointment = async (req, res) => {
 }
 
 const generateNewAppointmentNotification = (appointment) => {
+  const formattedDate = new Date(appointment.appointment_date || appointment.desired_date).toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
   return `
 🔔 NOUVELLE DEMANDE DE RENDEZ-VOUS 🔔
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-👤 *Client* : ${appointment.client_name}
-📱 *WhatsApp* : ${appointment.client_whatsapp}
-💅 *Service* : ${appointment.service.title}
-💰 *Prix* : ${appointment.service.price} FCFA
+*👤 CLIENT*
+📌 ${appointment.client_name}
+📱 ${appointment.client_whatsapp || 'Non fourni'}
+📧 ${appointment.client_email || 'Non fourni'}
 
-📅 *Date Demandée* : ${new Date(appointment.appointment_date || appointment.desired_date).toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-⏰ *Heure* : ${appointment.slot_start} - ${appointment.slot_end}
+*💅 SERVICE DEMANDÉ*
+${appointment.service.title}
+💰 ${appointment.service.price} FCFA
 
-${appointment.custom_description ? `📝 *Notes du client* :\n${appointment.custom_description}\n` : ''}━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*📅 CRÉNEAU SOUHAITÉ*
+📌 ${formattedDate}
+⏰ ${appointment.slot_start} - ${appointment.slot_end}
 
-✅ À accepter ou refuser dans votre dashboard
-`
+${appointment.custom_description ? `*📝 NOTES DU CLIENT*\n${appointment.custom_description}\n` : ''}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚡ *ACTION REQUISE:*
+✅ Accepter   |   ❌ Refuser
+
+Gérez cette demande dans votre dashboard administrateur.
+`.trim()
 }
 
 const generateAppointmentMessage = (appointment, isAccepted) => {
+  const svcTitle = appointment.service?.title || appointment.services?.title || 'le service'
+  const svcPrice = appointment.service?.price || appointment.services?.price || ''
+  const apptDate = appointment.appointment_date || appointment.desired_date
+  const formattedDate = new Date(apptDate).toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+
   if (isAccepted) {
-    const svcTitle = appointment.service?.title || appointment.services?.title || 'le service'
-    const svcPrice = appointment.service?.price || appointment.services?.price || ''
-    const apptDate = appointment.appointment_date || appointment.desired_date
-    return `🎉 Bonjour ${appointment.client_name}!\n\nVotre rendez-vous pour *${svcTitle}* a été ✅ *CONFIRMÉ*!\n\n📅 *Date* : ${new Date(apptDate).toLocaleDateString('fr-FR')}\n⏰ *Heure* : ${appointment.slot_start} - ${appointment.slot_end}\n💰 *Prix* : ${svcPrice} FCFA\n\nMerci de confirmer votre présence. À très bientôt! 💆‍♀️✨`
+    return `
+✨ *RENDEZ-VOUS CONFIRMÉ* ✨
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Bonjour ${appointment.client_name},
+
+Nous sommes heureux de confirmer votre rendez-vous! 🎉
+
+*📅 DATE & HEURE*
+📌 ${formattedDate}
+⏰ ${appointment.slot_start} - ${appointment.slot_end}
+
+*💅 SERVICE*
+${svcTitle}
+💰 ${svcPrice} FCFA
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Rendez-vous CONFIRMÉ
+📍 Nous vous attendons!
+
+Pour toute modification, veuillez nous contacter.
+
+Merci et à bientôt! 💆‍♀️✨
+`.trim()
   } else {
-    const svcTitle = appointment.service?.title || appointment.services?.title || 'le service'
-    const apptDate = appointment.appointment_date || appointment.desired_date
-    return `Bonjour ${appointment.client_name},\n\nNous sommes désolés, votre demande de RDV pour *${svcTitle}* n'a pas pu être acceptée pour le ${new Date(apptDate).toLocaleDateString('fr-FR')} à ${appointment.slot_start}.\n\nN'hésitez pas à visiter notre site pour choisir un autre créneau. Merci de votre compréhension!`
+    return `
+⚠️ *RENDEZ-VOUS NON DISPONIBLE* ⚠️
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Bonjour ${appointment.client_name},
+
+Nous regrettons de vous informer que votre demande de rendez-vous pour:
+
+*💅 ${svcTitle}*
+📅 ${formattedDate}
+⏰ ${appointment.slot_start}
+
+...n'a pas pu être acceptée à ce créneau.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💡 *Autres options:*
+• Consultez notre site pour d'autres créneaux
+• Contactez-nous directement pour des alternatives
+• Nous vous aiderons à trouver le créneau idéal
+
+Merci de votre compréhension! 🙏
+`.trim()
   }
 }
 
