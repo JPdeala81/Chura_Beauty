@@ -66,25 +66,20 @@ const Home = () => {
 
   useEffect(() => {
     if (!maintenanceMode || !maintenanceInfo?.reopenDate) return
-
     const updateTimer = () => {
       const reopenDateTime = new Date(`${maintenanceInfo.reopenDate}T${maintenanceInfo.reopenTime}`)
       const now = new Date()
       const diff = reopenDateTime - now
-
       if (diff <= 0) {
         setTimeRemaining('Prochainement...')
         checkMaintenanceMode()
         return
       }
-
       const hours = Math.floor(diff / (1000 * 60 * 60))
       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
       const seconds = Math.floor((diff % (1000 * 60)) / 1000)
-
       setTimeRemaining(`${hours}h ${minutes}m ${seconds}s`)
     }
-
     updateTimer()
     const interval = setInterval(updateTimer, 1000)
     return () => clearInterval(interval)
@@ -135,14 +130,9 @@ const Home = () => {
   const goToPage = (page) => {
     const pageNum = Math.max(1, Math.min(page, totalPages))
     setCurrentPage(pageNum)
-    window.scrollTo({ top: 300, behavior: 'smooth' })
-  }
-
-  const scrollToServices = () => {
     servicesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
-  // Maintenance Mode Screen
   if (maintenanceMode) {
     return (
       <motion.div
@@ -185,7 +175,6 @@ const Home = () => {
           >
             🔧
           </motion.div>
-
           <h1 style={{
             fontSize: 'clamp(2rem, 6vw, 3.5rem)',
             fontWeight: '800',
@@ -198,278 +187,251 @@ const Home = () => {
           }}>
             Maintenance en Cours
           </h1>
-
-          <p style={{
-            fontSize: 'clamp(15px, 2.5vw, 18px)',
-            marginBottom: '24px',
-            color: 'rgba(255, 255, 255, 0.9)',
-            lineHeight: '1.7'
-          }}>
-            {maintenanceInfo?.reason || 'Nous effectuons une maintenance programmée pour améliorer votre expérience.'}
+          <p style={{ fontSize: 'clamp(1rem, 2vw, 1.2rem)', marginBottom: '24px', opacity: 0.9 }}>
+            {maintenanceInfo?.reason}
           </p>
-
           {timeRemaining && (
             <motion.div
-              initial={{ y: -20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.2 }}
+              animate={{ scale: [1, 1.05, 1] }}
+              transition={{ duration: 2, repeat: Infinity }}
               style={{
-                background: 'rgba(255, 215, 0, 0.15)',
-                border: '2px solid #ffd700',
-                borderRadius: '16px',
-                padding: 'clamp(20px, 4vw, 30px)',
-                marginBottom: '24px'
+                fontSize: 'clamp(1.2rem, 3vw, 1.5rem)',
+                fontWeight: '700',
+                background: 'rgba(255, 255, 255, 0.15)',
+                padding: '16px 24px',
+                borderRadius: '12px',
+                border: '1px solid rgba(255, 215, 0, 0.4)'
               }}
             >
-              <p style={{ margin: 0, color: '#ffed4e', fontSize: 'clamp(12px, 2vw, 14px)', marginBottom: '8px', fontWeight: '600' }}>
-                ⏱️ Réouverture dans
-              </p>
-              <h2 style={{
-                margin: 0,
-                fontSize: 'clamp(28px, 6vw, 42px)',
-                fontWeight: 'bold',
-                fontFamily: 'monospace',
-                color: '#ffd700',
-                letterSpacing: '2px'
-              }}>
-                {timeRemaining}
-              </h2>
+              ⏳ Réouverture dans {timeRemaining}
             </motion.div>
           )}
-
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            style={{
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
-              borderRadius: '16px',
-              padding: 'clamp(20px, 4vw, 30px)',
-              marginBottom: '24px',
-              textAlign: 'left'
-            }}
-          >
-            <h3 style={{ marginTop: 0, marginBottom: '12px', color: 'white', fontSize: 'clamp(14px, 2vw, 16px)', fontWeight: '700' }}>
-              ✨ Pendant la maintenance
-            </h3>
-            <ul style={{
-              listStyle: 'none',
-              padding: 0,
-              margin: 0,
-              fontSize: 'clamp(13px, 2vw, 15px)'
-            }}>
-              <li style={{ marginBottom: '8px', color: 'rgba(255, 255, 255, 0.8)' }}>✓ Les réservations rouvriront après</li>
-              <li style={{ marginBottom: '8px', color: 'rgba(255, 255, 255, 0.8)' }}>✓ Nous améliorons continuellement</li>
-              <li style={{ color: 'rgba(255, 255, 255, 0.8)' }}>✓ Merci de votre patience!</li>
-            </ul>
-          </motion.div>
-
-          <p style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: 'clamp(12px, 2vw, 14px)', margin: 0 }}>
-            Besoin d'aide?{' '}
-            <a href="mailto:support@chura.com" style={{ color: '#ffd700', textDecoration: 'none', fontWeight: '600' }}>
-              Contactez-nous
-            </a>
-          </p>
         </motion.div>
       </motion.div>
     )
   }
 
   return (
-    <>
+    <div style={{ minHeight: '100vh', background: '#fff' }}>
       <Navbar />
-      <ErrorToast message={errorMessage} onClose={() => setErrorMessage('')} />
+      {errorMessage && <ErrorToast message={errorMessage} />}
 
-      <HeroSection onScrollToServices={scrollToServices} />
+      <HeroSection onScrollToServices={() => servicesRef.current?.scrollIntoView({ behavior: 'smooth' })} />
 
-      {/* Services Section */}
-      <section
-        ref={servicesRef}
-        style={{
-          background: 'linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%)',
-          minHeight: '70vh',
-          paddingTop: 'clamp(40px, 8vw, 80px)',
-          paddingBottom: 'clamp(40px, 10vw, 100px)',
-          position: 'relative'
-        }}
-      >
-        {/* Background animation */}
+      {/* SERVICES SECTION - MAGNIFIQUE DESIGN */}
+      <section ref={servicesRef} style={{ padding: 'clamp(60px, 10vw, 100px) clamp(16px, 5vw, 48px)', background: '#f8f9fb' }}>
+        {/* HEADER */}
         <motion.div
-          animate={{ opacity: [0.3, 0.6, 0.3] }}
-          transition={{ duration: 6, repeat: Infinity }}
-          style={{
-            position: 'absolute',
-            top: 0,
-            right: '10%',
-            width: '300px',
-            height: '300px',
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(255, 215, 0, 0.1), transparent)',
-            zIndex: 0
-          }}
-        />
-
-        <div className="container" style={{ position: 'relative', zIndex: 1 }}>
-          {/* Section Header */}
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          style={{ textAlign: 'center', marginBottom: 'clamp(40px, 8vw, 80px)' }}
+        >
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            style={{ textAlign: 'center', marginBottom: 'clamp(30px, 5vw, 50px)' }}
-          >
-            <h2 style={{
-              fontSize: 'clamp(2rem, 6vw, 3rem)',
-              fontFamily: 'Playfair Display, serif',
-              color: '#333',
-              fontWeight: '800',
-              margin: 0,
-              marginBottom: '12px'
-            }}>
-              ✨ Nos Services Magnifiques
-            </h2>
-            <p style={{
-              fontSize: 'clamp(14px, 2.5vw, 16px)',
-              color: '#999',
-              margin: 0,
-              maxWidth: '500px',
-              margin: '0 auto'
-            }}>
-              Découvrez notre collection exclusive de services beauté haut de gamme
-            </p>
-          </motion.div>
-
-          {/* Filters */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
-            style={{
-              background: 'white',
-              borderRadius: '16px',
-              padding: 'clamp(20px, 4vw, 30px)',
-              marginBottom: 'clamp(30px, 5vw, 50px)',
-              boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)',
-              border: '1px solid rgba(255, 215, 0, 0.1)'
-            }}
           >
-            <div style={{ marginBottom: '20px' }}>
-              <SearchBar value={searchQuery} onChange={setSearchQuery} />
-            </div>
+            <span style={{
+              display: 'inline-block',
+              background: 'linear-gradient(135deg, #ffd700, #ffed4e)',
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              fontSize: 'clamp(14px, 2vw, 16px)',
+              fontWeight: '700',
+              letterSpacing: '2px',
+              textTransform: 'uppercase',
+              marginBottom: '16px'
+            }}>
+              ✨ Nos Services Premium ✨
+            </span>
+          </motion.div>
+          <h2 style={{
+            fontSize: 'clamp(2rem, 6vw, 3.5rem)',
+            fontWeight: '900',
+            color: '#333',
+            margin: '0 0 16px 0',
+            lineHeight: '1.2'
+          }}>
+            Découvrez l'Excellence
+          </h2>
+          <p style={{
+            fontSize: 'clamp(14px, 2vw, 18px)',
+            color: '#999',
+            maxWidth: '600px',
+            margin: '0 auto',
+            lineHeight: '1.6'
+          }}>
+            Une sélection curatée de services beauté conçus pour sublimer votre beauté naturelle
+          </p>
+        </motion.div>
 
+        {/* SEARCH & FILTERS */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          style={{ marginBottom: 'clamp(40px, 6vw, 60px)' }}
+        >
+          <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+          <motion.div style={{ marginTop: 'clamp(20px, 3vw, 32px)' }}>
             <CategoryFilter
               categories={categories}
               activeCategory={activeCategory}
-              onCategoryChange={setActiveCategory}
+              setActiveCategory={setActiveCategory}
             />
           </motion.div>
+        </motion.div>
 
-          {/* Loading State */}
-          {loading && (
+        {/* SERVICES GRID */}
+        {loading ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            style={{ textAlign: 'center', padding: '80px 20px' }}
+          >
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              style={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                minHeight: '300px'
-              }}
+              animate={{ rotate: 360 }}
+              transition={{ duration: 2, repeat: Infinity }}
+              style={{ fontSize: '64px', display: 'inline-block' }}
             >
+              ✨
+            </motion.div>
+            <p style={{ marginTop: '16px', color: '#999', fontWeight: '600' }}>Chargement des services...</p>
+          </motion.div>
+        ) : paginatedServices.length === 0 ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            style={{
+              textAlign: 'center',
+              padding: 'clamp(40px, 8vw, 80px) 20px',
+              background: 'white',
+              borderRadius: '20px',
+              border: '2px dashed #ddd'
+            }}
+          >
+            <div style={{ fontSize: '64px', marginBottom: '16px' }}>🔍</div>
+            <h3 style={{ fontSize: 'clamp(18px, 3vw, 24px)', color: '#333', margin: '0 0 8px 0', fontWeight: '700' }}>
+              Aucun service trouvé
+            </h3>
+            <p style={{ color: '#999', margin: 0 }}>Essayez une autre recherche ou catégorie</p>
+          </motion.div>
+        ) : (
+          <>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(clamp(280px, 30vw, 380px), 1fr))',
+              gap: 'clamp(24px, 3vw, 32px)',
+              marginBottom: 'clamp(40px, 6vw, 60px)'
+            }}>
+              <AnimatePresence>
+                {paginatedServices.map((service, idx) => (
+                  <motion.div
+                    key={service.id || service._id}
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: idx * 0.12 }}
+                    exit={{ opacity: 0, y: -20 }}
+                  >
+                    <ServiceCard service={service} />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+
+            {/* PAGINATION */}
+            {totalPages > 1 && (
               <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3 }}
                 style={{
-                  width: '50px',
-                  height: '50px',
-                  border: '3px solid rgba(255, 215, 0, 0.2)',
-                  borderTop: '3px solid #ffd700',
-                  borderRadius: '50%'
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  gap: 'clamp(8px, 2vw, 16px)',
+                  flexWrap: 'wrap',
+                  padding: 'clamp(24px, 4vw, 40px)',
+                  background: 'white',
+                  borderRadius: '16px',
+                  boxShadow: '0 2px 12px rgba(0,0,0,0.08)'
                 }}
-              />
-            </motion.div>
-          )}
-
-          {/* Services Grid */}
-          {!loading && paginatedServices.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(clamp(280px, 30vw, 320px), 1fr))',
-                gap: 'clamp(20px, 3vw, 30px)',
-                marginBottom: 'clamp(30px, 5vw, 50px)'
-              }}
-            >
-              {paginatedServices.map((service, idx) => (
-                <ServiceCard key={service.id} service={service} index={idx} />
-              ))}
-            </motion.div>
-          )}
-
-          {/* No Services Message */}
-          {!loading && paginatedServices.length === 0 && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              style={{
-                textAlign: 'center',
-                padding: 'clamp(40px, 8vw, 60px)',
-                background: 'rgba(255, 215, 0, 0.05)',
-                borderRadius: '16px',
-                border: '2px dashed rgba(255, 215, 0, 0.2)'
-              }}
-            >
-              <p style={{ fontSize: 'clamp(16px, 3vw, 18px)', color: '#999', margin: 0 }}>
-                Aucun service ne correspond à votre recherche. Essayez d'autres critères! 🔍
-              </p>
-            </motion.div>
-          )}
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              style={{
-                display: 'flex',
-                justifyContent: 'center',
-                gap: '8px',
-                flexWrap: 'wrap'
-              }}
-            >
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+              >
                 <motion.button
-                  key={page}
-                  whileHover={{ scale: 1.05 }}
+                  whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => goToPage(page)}
+                  onClick={() => goToPage(currentPage - 1)}
+                  disabled={currentPage === 1}
                   style={{
-                    padding: '10px 14px',
-                    borderRadius: '8px',
+                    padding: '8px 16px',
+                    background: currentPage === 1 ? '#f0f0f0' : 'linear-gradient(135deg, #667eea, #764ba2)',
+                    color: currentPage === 1 ? '#ccc' : 'white',
                     border: 'none',
-                    background: page === currentPage ? '#ffd700' : 'white',
-                    color: page === currentPage ? '#000' : '#333',
-                    fontWeight: page === currentPage ? '700' : '600',
-                    cursor: 'pointer',
-                    fontSize: 'clamp(12px, 2vw, 14px)',
-                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-                    transition: 'all 0.3s ease'
+                    borderRadius: '8px',
+                    cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                    fontWeight: '600',
+                    fontSize: '14px'
                   }}
                 >
-                  {page}
+                  ← Précédent
                 </motion.button>
-              ))}
-            </motion.div>
-          )}
-        </div>
+
+                <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                    <motion.button
+                      key={page}
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => goToPage(page)}
+                      style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '8px',
+                        border: 'none',
+                        background: currentPage === page ? 'linear-gradient(135deg, #667eea, #764ba2)' : '#f0f0f0',
+                        color: currentPage === page ? 'white' : '#333',
+                        fontWeight: currentPage === page ? '700' : '600',
+                        fontSize: '14px',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s'
+                      }}
+                    >
+                      {page}
+                    </motion.button>
+                  ))}
+                </div>
+
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => goToPage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  style={{
+                    padding: '8px 16px',
+                    background: currentPage === totalPages ? '#f0f0f0' : 'linear-gradient(135deg, #667eea, #764ba2)',
+                    color: currentPage === totalPages ? '#ccc' : 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                    fontWeight: '600',
+                    fontSize: '14px'
+                  }}
+                >
+                  Suivant →
+                </motion.button>
+              </motion.div>
+            )}
+          </>
+        )}
       </section>
 
       <Footer />
-    </>
+    </div>
   )
 }
 
