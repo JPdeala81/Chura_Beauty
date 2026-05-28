@@ -129,8 +129,9 @@ export default function ServiceDetail() {
       {/* Hero Section */}
       <section style={{
         background: 'linear-gradient(135deg, #ffd700 0%, #ffed4e 100%)',
-        padding: 'clamp(20px, 6vw, 40px) 20px',
-        textAlign: 'center'
+        padding: 'clamp(60px, 8vw, 60px) 20px clamp(20px, 6vw, 40px) 20px',
+        textAlign: 'center',
+        marginTop: 'clamp(40px, 8vw, 60px)'
       }}>
         <div className="container">
           <motion.div
