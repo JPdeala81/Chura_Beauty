@@ -398,13 +398,13 @@ const AdminDashboard = () => {
 
         {activeTab === 'home' ? (
           <>
-            {/* Salutation */}
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: '20px' }}>
-              <h2 style={{ fontFamily: 'Playfair Display, serif', color: '#2c1810', fontSize: isXS ? '1.4rem' : isSM ? '1.6rem' : '2rem', marginBottom: '4px' }}>
+            {/* Salutation & Header */}
+            <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', stiffness: 100, damping: 12 }} style={{ marginBottom: '32px' }}>
+              <h2 style={{ fontFamily: 'Playfair Display, serif', color: '#2c1810', fontSize: isXS ? '1.5rem' : isSM ? '1.8rem' : '2.2rem', marginBottom: '8px', fontWeight: '800', letterSpacing: '-0.5px' }}>
                 Bonjour {adminInfo?.owner_name?.split(' ')[0] || 'Admin'} 👋
               </h2>
-              <p style={{ color: '#6c757d', fontSize: isXS ? '12px' : '14px' }}>
-                {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+              <p style={{ color: '#8b7d73', fontSize: isXS ? '13px' : '14px', fontWeight: '500', letterSpacing: '0.3px' }}>
+                {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} • {adminInfo?.salon_name || 'Dashboard'}
               </p>
             </motion.div>
 
@@ -412,82 +412,92 @@ const AdminDashboard = () => {
             <div style={{
               display: 'grid',
               gridTemplateColumns: isXS ? 'repeat(2, 1fr)' : isSM ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
-              gap: isXS ? '10px' : '16px',
-              marginBottom: '28px'
+              gap: isXS ? '12px' : '18px',
+              marginBottom: '32px'
             }}>
               {kpiCards.map((kpi, i) => (
                 <motion.div
                   key={i}
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 24 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.08 }}
-                  whileHover={{ y: -4 }}
+                  transition={{ delay: i * 0.1, type: 'spring', stiffness: 100, damping: 12 }}
+                  whileHover={{ y: -6, boxShadow: '0 12px 32px rgba(0,0,0,0.12)' }}
                   style={{
-                    background: 'white',
-                    borderRadius: isXS ? '14px' : '18px',
-                    padding: isXS ? '14px' : isSM ? '16px' : '22px',
-                    boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
-                    border: `1px solid ${kpi.bg}`,
+                    background: 'linear-gradient(135deg, #ffffff 0%, #f9f9f9 100%)',
+                    borderRadius: isXS ? '16px' : '20px',
+                    padding: isXS ? '16px' : isSM ? '18px' : '24px',
+                    boxShadow: '0 6px 24px rgba(0,0,0,0.08)',
+                    border: `1.5px solid ${kpi.bg}`,
                     position: 'relative',
-                    overflow: 'hidden'
+                    overflow: 'hidden',
+                    cursor: 'pointer',
+                    transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)'
                   }}
                 >
-                  <div style={{ position: 'absolute', top: '-15px', right: '-15px', width: '60px', height: '60px', borderRadius: '50%', background: kpi.bg }} />
-                  <div style={{ fontSize: isXS ? '1.4rem' : '1.8rem', marginBottom: '8px' }}>{kpi.icon}</div>
-                  <div style={{ fontFamily: 'Playfair Display, serif', fontSize: isXS ? '1.3rem' : '1.8rem', fontWeight: '700', color: kpi.color, lineHeight: 1 }}>
-                    {kpi.value}
-                  </div>
-                  <div style={{ color: '#6c757d', fontSize: isXS ? '10px' : '12px', marginTop: '4px', fontWeight: '500' }}>
-                    {kpi.label}
+                  <div style={{ position: 'absolute', top: '-24px', right: '-24px', width: '80px', height: '80px', borderRadius: '50%', background: kpi.bg, opacity: 0.08 }} />
+                  <div style={{ position: 'relative', zIndex: 1 }}>
+                    <div style={{ fontSize: isXS ? '1.6rem' : '2rem', marginBottom: '12px', lineHeight: 1 }}>{kpi.icon}</div>
+                    <div style={{ fontFamily: 'Playfair Display, serif', fontSize: isXS ? '1.4rem' : '2rem', fontWeight: '700', color: kpi.color, lineHeight: 1, marginBottom: '6px' }}>
+                      {kpi.value}
+                    </div>
+                    <div style={{ color: '#8b7d73', fontSize: isXS ? '11px' : '13px', fontWeight: '600', letterSpacing: '0.5px' }}>
+                      {kpi.label}
+                    </div>
                   </div>
                 </motion.div>
               ))}
             </div>
 
             {/* Quick Actions */}
-            <h5 style={{ fontFamily: 'Playfair Display, serif', color: '#2c1810', marginBottom: '14px', fontSize: isXS ? '1rem' : '1.2rem' }}>
+            <h5 style={{ fontFamily: 'Playfair Display, serif', color: '#2c1810', marginBottom: '18px', fontSize: isXS ? '1.05rem' : '1.25rem', fontWeight: '700', letterSpacing: '0.5px' }}>
               ✨ Actions rapides
             </h5>
             <div style={{
               display: 'grid',
-              gridTemplateColumns: isXS ? 'repeat(2, 1fr)' : isSM ? 'repeat(3, 1fr)' : isMD ? 'repeat(4, 1fr)' : 'repeat(4, 1fr)',
-              gap: isXS ? '10px' : '14px',
-              marginBottom: '28px'
+              gridTemplateColumns: isXS ? 'repeat(2, 1fr)' : isSM ? 'repeat(3, 1fr)' : isMD ? 'repeat(4, 1fr)' : 'repeat(5, 1fr)',
+              gap: isXS ? '12px' : isSM ? '16px' : '18px',
+              marginBottom: '32px'
             }}>
               {quickActions.map((action, i) => (
                 <motion.div
                   key={action.id}
-                  initial={{ opacity: 0, scale: 0.9 }}
+                  initial={{ opacity: 0, scale: 0.85 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.1 * i + 0.3 }}
-                  whileTap={{ scale: 0.97 }}
+                  transition={{ delay: 0.08 * i + 0.2, type: 'spring', stiffness: 120, damping: 14 }}
+                  whileHover={{ y: -8, boxShadow: '0 16px 36px rgba(0,0,0,0.14)' }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={() => setActiveTab(action.id)}
                   style={{
-                    background: 'white',
-                    borderRadius: isXS ? '14px' : '18px',
-                    padding: isXS ? '14px 10px' : isSM ? '16px 12px' : '22px 16px',
-                    boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
-                    border: `1px solid ${action.color}18`,
+                    background: 'linear-gradient(135deg, #ffffff 0%, #f8f8f8 100%)',
+                    borderRadius: isXS ? '16px' : '20px',
+                    padding: isXS ? '16px 12px' : isSM ? '18px 14px' : '24px 18px',
+                    boxShadow: '0 6px 24px rgba(0,0,0,0.06)',
+                    border: `1.5px solid ${action.color}20`,
                     cursor: 'pointer',
                     textAlign: 'center',
-                    position: 'relative'
+                    position: 'relative',
+                    transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                    background: `linear-gradient(135deg, #ffffff 0%, rgba(${parseInt(action.color.slice(1, 3), 16)}, ${parseInt(action.color.slice(3, 5), 16)}, ${parseInt(action.color.slice(5, 7), 16)}, 0.02) 100%)`
                   }}
                 >
                   {action.badge > 0 && (
-                    <span style={{ position: 'absolute', top: '8px', right: '8px', background: '#dc3545', color: 'white', borderRadius: '50%', width: '18px', height: '18px', fontSize: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700' }}>
+                    <motion.span
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      style={{ position: 'absolute', top: '10px', right: '10px', background: action.color, color: 'white', borderRadius: '50%', width: '24px', height: '24px', fontSize: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700', boxShadow: '0 4px 12px rgba(220, 53, 69, 0.4)' }}>
                       {action.badge > 9 ? '9+' : action.badge}
-                    </span>
+                    </motion.span>
                   )}
-                  <div style={{ fontSize: isXS ? '1.8rem' : '2.2rem', marginBottom: '8px' }}>{action.icon}</div>
-                  <div style={{ fontFamily: 'Playfair Display, serif', color: '#2c1810', fontSize: isXS ? '11px' : '13px', fontWeight: '700', marginBottom: isXS ? '0' : '4px' }}>
+                  <div style={{ fontSize: isXS ? '1.8rem' : '2.4rem', marginBottom: '10px', lineHeight: 1 }}>{action.icon}</div>
+                  <div style={{ fontFamily: 'Playfair Display, serif', color: '#2c1810', fontSize: isXS ? '12px' : '14px', fontWeight: '700', marginBottom: isXS ? '2px' : '6px' }}>
                     {action.label}
                   </div>
                   {!isXS && (
-                    <div style={{ color: '#6c757d', fontSize: '11px', lineHeight: '1.3' }}>
+                    <div style={{ color: '#8b7d73', fontSize: '12px', lineHeight: '1.4', minHeight: '24px' }}>
                       {action.desc}
                     </div>
                   )}
-                  <div style={{ marginTop: isXS ? '6px' : '10px', background: `${action.color}12`, color: action.color, borderRadius: '6px', padding: '4px', fontSize: '11px', fontWeight: '700' }}>
+                  <div style={{ marginTop: isXS ? '8px' : '12px', background: `linear-gradient(135deg, ${action.color}15, ${action.color}08)`, color: action.color, borderRadius: '8px', padding: isXS ? '6px 8px' : '8px 12px', fontSize: isXS ? '10px' : '12px', fontWeight: '700', border: `1px solid ${action.color}25`, transition: 'all 0.2s ease' }}>
                     Ouvrir →
                   </div>
                 </motion.div>
@@ -496,11 +506,26 @@ const AdminDashboard = () => {
 
             {/* Graphique CA */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              style={{ background: 'white', borderRadius: '20px', padding: isXS ? '16px' : '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}
+              transition={{ type: 'spring', stiffness: 80, damping: 12 }}
+              style={{
+                background: 'linear-gradient(135deg, #ffffff 0%, #f9f9f9 100%)',
+                borderRadius: '24px',
+                padding: isXS ? '18px' : isSM ? '22px' : '28px',
+                boxShadow: '0 8px 28px rgba(0,0,0,0.08)',
+                border: '1px solid rgba(184,134,11,0.08)'
+              }}
             >
+              <div style={{ marginBottom: '16px' }}>
+                <h3 style={{ fontFamily: 'Playfair Display, serif', color: '#2c1810', fontSize: isXS ? '1rem' : '1.3rem', fontWeight: '700', margin: 0 }}>
+                  📊 Chiffre d'affaires
+                </h3>
+                <p style={{ color: '#8b7d73', fontSize: '12px', margin: '6px 0 0 0', fontWeight: '500' }}>
+                  Évolution des revenus par semaine
+                </p>
+              </div>
               <RevenueChart compact={isSM} />
             </motion.div>
           </>
