@@ -1,27 +1,49 @@
 import { useState, useEffect } from 'react';
 import { Form, Button, Card, Alert } from 'react-bootstrap';
 import * as serviceService from '../../services/serviceService';
+import { useFormValidation, validators } from '../../hooks/useFormValidation';
 
 export default function ServiceForm({ service, onClose }) {
   const [categories, setCategories] = useState([]);
   const [newCategory, setNewCategory] = useState('');
   const [showNewCategory, setShowNewCategory] = useState(false);
-  const [durationMode, setDurationMode] = useState('minutes'); // 'minutes', 'hours', 'seconds'
-  
-  const [formData, setFormData] = useState({
-    title: service?.title || '',
-    description: service?.description || '',
-    category: service?.category || '',
-    price: service?.price || '',
-    duration: service?.duration || '',
-    displayStyle: service?.displayStyle || 'card',
-    checkboxOptions: service?.checkboxOptions?.join(',') || '',
-  });
-
+  const [durationMode, setDurationMode] = useState('minutes');
   const [images, setImages] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  const form = useFormValidation(
+    {
+      title: service?.title || '',
+      description: service?.description || '',
+      category: service?.category || '',
+      price: service?.price || '',
+      duration: service?.duration || '',
+      displayStyle: service?.displayStyle || 'card',
+      checkboxOptions: service?.checkboxOptions?.join(',') || '',
+    },
+    {
+      title: [
+        (v) => validators.required(v, 'Titre requis'),
+        (v) => validators.minLength(3)(v, 'Minimum 3 caractères'),
+        (v) => validators.maxLength(100)(v, 'Maximum 100 caractères'),
+      ],
+      description: [
+        (v) => validators.required(v, 'Description requise'),
+        (v) => validators.minLength(10)(v, 'Minimum 10 caractères'),
+        (v) => validators.maxLength(500)(v, 'Maximum 500 caractères'),
+      ],
+      category: (v) => validators.required(v, 'Catégorie requise'),
+      price: [
+        (v) => validators.required(v, 'Prix requis'),
+        (v) => validators.positiveNumber(v, 'Le prix doit être positif'),
+        (v) => validators.minNumber(100)(v, 'Minimum 100 FCFA'),
+      ],
+      duration: [
+        (v) => validators.required(v, 'Durée requise'),
+        (v) => validators.positiveNumber(v, 'La durée doit être positive'),
+      ],
+    }
+  );
 
   useEffect(() => {
     // Fetch existing categories
@@ -38,12 +60,13 @@ export default function ServiceForm({ service, onClose }) {
     }
   };
 
-  const handleChange = (e) => {
+  const handleFieldChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    form.setFieldValue(name, value);
+    if (form.touched[name]) {
+      const error = form.validateField(name, value);
+      form.setFieldError(name, error);
+    }
   };
 
   const handleDurationChange = (e) => {
@@ -56,14 +79,15 @@ export default function ServiceForm({ service, onClose }) {
       minutes = Math.round(value / 60);
     }
 
-    setFormData((prev) => ({
-      ...prev,
-      duration: minutes || '',
-    }));
+    form.setFieldValue('duration', minutes || '');
+    if (form.touched.duration) {
+      const error = form.validateField('duration', minutes);
+      form.setFieldError('duration', error);
+    }
   };
 
   const convertDurationDisplay = () => {
-    const dur = parseFloat(formData.duration) || 0;
+    const dur = parseFloat(form.values.duration) || 0;
     if (durationMode === 'hours') {
       return (dur / 60).toFixed(1);
     } else if (durationMode === 'seconds') {
@@ -79,28 +103,16 @@ export default function ServiceForm({ service, onClose }) {
   const handleAddCategory = () => {
     if (newCategory.trim() && !categories.includes(newCategory)) {
       setCategories([...categories, newCategory].sort());
-      setFormData((prev) => ({
-        ...prev,
-        category: newCategory,
-      }));
+      form.setFieldValue('category', newCategory);
       setNewCategory('');
       setShowNewCategory(false);
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
+  const handleSubmit = form.handleSubmit(async (values) => {
     setSuccess('');
 
-    if (!formData.title || !formData.description || !formData.category || !formData.price || !formData.duration) {
-      setError('Tous les champs sont requis');
-      return;
-    }
-
     try {
-      setLoading(true);
-
       const data = new FormData();
       const fieldMap = {
         'title': 'title',
@@ -111,14 +123,14 @@ export default function ServiceForm({ service, onClose }) {
         'displayStyle': 'display_style',
         'checkboxOptions': 'checkbox_options'
       };
-      
-      Object.keys(formData).forEach((key) => {
+
+      Object.keys(values).forEach((key) => {
         const backendKey = fieldMap[key] || key;
         if (key === 'checkboxOptions') {
-          const options = formData[key].split(',').filter(Boolean).map(o => o.trim());
+          const options = values[key].split(',').filter(Boolean).map(o => o.trim());
           data.append(backendKey, JSON.stringify(options));
         } else {
-          data.append(backendKey, formData[key]);
+          data.append(backendKey, values[key]);
         }
       });
 
@@ -134,26 +146,17 @@ export default function ServiceForm({ service, onClose }) {
         setSuccess('Service créé !');
       }
 
-      setFormData({
-        title: '',
-        description: '',
-        category: '',
-        price: '',
-        duration: '',
-        displayStyle: 'card',
-        checkboxOptions: ''
-      });
+      form.resetForm();
       setImages([]);
 
       setTimeout(() => {
         onClose();
       }, 1500);
     } catch (err) {
-      setError(err.response?.data?.message || 'Erreur lors de l\'enregistrement');
-    } finally {
-      setLoading(false);
+      const errorMsg = err.response?.data?.message || err.message || 'Erreur lors de l\'enregistrement';
+      form.setFieldError('_form', errorMsg);
     }
-  };
+  });
 
   return (
     <Card className="mb-4" style={{ borderRadius: '16px', border: '1px solid rgba(184,134,11,0.1)' }}>
@@ -168,7 +171,7 @@ export default function ServiceForm({ service, onClose }) {
       </Card.Header>
 
       <Card.Body>
-        {error && <Alert variant="danger" style={{ borderRadius: '12px' }}>{error}</Alert>}
+        {form.errors._form && <Alert variant="danger" style={{ borderRadius: '12px' }}>{form.errors._form}</Alert>}
         {success && <Alert variant="success" style={{ borderRadius: '12px' }}>{success}</Alert>}
 
         <Form onSubmit={handleSubmit}>
@@ -180,13 +183,18 @@ export default function ServiceForm({ service, onClose }) {
             <Form.Control
               type="text"
               name="title"
-              value={formData.title}
-              onChange={handleChange}
-              className="form-control-luxury"
+              value={form.values.title}
+              onChange={handleFieldChange}
+              onBlur={form.handleBlur}
+              isInvalid={form.touched.title && !!form.errors.title}
               placeholder="Ex: Coloration complète"
-              required
               style={{ borderRadius: '10px', padding: '12px 16px' }}
             />
+            {form.touched.title && form.errors.title && (
+              <Form.Control.Feedback type="invalid" style={{ display: 'block', marginTop: '6px' }}>
+                {form.errors.title}
+              </Form.Control.Feedback>
+            )}
           </Form.Group>
 
           {/* Description */}
@@ -198,16 +206,21 @@ export default function ServiceForm({ service, onClose }) {
               as="textarea"
               rows={3}
               name="description"
-              value={formData.description}
-              onChange={handleChange}
-              className="form-control-luxury"
+              value={form.values.description}
+              onChange={handleFieldChange}
+              onBlur={form.handleBlur}
+              isInvalid={form.touched.description && !!form.errors.description}
               placeholder="Décrivez votre service..."
-              required
               style={{ borderRadius: '10px', padding: '12px 16px' }}
             />
+            {form.touched.description && form.errors.description && (
+              <Form.Control.Feedback type="invalid" style={{ display: 'block', marginTop: '6px' }}>
+                {form.errors.description}
+              </Form.Control.Feedback>
+            )}
           </Form.Group>
 
-          {/* Catégorie avec création */}
+          {/* Catégorie */}
           <Form.Group className="mb-4">
             <Form.Label style={{ fontWeight: '700', color: '#1a0f08', fontSize: '14px', marginBottom: '10px' }}>
               🏷️ Catégorie *
@@ -215,10 +228,10 @@ export default function ServiceForm({ service, onClose }) {
             <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
               <Form.Select
                 name="category"
-                value={formData.category}
-                onChange={handleChange}
-                className="form-control-luxury"
-                required
+                value={form.values.category}
+                onChange={handleFieldChange}
+                onBlur={form.handleBlur}
+                isInvalid={form.touched.category && !!form.errors.category}
                 style={{ borderRadius: '10px', padding: '12px 16px' }}
               >
                 <option value="">Sélectionner une catégorie</option>
@@ -234,15 +247,19 @@ export default function ServiceForm({ service, onClose }) {
                 + Nouvelle
               </Button>
             </div>
-            
+            {form.touched.category && form.errors.category && (
+              <Form.Control.Feedback type="invalid" style={{ display: 'block', marginTop: '6px' }}>
+                {form.errors.category}
+              </Form.Control.Feedback>
+            )}
+
             {showNewCategory && (
-              <div style={{ display: 'flex', gap: '8px' }}>
+              <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
                 <Form.Control
                   type="text"
                   placeholder="Nom de la catégorie"
                   value={newCategory}
                   onChange={(e) => setNewCategory(e.target.value)}
-                  className="form-control-luxury"
                   style={{ borderRadius: '10px', padding: '12px 16px' }}
                 />
                 <Button
@@ -264,18 +281,23 @@ export default function ServiceForm({ service, onClose }) {
             <Form.Control
               type="number"
               name="price"
-              value={formData.price}
-              onChange={handleChange}
-              className="form-control-luxury"
+              value={form.values.price}
+              onChange={handleFieldChange}
+              onBlur={form.handleBlur}
+              isInvalid={form.touched.price && !!form.errors.price}
               placeholder="0"
-              required
               min="0"
               step="100"
               style={{ borderRadius: '10px', padding: '12px 16px' }}
             />
+            {form.touched.price && form.errors.price && (
+              <Form.Control.Feedback type="invalid" style={{ display: 'block', marginTop: '6px' }}>
+                {form.errors.price}
+              </Form.Control.Feedback>
+            )}
           </Form.Group>
 
-          {/* Durée avec sélecteur d'unité */}
+          {/* Durée */}
           <Form.Group className="mb-4">
             <Form.Label style={{ fontWeight: '700', color: '#1a0f08', fontSize: '14px', marginBottom: '10px' }}>
               ⏱️ Durée du service *
@@ -286,9 +308,9 @@ export default function ServiceForm({ service, onClose }) {
                   type="number"
                   value={convertDurationDisplay()}
                   onChange={handleDurationChange}
-                  className="form-control-luxury"
+                  onBlur={form.handleBlur}
+                  isInvalid={form.touched.duration && !!form.errors.duration}
                   placeholder="0"
-                  required
                   min="0"
                   step="0.5"
                   style={{ borderRadius: '10px', padding: '12px 16px' }}
@@ -297,8 +319,8 @@ export default function ServiceForm({ service, onClose }) {
               <Form.Select
                 value={durationMode}
                 onChange={(e) => setDurationMode(e.target.value)}
-                style={{ 
-                  borderRadius: '10px', 
+                style={{
+                  borderRadius: '10px',
                   padding: '12px 16px',
                   border: '2px solid rgba(184,134,11,0.15)',
                   fontWeight: '600',
@@ -310,8 +332,13 @@ export default function ServiceForm({ service, onClose }) {
                 <option value="seconds">Secondes</option>
               </Form.Select>
             </div>
+            {form.touched.duration && form.errors.duration && (
+              <Form.Control.Feedback type="invalid" style={{ display: 'block', marginTop: '6px' }}>
+                {form.errors.duration}
+              </Form.Control.Feedback>
+            )}
             <small style={{ color: '#6c757d', marginTop: '6px', display: 'block' }}>
-              💡 Stocké en minutes ({Math.round(formData.duration)} min)
+              💡 Stocké en minutes ({Math.round(form.values.duration)} min)
             </small>
           </Form.Group>
 
@@ -322,8 +349,8 @@ export default function ServiceForm({ service, onClose }) {
             </Form.Label>
             <Form.Select
               name="displayStyle"
-              value={formData.displayStyle}
-              onChange={handleChange}
+              value={form.values.displayStyle}
+              onChange={handleFieldChange}
               style={{ borderRadius: '10px', padding: '12px 16px', border: '2px solid rgba(184,134,11,0.15)' }}
             >
               <option value="card">Carte standard</option>
@@ -351,7 +378,7 @@ export default function ServiceForm({ service, onClose }) {
             )}
           </Form.Group>
 
-          {/* Options personnalisées */}
+          {/* Options */}
           <Form.Group className="mb-4">
             <Form.Label style={{ fontWeight: '700', color: '#1a0f08', fontSize: '14px' }}>
               ✓ Options (séparées par des virgules)
@@ -359,9 +386,8 @@ export default function ServiceForm({ service, onClose }) {
             <Form.Control
               type="text"
               name="checkboxOptions"
-              value={formData.checkboxOptions}
-              onChange={handleChange}
-              className="form-control-luxury"
+              value={form.values.checkboxOptions}
+              onChange={handleFieldChange}
               placeholder="Ex: Sans shampoing, Premium, Avec massage"
               style={{ borderRadius: '10px', padding: '12px 16px' }}
             />
@@ -370,13 +396,13 @@ export default function ServiceForm({ service, onClose }) {
             </small>
           </Form.Group>
 
-          {/* Boutons d'action */}
+          {/* Boutons */}
           <div className="d-flex gap-2" style={{ paddingTop: '12px', borderTop: '1px solid rgba(184,134,11,0.1)' }}>
-            <Button 
-              variant="primary" 
-              type="submit" 
-              disabled={loading}
-              style={{ 
+            <Button
+              variant="primary"
+              type="submit"
+              disabled={form.isSubmitting}
+              style={{
                 borderRadius: '10px',
                 fontWeight: '700',
                 background: 'linear-gradient(135deg, #b8860b, #d4a574)',
@@ -384,13 +410,13 @@ export default function ServiceForm({ service, onClose }) {
                 padding: '11px 24px'
               }}
             >
-              {loading ? '⏳ Enregistrement...' : '✓ Enregistrer'}
+              {form.isSubmitting ? '⏳ Enregistrement...' : '✓ Enregistrer'}
             </Button>
-            <Button 
-              variant="secondary" 
-              onClick={onClose} 
-              disabled={loading}
-              style={{ 
+            <Button
+              variant="secondary"
+              onClick={onClose}
+              disabled={form.isSubmitting}
+              style={{
                 borderRadius: '10px',
                 fontWeight: '700'
               }}
