@@ -19,6 +19,12 @@ router.post('/maintenance/enable', protect, siteSettingsController.enableMainten
 // POST maintenance disable (admin only)
 router.post('/maintenance/disable', protect, siteSettingsController.disableMaintenance)
 
+// POST app closure (admin only)
+router.post('/app-closure', protect, siteSettingsController.toggleAppClosure)
+
+// PUT payment config (admin only)
+router.put('/payment-config', protect, siteSettingsController.updatePaymentConfig)
+
 // GET admin stats (admin only - for DeveloperDashboard)
 router.get('/admin/stats', protect, siteSettingsController.getAdminStats)
 

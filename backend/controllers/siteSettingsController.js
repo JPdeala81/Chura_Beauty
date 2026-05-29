@@ -464,6 +464,72 @@ const siteSettingsController = {
     } catch (err) {
       res.status(500).json({ error: err.message })
     }
+  },
+
+  // Toggle App Closure (fermeture temporaire du site)
+  toggleAppClosure: async (req, res) => {
+    try {
+      const { enabled, reason, reopenDate, reopenTime } = req.body
+
+      const maintenanceEnd = enabled && reopenDate
+        ? new Date(`${reopenDate}T${reopenTime || '00:00'}`).toISOString()
+        : null
+
+      const { data: existing } = await supabase
+        .from('site_settings')
+        .select('id')
+        .single()
+
+      const updateData = {
+        is_maintenance: !!enabled,
+        maintenance_reason: enabled ? (reason || 'Fermeture temporaire') : null,
+        maintenance_end: maintenanceEnd,
+        updated_at: new Date().toISOString()
+      }
+
+      let result
+      if (existing) {
+        result = await supabase
+          .from('site_settings')
+          .update(updateData)
+          .eq('id', existing.id)
+          .select()
+      } else {
+        result = await supabase
+          .from('site_settings')
+          .insert([{ ...updateData, created_at: new Date().toISOString() }])
+          .select()
+      }
+
+      const { data, error } = result
+      if (error) throw error
+      res.json({ success: true, message: enabled ? 'Application fermée' : 'Application réouverte', data: data[0] })
+    } catch (err) {
+      res.status(500).json({ success: false, error: err.message })
+    }
+  },
+
+  // Update Payment Config via site-settings route
+  updatePaymentConfig: async (req, res) => {
+    try {
+      const { airtel_code, moov_code, is_payment_enabled } = req.body
+      const { data, error } = await supabase
+        .from('admins')
+        .update({
+          airtel_code: airtel_code !== undefined ? airtel_code : undefined,
+          moov_code: moov_code !== undefined ? moov_code : undefined,
+          is_payment_enabled: is_payment_enabled !== undefined ? !!is_payment_enabled : false
+        })
+        .eq('id', req.admin.id)
+        .select()
+        .single()
+
+      if (error) throw error
+      const { password, ...adminWithoutPassword } = data
+      res.json({ success: true, admin: adminWithoutPassword })
+    } catch (err) {
+      res.status(500).json({ success: false, error: err.message })
+    }
   }
 }
 

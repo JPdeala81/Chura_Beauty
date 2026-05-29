@@ -583,7 +583,7 @@ const DeveloperDashboard = () => {
         payload.whatsapp = profileForm.whatsapp.trim()
       }
       // Only include photo if it was changed (not the original)
-      if (profileForm.profile_photo && profileForm.profile_photo !== (adminData?.profile_photo || '')) {
+      if (profileForm.profile_photo && profileForm.profile_photo !== (adminInfo?.profile_photo || '')) {
         payload.profile_photo = profileForm.profile_photo
       }
       

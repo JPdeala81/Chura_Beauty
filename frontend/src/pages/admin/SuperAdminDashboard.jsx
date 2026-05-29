@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { AuthContext } from '../../context/AuthContext'
 import api from '../../services/api'
+import { compressBase64Image } from '../../utils/imageCompression'
 import QRCodeConfig from '../../components/admin/QRCodeConfig'
 import QRCode from 'qrcode.react'
 import DashboardModal from '../../components/admin/DashboardModal'
@@ -288,7 +289,7 @@ const SuperAdminDashboard = () => {
         payload.whatsapp = profileForm.whatsapp.trim()
       }
       // Only include photo if it was changed (not the original)
-      if (profileForm.profile_photo && profileForm.profile_photo !== (adminData?.profile_photo || '')) {
+      if (profileForm.profile_photo && profileForm.profile_photo !== (adminInfo?.profile_photo || '')) {
         payload.profile_photo = profileForm.profile_photo
       }
       
@@ -816,10 +817,11 @@ const SuperAdminDashboard = () => {
     const file = e.target.files[0]
     if (file) {
       const reader = new FileReader()
-      reader.onloadend = () => {
-        setLogoFile(reader.result)
-        setLogoPreview(reader.result)
-        setSiteSettingsForm(prev => ({ ...prev, app_logo: reader.result }))
+      reader.onloadend = async () => {
+        const compressed = await compressBase64Image(reader.result, 400, 400, 0.8)
+        setLogoFile(compressed)
+        setLogoPreview(compressed)
+        setSiteSettingsForm(prev => ({ ...prev, app_logo: compressed }))
       }
       reader.readAsDataURL(file)
     }
@@ -830,10 +832,11 @@ const SuperAdminDashboard = () => {
     const file = e.target.files[0]
     if (file) {
       const reader = new FileReader()
-      reader.onloadend = () => {
-        setHeroImageFile(reader.result)
-        setHeroImagePreview(reader.result)
-        setSiteSettingsForm(prev => ({ ...prev, hero_background_image: reader.result }))
+      reader.onloadend = async () => {
+        const compressed = await compressBase64Image(reader.result, 1280, 720, 0.7)
+        setHeroImageFile(compressed)
+        setHeroImagePreview(compressed)
+        setSiteSettingsForm(prev => ({ ...prev, hero_background_image: compressed }))
       }
       reader.readAsDataURL(file)
     }

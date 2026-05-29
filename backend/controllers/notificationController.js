@@ -86,6 +86,31 @@ export const deleteNotification = async (req, res) => {
   }
 }
 
+export const sendQRNotification = async (req, res) => {
+  try {
+    const { recipient, qrData, maintenanceInfo } = req.body
+    const { data, error } = await supabase
+      .from('notifications')
+      .insert([{
+        type: 'qr_code',
+        message: `QR Code maintenance envoyé à ${recipient || 'developer'}`,
+        metadata: JSON.stringify({ qrData, maintenanceInfo }),
+        is_read: false,
+        created_at: new Date().toISOString()
+      }])
+      .select()
+      .single()
+
+    if (error) {
+      return res.status(500).json({ success: false, message: error.message })
+    }
+
+    res.status(200).json({ success: true, notification: data })
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message })
+  }
+}
+
 export const getUnreadCount = async (req, res) => {
   try {
     const { count, error } = await supabase

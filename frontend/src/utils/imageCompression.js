@@ -63,6 +63,33 @@ export const compressImage = (file, maxWidth = 1920, maxHeight = 1080, quality =
   });
 };
 
+// Compress a base64 image string (used when images are stored as dataURL in state)
+export const compressBase64Image = (base64String, maxWidth = 1024, maxHeight = 768, quality = 0.7) => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      let width = img.width;
+      let height = img.height;
+      if (width > height) {
+        if (width > maxWidth) { height = Math.round((height * maxWidth) / width); width = maxWidth; }
+      } else {
+        if (height > maxHeight) { width = Math.round((width * maxHeight) / height); height = maxHeight; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+      const compressed = canvas.toDataURL('image/jpeg', quality);
+      const origKB = Math.round(base64String.length * 0.75 / 1024);
+      const compKB = Math.round(compressed.length * 0.75 / 1024);
+      console.log(`📸 Base64 compressée: ${origKB}KB → ${compKB}KB`);
+      resolve(compressed);
+    };
+    img.onerror = () => reject(new Error('Impossible de charger l\'image'));
+    img.src = base64String;
+  });
+};
+
 // Compress multiple images
 export const compressImages = async (files) => {
   const compressed = [];
