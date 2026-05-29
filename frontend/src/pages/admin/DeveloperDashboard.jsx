@@ -4649,28 +4649,6 @@ const DeveloperDashboard = () => {
         onConfirm={modal.onConfirm}
         onCancel={() => setModal({...modal, show: false})}
       />
-
-      <style>{`
-        .dev-dashboard * { -webkit-tap-highlight-color: transparent; }
-        .dev-dashboard button { touch-action: manipulation; }
-        .dev-dashboard input, .dev-dashboard textarea, .dev-dashboard select {
-          transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        .dev-dashboard input:focus, .dev-dashboard textarea:focus, .dev-dashboard select:focus {
-          box-shadow: 0 0 0 3px rgba(184, 134, 11, 0.1);
-        }
-        .dev-dashboard-card {
-          background: linear-gradient(135deg, #ffffff 0%, #f9f9f9 100%);
-          border-radius: 16px;
-          box-shadow: 0 6px 24px rgba(0, 0, 0, 0.06);
-          border: 1px solid rgba(184, 134, 11, 0.08);
-          transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        .dev-dashboard-card:hover {
-          box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
-          border-color: rgba(184, 134, 11, 0.16);
-        }
-      `}</style>
     </div>
   )
 }
