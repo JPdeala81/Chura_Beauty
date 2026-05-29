@@ -174,11 +174,17 @@ const DeveloperDashboard = () => {
   const [terminalOutput, setTerminalOutput] = useState(['$ npm start', '> Server running on port 3000\n✓ Connected to Supabase'])
   const [terminalCommand, setTerminalCommand] = useState('')
 
+  const isFetchingRef = useRef(false)
+
+  // Initial load only
   useEffect(() => {
     fetchAllData()
-    // Only refetch if not in edit mode
+  }, [])
+
+  // Polling interval — 30s, stops when user is editing a form
+  useEffect(() => {
     if (editingProfile || editingSiteSettings) return
-    const interval = setInterval(fetchAllData, 5000)
+    const interval = setInterval(fetchAllData, 30000)
     return () => clearInterval(interval)
   }, [editingProfile, editingSiteSettings])
 
@@ -197,31 +203,24 @@ const DeveloperDashboard = () => {
   }, [maintenanceMode, countdownTime])
 
   const fetchAllData = async () => {
+    if (isFetchingRef.current) return
+    isFetchingRef.current = true
     try {
       setLoading(true)
-      console.log('🔄 Chargement des données du tableau de bord développeur...')
-      
+
       // Fetch REAL data from API responsibly
       try {
         const appoRes = await api.get('/appointments')
         const appts = appoRes.data.appointments || appoRes.data || []
-        console.log('✅ Appointments chargés:', appts)
-        console.log(`📊 Total appointments: ${appts.length}`)
-        if (appts.length > 0) {
-          console.log('📋 First appointment structure:', JSON.stringify(appts[0], null, 2))
-          console.log('🔑 Column names:', Object.keys(appts[0]))
-        }
         setAppointments(appts)
       } catch (err) {
         console.warn('❌ Erreur appointments:', err.message)
-        console.error('Full error:', err)
         setAppointments([])
       }
 
       try {
         const servRes = await api.get('/services')
         setServices(servRes.data.services || servRes.data || [])
-        console.log('✅ Services chargés:', servRes.data)
       } catch (err) {
         console.warn('❌ Erreur services:', err.message)
         setServices([])
@@ -231,7 +230,6 @@ const DeveloperDashboard = () => {
         const adminsRes = await api.get('/site-settings/developer/all-admins')
         const adminsList = Array.isArray(adminsRes.data) ? adminsRes.data : (adminsRes.data.admins || [])
         setAdmins(adminsList)
-        console.log('✅ Admins chargés:', adminsList)
       } catch (err) {
         console.warn('❌ Erreur admins:', err.message)
         setAdmins([])
@@ -241,7 +239,6 @@ const DeveloperDashboard = () => {
         const logsRes = await api.get('/site-settings/developer/recent-logs')
         const logsList = Array.isArray(logsRes.data) ? logsRes.data : (logsRes.data.logs || [])
         setLogs(logsList)
-        console.log('✅ Logs chargés:', logsList)
       } catch (err) {
         console.warn('❌ Erreur logs:', err.message)
         setLogs([])
@@ -250,34 +247,34 @@ const DeveloperDashboard = () => {
       try {
         const settingsRes = await api.get('/site-settings')
         const settingsData = settingsRes.data || {}
-        console.log('✅ Site settings chargés:', settingsData)
-        // Load payment config from settings
         setPaymentConfig({
           airtel_code: settingsData.airtel_code || '',
           moov_code: settingsData.moov_code || '',
           is_payment_enabled: settingsData.is_payment_enabled || false
         })
-        // Pré-remplir le formulaire avec les données existantes
-        setSiteSettingsForm(prev => ({
-          ...prev,
-          app_name: settingsData.app_name || prev.app_name,
-          app_logo: settingsData.app_logo || prev.app_logo,
-          hero_background_image: settingsData.hero_background_image || prev.hero_background_image,
-          homepage_hero_title: settingsData.homepage_hero_title || prev.homepage_hero_title,
-          homepage_hero_subtitle: settingsData.homepage_hero_subtitle || prev.homepage_hero_subtitle,
-          tagline: settingsData.tagline || prev.tagline,
-          footer_company_name: settingsData.footer_company_name || prev.footer_company_name,
-          footer_address: settingsData.footer_address || prev.footer_address,
-          footer_phone: settingsData.footer_phone || prev.footer_phone,
-          footer_email: settingsData.footer_email || prev.footer_email,
-          footer_whatsapp: settingsData.footer_whatsapp || prev.footer_whatsapp,
-          footer_instagram: settingsData.footer_instagram || prev.footer_instagram,
-          footer_facebook: settingsData.footer_facebook || prev.footer_facebook,
-          footer_twitter: settingsData.footer_twitter || prev.footer_twitter,
-          privacy_policy: settingsData.privacy_policy || '',
-          terms_of_service: settingsData.terms_of_service || '',
-          about_content: settingsData.about_content || ''
-        }))
+        // Ne pas écraser le formulaire si l'utilisateur est en train de l'éditer
+        if (!editingSiteSettings) {
+          setSiteSettingsForm(prev => ({
+            ...prev,
+            app_name: settingsData.app_name || prev.app_name,
+            app_logo: settingsData.app_logo || prev.app_logo,
+            hero_background_image: settingsData.hero_background_image || prev.hero_background_image,
+            homepage_hero_title: settingsData.homepage_hero_title || prev.homepage_hero_title,
+            homepage_hero_subtitle: settingsData.homepage_hero_subtitle || prev.homepage_hero_subtitle,
+            tagline: settingsData.tagline || prev.tagline,
+            footer_company_name: settingsData.footer_company_name || prev.footer_company_name,
+            footer_address: settingsData.footer_address || prev.footer_address,
+            footer_phone: settingsData.footer_phone || prev.footer_phone,
+            footer_email: settingsData.footer_email || prev.footer_email,
+            footer_whatsapp: settingsData.footer_whatsapp || prev.footer_whatsapp,
+            footer_instagram: settingsData.footer_instagram || prev.footer_instagram,
+            footer_facebook: settingsData.footer_facebook || prev.footer_facebook,
+            footer_twitter: settingsData.footer_twitter || prev.footer_twitter,
+            privacy_policy: settingsData.privacy_policy || '',
+            terms_of_service: settingsData.terms_of_service || '',
+            about_content: settingsData.about_content || ''
+          }))
+        }
       } catch (err) {
         console.warn('❌ Erreur site settings:', err.message)
       }
@@ -286,15 +283,16 @@ const DeveloperDashboard = () => {
         const profileRes = await api.get('/auth/profile')
         const adminData = profileRes.data?.admin || profileRes.data || {}
         setAdminInfo(adminData)
-        // Pré-remplir le formulaire de profil
-        setProfileForm({
-          full_name: adminData.full_name || '',
-          email: adminData.email || '',
-          phone: adminData.phone || '',
-          whatsapp: adminData.whatsapp || '',
-          profile_photo: adminData.profile_photo || ''
-        })
-        console.log('✅ Profile chargé:', adminData)
+        // Ne pas écraser le formulaire si l'utilisateur est en train de l'éditer
+        if (!editingProfile) {
+          setProfileForm({
+            full_name: adminData.full_name || '',
+            email: adminData.email || '',
+            phone: adminData.phone || '',
+            whatsapp: adminData.whatsapp || '',
+            profile_photo: adminData.profile_photo || ''
+          })
+        }
       } catch (err) {
         console.warn('❌ Erreur profile:', err.message)
       }
@@ -302,6 +300,7 @@ const DeveloperDashboard = () => {
       console.error('❌ Erreur générale fetch:', error)
     } finally {
       setLoading(false)
+      isFetchingRef.current = false
     }
   }
 
