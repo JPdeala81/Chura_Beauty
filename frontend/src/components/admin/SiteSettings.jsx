@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import api from '../../services/api';
 import { compressImage, isFileSizeAcceptable } from '../../utils/imageCompression';
 import { sanitizeObject, isValidHexColor } from '../../utils/dataSanitization';
+import { compressFormDataImages } from '../../utils/formDataCompression';
 
 const initialState = {
   salonName: '',
@@ -262,7 +263,7 @@ const SiteSettings = ({ onUpdate }) => {
       data.append('animation_enabled', form.animationEnabled);
       data.append('theme_name', form.themeName);
 
-      // Add images with proper handling
+      // Add images with compression
       if (form.coverPhoto instanceof File) {
         data.append('cover_photo', form.coverPhoto);
       }
@@ -273,7 +274,12 @@ const SiteSettings = ({ onUpdate }) => {
         data.append('favicon_image', form.faviconImage);
       }
 
-      await api.put('/auth/profile', data);
+      // Compress all images before sending
+      console.log('📦 Compressing images in FormData before upload...');
+      const compressedData = await compressFormDataImages(data);
+      console.log('✅ All images compressed, sending to API...');
+
+      await api.put('/auth/profile', compressedData);
       setMessage({ type: 'success', text: '✅ Paramètres du site sauvegardés !' });
       if (onUpdate) onUpdate();
     } catch (err) {
