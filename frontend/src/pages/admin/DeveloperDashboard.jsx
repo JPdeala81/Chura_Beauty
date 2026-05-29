@@ -176,9 +176,9 @@ const DeveloperDashboard = () => {
 
   useEffect(() => {
     fetchAllData()
-    // Only refetch if not in edit mode (optimized to 30s for performance)
+    // Only refetch if not in edit mode
     if (editingProfile || editingSiteSettings) return
-    const interval = setInterval(fetchAllData, 30000) // Reduced from 5000 to 30000ms
+    const interval = setInterval(fetchAllData, 5000)
     return () => clearInterval(interval)
   }, [editingProfile, editingSiteSettings])
 
@@ -583,7 +583,7 @@ const DeveloperDashboard = () => {
         payload.whatsapp = profileForm.whatsapp.trim()
       }
       // Only include photo if it was changed (not the original)
-      if (profileForm.profile_photo && profileForm.profile_photo !== (adminInfo?.profile_photo || '')) {
+      if (profileForm.profile_photo && profileForm.profile_photo !== (adminData?.profile_photo || '')) {
         payload.profile_photo = profileForm.profile_photo
       }
       
@@ -4641,7 +4641,7 @@ const DeveloperDashboard = () => {
       </div>
 
       {/* Modal Globale */}
-      <DashboardModal
+      <DashboardModal 
         show={modal.show}
         type={modal.type}
         title={modal.title}

@@ -11,7 +11,8 @@
       "Bash(git rm *)",
       "Bash(git config *)",
       "PowerShell(Get-ChildItem -Path \"c:\\\\Users\\\\USER\\\\OneDrive\\\\Desktop\\\\Chura_Site\" -Recurse -Depth 3 | Where-Object {$_.PSIsContainer -and $_.Name -notmatch \"node_modules|dist|\\\\.git\"} | Select-Object -ExpandProperty FullName | Sort-Object)",
-      "Bash(Find \"c:\\\\Users\\\\USER\\\\OneDrive\\\\Desktop\\\\Chura_Site\\\\backend\" -name \"server.js\" -o -name \"index.js\" -o -name \"app.js\")"
+      "Bash(Find \"c:\\\\Users\\\\USER\\\\OneDrive\\\\Desktop\\\\Chura_Site\\\\backend\" -name \"server.js\" -o -name \"index.js\" -o -name \"app.js\")",
+      "Bash(git checkout *)"
     ]
   }
 }
