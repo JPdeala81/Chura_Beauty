@@ -186,6 +186,18 @@ const SiteSettings = ({ onUpdate }) => {
       errors.push('Facebook: maximum 100 caractères');
     }
 
+    // File size validation - CRITICAL
+    const maxImageSize = 2 * 1024 * 1024; // 2MB max
+    if (form.coverPhoto instanceof File && form.coverPhoto.size > maxImageSize) {
+      errors.push(`Logo trop volumineux: ${(form.coverPhoto.size / 1024 / 1024).toFixed(2)}MB (max 2MB)`);
+    }
+    if (form.profilePhoto instanceof File && form.profilePhoto.size > maxImageSize) {
+      errors.push(`Photo trop volumineuse: ${(form.profilePhoto.size / 1024 / 1024).toFixed(2)}MB (max 2MB)`);
+    }
+    if (form.faviconImage instanceof File && form.faviconImage.size > 500 * 1024) {
+      errors.push(`Favicon trop volumineux: ${(form.faviconImage.size / 1024).toFixed(2)}KB (max 500KB)`);
+    }
+
     // Color validation
     if (!/^#[0-9A-F]{6}$/i.test(form.heroBgColor)) {
       errors.push('Couleur de fond: format hex invalide (#RRGGBB)');
