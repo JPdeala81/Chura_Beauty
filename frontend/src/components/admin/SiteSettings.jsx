@@ -51,9 +51,13 @@ const SiteSettings = ({ onUpdate }) => {
 
   const fetchProfile = async () => {
     try {
-      const res = await api.get('/auth/profile');
-      const d = res.data?.admin || res.data;
-      if (d) {
+      const [profileRes, siteRes] = await Promise.allSettled([
+        api.get('/auth/profile'),
+        api.get('/site-settings')
+      ]);
+      const d = profileRes.status === 'fulfilled' ? (profileRes.value.data?.admin || profileRes.value.data) : {};
+      const s = siteRes.status === 'fulfilled' ? (siteRes.value.data || {}) : {};
+      if (d || s) {
         setForm({
           salonName: d.salon_name || '',
           heroTitle: d.hero_title || '',
@@ -75,8 +79,8 @@ const SiteSettings = ({ onUpdate }) => {
           heroCtaSecondary: d.hero_cta2_text || 'Consulter',
           navbarCta: d.navbar_cta_text || 'Réserver',
           adminBtnText: d.admin_btn_text || 'Bon marché',
-          heroCardMedia: d.hero_card_media || '',
-          heroCardMediaType: d.hero_card_media_type || 'image',
+          heroCardMedia: s.hero_card_media || '',
+          heroCardMediaType: s.hero_card_media_type || 'image',
           // Design tokens
           primaryColor: d.primary_color || '#ffd700',
           secondaryColor: d.secondary_color || '#764ba2',
@@ -271,10 +275,7 @@ const SiteSettings = ({ onUpdate }) => {
       data.append('hero_cta2_text', sanitizedForm.heroCtaSecondary);
       data.append('navbar_cta_text', sanitizedForm.navbarCta);
       data.append('admin_btn_text', sanitizedForm.adminBtnText);
-      // Carte héro - media personnalisé
-      if (form.heroCardMedia) data.append('hero_card_media', form.heroCardMedia);
-      data.append('hero_card_media_type', form.heroCardMediaType || 'image');
-      // Design tokens
+      // Design tokens (hero_card_media sauvegardé séparément vers /site-settings)
       data.append('primary_color', form.primaryColor);
       data.append('secondary_color', form.secondaryColor);
       data.append('card_border_radius', form.cardBorderRadius);
@@ -299,6 +300,13 @@ const SiteSettings = ({ onUpdate }) => {
       console.log('✅ All images compressed, sending to API...');
 
       await api.put('/auth/profile', compressedData);
+
+      // Sauvegarder hero_card_media vers site_settings (table séparée lue par HeroSection)
+      await api.put('/site-settings', {
+        hero_card_media: form.heroCardMedia || '',
+        hero_card_media_type: form.heroCardMediaType || 'image'
+      });
+
       setMessage({ type: 'success', text: '✅ Paramètres du site sauvegardés !' });
       if (onUpdate) onUpdate();
     } catch (err) {
@@ -595,44 +603,101 @@ const SiteSettings = ({ onUpdate }) => {
           </div>
         </motion.div>
 
-        {/* ── CARTE HÉRO - MEDIA PERSONNALISÉ ── */}
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} style={{ background: 'linear-gradient(135deg, rgba(111,66,193,0.06), rgba(184,134,11,0.04))', borderRadius: '16px', padding: '20px', marginTop: '20px', border: '1px solid rgba(111,66,193,0.15)' }}>
-          <h6 style={{ fontFamily: 'Playfair Display, serif', color: '#2c1810', marginBottom: '6px', fontSize: '1.1rem' }}>🖼️ Carte Héro — Image ou Vidéo</h6>
-          <p style={{ fontSize: '12px', color: '#6c757d', marginBottom: '16px' }}>
-            Remplace l'animation par défaut (emoji + nom du salon) par une image ou une vidéo de votre choix.
-            Si vide, l'animation originale est conservée.
-          </p>
+        {/* ── CARTE FLOTTANTE HERO ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          style={{
+            background: 'linear-gradient(135deg, rgba(44,24,16,0.05), rgba(184,134,11,0.08))',
+            borderRadius: '20px',
+            padding: '24px',
+            marginTop: '24px',
+            border: '2px solid rgba(184,134,11,0.25)'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+            <div style={{ fontSize: '32px' }}>💆‍♀️</div>
+            <div>
+              <h6 style={{ fontFamily: 'Playfair Display, serif', color: '#2c1810', margin: 0, fontSize: '1.15rem', fontWeight: '700' }}>
+                Carte Flottante — Page d'Accueil
+              </h6>
+              <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#6c757d' }}>
+                C'est la carte animée (💆‍♀️ + nom du salon + ville) visible à droite de la page d'accueil
+              </p>
+            </div>
+          </div>
+
+          {/* Aperçu de l'état actuel */}
+          <div style={{ background: 'rgba(255,255,255,0.6)', borderRadius: '12px', padding: '12px 16px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '12px', border: '1px solid rgba(184,134,11,0.1)' }}>
+            <div style={{ fontSize: '20px' }}>
+              {form.heroCardMedia ? (form.heroCardMediaType === 'video' ? '🎥' : '🖼️') : '✨'}
+            </div>
+            <div style={{ fontSize: '13px', color: '#2c1810' }}>
+              <strong>État actuel :</strong>{' '}
+              {form.heroCardMedia
+                ? `Média personnalisé (${form.heroCardMediaType}) — ${form.heroCardMedia.substring(0, 50)}${form.heroCardMedia.length > 50 ? '...' : ''}`
+                : 'Animation par défaut (💆‍♀️ + ' + (form.salonName || 'Nom du salon') + ' + Ville)'
+              }
+            </div>
+          </div>
+
+          <div style={{ marginBottom: '14px' }}>
+            <p style={{ fontSize: '13px', color: '#6c757d', marginBottom: '12px', lineHeight: '1.5' }}>
+              <strong>Option A (actuel) :</strong> L'animation par défaut s'affiche si aucun média n'est défini.<br/>
+              <strong>Option B :</strong> Collez une URL d'image ou vidéo pour la remplacer entièrement.
+            </p>
+          </div>
+
           <div className="row g-3">
             <div className="col-md-8">
-              <label style={{ fontSize: '12px', fontWeight: '700', color: '#6c757d', textTransform: 'uppercase', letterSpacing: '1px', display: 'block', marginBottom: '6px' }}>URL de l'image ou vidéo</label>
+              <label style={{ fontSize: '12px', fontWeight: '700', color: '#6c757d', textTransform: 'uppercase', letterSpacing: '1px', display: 'block', marginBottom: '6px' }}>
+                🔗 URL image ou vidéo (laisser vide = animation par défaut)
+              </label>
               <input
                 type="url"
                 name="heroCardMedia"
                 value={form.heroCardMedia}
                 onChange={handleChange}
-                style={{ border: '2px solid rgba(111,66,193,0.2)', borderRadius: '12px', padding: '10px 14px', width: '100%', fontFamily: 'Nunito, sans-serif', fontSize: '13px', outline: 'none' }}
-                placeholder="https://... ou laisser vide pour l'animation par défaut"
+                style={{ border: '2px solid rgba(184,134,11,0.3)', borderRadius: '12px', padding: '12px 16px', width: '100%', fontFamily: 'Nunito, sans-serif', fontSize: '13px', outline: 'none', background: 'white' }}
+                placeholder="https://exemple.com/mon-image.jpg"
               />
+              <small style={{ color: '#6c757d', fontSize: '11px' }}>
+                Formats supportés : JPG, PNG, WebP, GIF, MP4, WebM
+              </small>
             </div>
             <div className="col-md-4">
-              <label style={{ fontSize: '12px', fontWeight: '700', color: '#6c757d', textTransform: 'uppercase', letterSpacing: '1px', display: 'block', marginBottom: '6px' }}>Type de média</label>
-              <select name="heroCardMediaType" value={form.heroCardMediaType} onChange={handleChange} style={{ border: '2px solid rgba(111,66,193,0.2)', borderRadius: '12px', padding: '10px 14px', width: '100%', fontFamily: 'Nunito, sans-serif', fontSize: '13px' }}>
+              <label style={{ fontSize: '12px', fontWeight: '700', color: '#6c757d', textTransform: 'uppercase', letterSpacing: '1px', display: 'block', marginBottom: '6px' }}>
+                Type de média
+              </label>
+              <select
+                name="heroCardMediaType"
+                value={form.heroCardMediaType}
+                onChange={handleChange}
+                style={{ border: '2px solid rgba(184,134,11,0.3)', borderRadius: '12px', padding: '12px 16px', width: '100%', fontFamily: 'Nunito, sans-serif', fontSize: '13px', background: 'white' }}
+              >
                 <option value="image">🖼️ Image</option>
                 <option value="video">🎥 Vidéo</option>
               </select>
             </div>
           </div>
+
           {form.heroCardMedia && (
-            <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ marginTop: '16px', display: 'flex', alignItems: 'center', gap: '14px', background: 'rgba(40,167,69,0.06)', borderRadius: '12px', padding: '12px 16px', border: '1px solid rgba(40,167,69,0.2)' }}>
               {form.heroCardMediaType === 'video' ? (
-                <video src={form.heroCardMedia} style={{ height: '80px', borderRadius: '8px', objectFit: 'cover' }} muted />
+                <video src={form.heroCardMedia} style={{ height: '70px', width: '100px', borderRadius: '8px', objectFit: 'cover' }} muted />
               ) : (
-                <img src={form.heroCardMedia} alt="Aperçu" style={{ height: '80px', borderRadius: '8px', objectFit: 'cover' }} onError={e => e.target.style.display = 'none'} />
+                <img src={form.heroCardMedia} alt="Aperçu carte" style={{ height: '70px', width: '100px', borderRadius: '8px', objectFit: 'cover' }} onError={e => { e.target.style.display='none' }} />
               )}
               <div>
-                <div style={{ fontSize: '12px', color: '#28a745', fontWeight: '600' }}>✅ Média configuré</div>
-                <button type="button" onClick={() => setForm(f => ({ ...f, heroCardMedia: '' }))} style={{ background: 'none', border: 'none', color: '#dc3545', fontSize: '11px', cursor: 'pointer', padding: 0, marginTop: '4px' }}>
-                  ✕ Supprimer (revenir à l'animation)
+                <div style={{ fontSize: '13px', color: '#28a745', fontWeight: '700', marginBottom: '4px' }}>✅ Média personnalisé configuré</div>
+                <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '6px' }}>Ce média remplacera l'animation sur la page d'accueil</div>
+                <button
+                  type="button"
+                  onClick={() => setForm(f => ({ ...f, heroCardMedia: '', heroCardMediaType: 'image' }))}
+                  style={{ background: 'none', border: '1px solid #dc3545', color: '#dc3545', borderRadius: '6px', padding: '4px 10px', fontSize: '11px', cursor: 'pointer', fontWeight: '600' }}
+                >
+                  ✕ Supprimer — revenir à l'animation
                 </button>
               </div>
             </div>
