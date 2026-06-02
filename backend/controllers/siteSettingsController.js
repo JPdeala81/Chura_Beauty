@@ -509,6 +509,65 @@ const siteSettingsController = {
     }
   },
 
+  // Global Reset - Resets all appointments and logs (NOT services or admins)
+  globalReset: async (req, res) => {
+    try {
+      if (req.admin.role !== 'developer') {
+        return res.status(403).json({ success: false, error: 'Réservé au développeur' })
+      }
+      await supabase.from('appointments').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+      try { await supabase.from('logs').delete().neq('id', '00000000-0000-0000-0000-000000000000') } catch {}
+      res.json({ success: true, message: 'Réinitialisation effectuée (rendez-vous et logs supprimés)' })
+    } catch (err) {
+      res.status(500).json({ success: false, error: err.message })
+    }
+  },
+
+  // Regenerate JWT secret (informational - actual secret is in env vars)
+  regenerateJwtSecret: async (req, res) => {
+    try {
+      if (req.admin.role !== 'developer') {
+        return res.status(403).json({ success: false, error: 'Réservé au développeur' })
+      }
+      const keyId = `jwt_${Date.now().toString(36)}_${Math.random().toString(36).substr(2, 6)}`
+      res.json({ success: true, message: 'Clé JWT régénérée (mettre à jour JWT_SECRET dans Vercel)', keyId })
+    } catch (err) {
+      res.status(500).json({ success: false, error: err.message })
+    }
+  },
+
+  // Create a new admin account
+  createAdmin: async (req, res) => {
+    try {
+      if (req.admin.role !== 'developer') {
+        return res.status(403).json({ success: false, error: 'Réservé au développeur' })
+      }
+      const { email, password, role = 'admin', salon_name = 'Nouveau Salon' } = req.body
+      if (!email || !password) return res.status(400).json({ success: false, error: 'Email et mot de passe requis' })
+      const bcrypt = (await import('bcryptjs')).default
+      const hashed = await bcrypt.hash(password, 12)
+      const { data, error } = await supabase.from('admins').insert([{ email, password: hashed, role, salon_name, created_at: new Date().toISOString() }]).select().single()
+      if (error) throw error
+      const { password: _, ...adminWithoutPassword } = data
+      res.json({ success: true, admin: adminWithoutPassword })
+    } catch (err) {
+      res.status(500).json({ success: false, error: err.message })
+    }
+  },
+
+  // Clear logs table
+  clearLogs: async (req, res) => {
+    try {
+      if (req.admin.role !== 'developer') {
+        return res.status(403).json({ success: false, error: 'Réservé au développeur' })
+      }
+      try { await supabase.from('logs').delete().neq('id', '00000000-0000-0000-0000-000000000000') } catch {}
+      res.json({ success: true, message: 'Logs effacés' })
+    } catch (err) {
+      res.status(500).json({ success: false, error: err.message })
+    }
+  },
+
   // Update Payment Config via site-settings route
   updatePaymentConfig: async (req, res) => {
     try {

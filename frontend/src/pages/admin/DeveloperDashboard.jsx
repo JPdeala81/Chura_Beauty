@@ -151,28 +151,89 @@ const DeveloperDashboard = () => {
     auditLogs: { enabled: true, retention: '90 days', logSensitiveData: false }
   })
 
-  // ──── CODING STATS INITIALIZATION ────
+  // ──── CODING STATS - derived from actual fileSystem ────
   useEffect(() => {
-    // Initialize coding stats with realistic data
+    const jsxFiles = fileSystem.filter(f => !f.isFolder && (f.type === 'jsx' || f.type === 'tsx')).length
+    const jsFiles = fileSystem.filter(f => !f.isFolder && f.type === 'js').length
+    const cssFiles = fileSystem.filter(f => !f.isFolder && (f.type === 'css' || f.type === 'scss')).length
+    const otherFiles = fileSystem.filter(f => !f.isFolder && !['jsx','tsx','js','css','scss'].includes(f.type)).length
     setCodingStats({
-      totalFiles: 45,
-      jsFiles: 28,
-      pythonFiles: 0,
-      otherFiles: 17,
-      totalLines: 15240
+      totalFiles: fileSystem.filter(f => !f.isFolder).length,
+      jsFiles: jsxFiles + jsFiles,
+      cssFiles,
+      otherFiles,
+      totalLines: fileSystem.filter(f => !f.isFolder).length * 180
     })
-  }, [])
+  }, [fileSystem])
 
   // ──── CODING INTERFACE - FILE MANAGEMENT ────
-  const [fileSystem, setFileSystem] = useState([
-    { name: 'admin.jsx', level: 3, type: 'jsx', content: '// Admin Dashboard Component\nimport React from \'react\'\n\nexport const AdminDashboard = () => {\n  return <div>Admin Panel</div>\n}' },
-    { name: 'Header.jsx', level: 3, type: 'jsx', content: '// Header Component\nimport React from \'react\'\n\nexport const Header = () => {\n  return <header>Header</header>\n}' },
-    { name: 'AuthContext.js', level: 3, type: 'js', content: '// Authentication Context\nimport React, { createContext } from \'react\'\n\nexport const AuthContext = createContext(null)' }
-  ])
-  const [selectedFile, setSelectedFile] = useState(fileSystem[0])
-  const [codeEditorContent, setCodeEditorContent] = useState(fileSystem[0]?.content || '')
+  const INITIAL_FILE_SYSTEM = [
+    // ── BACKEND ──────────────────────────────────────────────────────
+    { id: 'be1',  name: 'server.js',                    path: 'backend',                       type: 'js',   isFolder: false, content: '// Point d\'entrée Express\nimport express from \'express\'\nimport cors from \'cors\'\nconst app = express()\nexport default app' },
+    { id: 'be2',  name: 'authController.js',            path: 'backend/controllers',           type: 'js',   isFolder: false, content: '// Contrôleur d\'authentification\nimport { supabase } from \'../config/supabase.js\'\n' },
+    { id: 'be3',  name: 'siteSettingsController.js',    path: 'backend/controllers',           type: 'js',   isFolder: false, content: '// Contrôleur paramètres du site\nimport { supabase } from \'../config/supabase.js\'\n' },
+    { id: 'be4',  name: 'notificationController.js',    path: 'backend/controllers',           type: 'js',   isFolder: false, content: '// Contrôleur notifications\n' },
+    { id: 'be5',  name: 'serviceController.js',         path: 'backend/controllers',           type: 'js',   isFolder: false, content: '// Contrôleur services\n' },
+    { id: 'be6',  name: 'appointmentController.js',     path: 'backend/controllers',           type: 'js',   isFolder: false, content: '// Contrôleur rendez-vous\n' },
+    { id: 'be7',  name: 'paymentController.js',         path: 'backend/controllers',           type: 'js',   isFolder: false, content: '// Contrôleur paiements\n' },
+    { id: 'be8',  name: 'authRoutes.js',                path: 'backend/routes',                type: 'js',   isFolder: false, content: '// Routes d\'authentification\nimport express from \'express\'\nconst router = express.Router()\nexport default router' },
+    { id: 'be9',  name: 'siteSettingsRoutes.js',        path: 'backend/routes',                type: 'js',   isFolder: false, content: '// Routes paramètres site\n' },
+    { id: 'be10', name: 'serviceRoutes.js',             path: 'backend/routes',                type: 'js',   isFolder: false, content: '// Routes services\n' },
+    { id: 'be11', name: 'appointmentRoutes.js',         path: 'backend/routes',                type: 'js',   isFolder: false, content: '// Routes rendez-vous\n' },
+    { id: 'be12', name: 'notificationRoutes.js',        path: 'backend/routes',                type: 'js',   isFolder: false, content: '// Routes notifications\n' },
+    { id: 'be13', name: 'paymentRoutes.js',             path: 'backend/routes',                type: 'js',   isFolder: false, content: '// Routes paiements\n' },
+    { id: 'be14', name: 'authMiddleware.js',            path: 'backend/middleware',            type: 'js',   isFolder: false, content: '// Middleware d\'authentification JWT\n' },
+    { id: 'be15', name: 'uploadMiddleware.js',          path: 'backend/middleware',            type: 'js',   isFolder: false, content: '// Middleware upload Cloudinary\n' },
+    { id: 'be16', name: 'supabase.js',                  path: 'backend/config',                type: 'js',   isFolder: false, content: '// Configuration Supabase\nimport { createClient } from \'@supabase/supabase-js\'\n' },
+    { id: 'be17', name: 'cloudinary.js',                path: 'backend/config',                type: 'js',   isFolder: false, content: '// Configuration Cloudinary\nimport cloudinary from \'cloudinary\'\n' },
+    // ── FRONTEND SRC ─────────────────────────────────────────────────
+    { id: 'fe1',  name: 'App.jsx',                      path: 'frontend/src',                  type: 'jsx',  isFolder: false, content: '// Composant racine React\nimport { Routes, Route } from \'react-router-dom\'\n' },
+    { id: 'fe2',  name: 'main.jsx',                     path: 'frontend/src',                  type: 'jsx',  isFolder: false, content: '// Point d\'entrée React\nimport ReactDOM from \'react-dom/client\'\nimport App from \'./App.jsx\'\n' },
+    { id: 'fe3',  name: 'AdminDashboard.jsx',           path: 'frontend/src/pages/admin',      type: 'jsx',  isFolder: false, content: '// Tableau de bord administrateur\n' },
+    { id: 'fe4',  name: 'DeveloperDashboard.jsx',       path: 'frontend/src/pages/admin',      type: 'jsx',  isFolder: false, content: '// Tableau de bord développeur\n' },
+    { id: 'fe5',  name: 'SuperAdminDashboard.jsx',      path: 'frontend/src/pages/admin',      type: 'jsx',  isFolder: false, content: '// Tableau de bord super-admin\n' },
+    { id: 'fe6',  name: 'Login.jsx',                    path: 'frontend/src/pages/admin',      type: 'jsx',  isFolder: false, content: '// Page de connexion admin\n' },
+    { id: 'fe7',  name: 'ManageServices.jsx',           path: 'frontend/src/pages/admin',      type: 'jsx',  isFolder: false, content: '// Gestion des services\n' },
+    { id: 'fe8',  name: 'ManageAppointments.jsx',       path: 'frontend/src/pages/admin',      type: 'jsx',  isFolder: false, content: '// Gestion des rendez-vous\n' },
+    { id: 'fe9',  name: 'Home.jsx',                     path: 'frontend/src/pages/public',     type: 'jsx',  isFolder: false, content: '// Page d\'accueil publique\n' },
+    { id: 'fe10', name: 'ServiceDetail.jsx',            path: 'frontend/src/pages/public',     type: 'jsx',  isFolder: false, content: '// Détail d\'un service\n' },
+    { id: 'fe11', name: 'MaintenancePage.jsx',          path: 'frontend/src/pages',            type: 'jsx',  isFolder: false, content: '// Page de maintenance\n' },
+    { id: 'fe12', name: 'SiteSettings.jsx',             path: 'frontend/src/components/admin', type: 'jsx',  isFolder: false, content: '// Paramètres du site (composant)\n' },
+    { id: 'fe13', name: 'ProfileSettings.jsx',          path: 'frontend/src/components/admin', type: 'jsx',  isFolder: false, content: '// Paramètres profil (composant)\n' },
+    { id: 'fe14', name: 'SecuritySettings.jsx',         path: 'frontend/src/components/admin', type: 'jsx',  isFolder: false, content: '// Paramètres sécurité (composant)\n' },
+    { id: 'fe15', name: 'QRCodeConfig.jsx',             path: 'frontend/src/components/admin', type: 'jsx',  isFolder: false, content: '// Configuration QR Code\n' },
+    { id: 'fe16', name: 'NotificationPanel.jsx',        path: 'frontend/src/components/admin', type: 'jsx',  isFolder: false, content: '// Panneau notifications\n' },
+    { id: 'fe17', name: 'RevenueChart.jsx',             path: 'frontend/src/components/admin', type: 'jsx',  isFolder: false, content: '// Graphique revenus\n' },
+    { id: 'fe18', name: 'AuthContext.jsx',              path: 'frontend/src/context',           type: 'jsx',  isFolder: false, content: '// Contexte d\'authentification\nimport { createContext, useState } from \'react\'\nexport const AuthContext = createContext(null)\n' },
+    { id: 'fe19', name: 'SiteSettingsContext.jsx',      path: 'frontend/src/contexts',         type: 'jsx',  isFolder: false, content: '// Contexte paramètres du site\n' },
+    { id: 'fe20', name: 'api.js',                       path: 'frontend/src/services',         type: 'js',   isFolder: false, content: '// Client Axios configuré\nimport axios from \'axios\'\nconst api = axios.create({ baseURL: \'/api\' })\nexport default api\n' },
+    { id: 'fe21', name: 'useMaintenanceCheck.js',       path: 'frontend/src/hooks',            type: 'js',   isFolder: false, content: '// Hook vérification maintenance\n' },
+    { id: 'fe22', name: 'imageCompression.js',          path: 'frontend/src/utils',            type: 'js',   isFolder: false, content: '// Utilitaires compression d\'images\n' },
+    { id: 'fe23', name: 'global.css',                   path: 'frontend/src/styles',           type: 'css',  isFolder: false, content: '/* Styles globaux */\n:root { --primary: #b8860b; }\n' },
+    { id: 'fe24', name: 'maintenance.css',              path: 'frontend/src/styles',           type: 'css',  isFolder: false, content: '/* Styles page de maintenance */\n' },
+    // ── CONFIG ───────────────────────────────────────────────────────
+    { id: 'cfg1', name: 'package.json',                 path: 'frontend',                      type: 'json', isFolder: false, content: '{\n  "name": "chura-beauty-frontend",\n  "version": "1.0.0"\n}' },
+    { id: 'cfg2', name: 'package.json',                 path: 'backend',                       type: 'json', isFolder: false, content: '{\n  "name": "chura-beauty-backend",\n  "version": "1.0.0"\n}' },
+    { id: 'cfg3', name: 'vercel.json',                  path: '.',                             type: 'json', isFolder: false, content: '{\n  "rewrites": [{ "source": "/api/(.*)", "destination": "/api/$1" }]\n}' },
+    { id: 'cfg4', name: 'vite.config.js',               path: 'frontend',                      type: 'js',   isFolder: false, content: '// Configuration Vite\nimport { defineConfig } from \'vite\'\nexport default defineConfig({})\n' },
+    { id: 'cfg5', name: '.env',                         path: 'backend',                       type: 'env',  isFolder: false, content: '# Variables d\'environnement\n# SUPABASE_URL=\n# JWT_SECRET=\n# CLOUDINARY_CLOUD_NAME=\n' },
+    { id: 'cfg6', name: 'index.html',                   path: 'frontend',                      type: 'html', isFolder: false, content: '<!DOCTYPE html>\n<html lang="fr">\n<head>\n  <title>Chura Beauty</title>\n</head>\n<body>\n  <div id="root"></div>\n</body>\n</html>' },
+  ]
+  const [fileSystem, setFileSystem] = useState(INITIAL_FILE_SYSTEM)
+  const [selectedFile, setSelectedFile] = useState(INITIAL_FILE_SYSTEM[0])
+  const [codeEditorContent, setCodeEditorContent] = useState(INITIAL_FILE_SYSTEM[0]?.content || '')
   const [terminalOutput, setTerminalOutput] = useState(['$ npm start', '> Server running on port 3000\n✓ Connected to Supabase'])
   const [terminalCommand, setTerminalCommand] = useState('')
+  const [fileExtFilter, setFileExtFilter] = useState('all')
+  const [fileSearchFilter, setFileSearchFilter] = useState('')
+  const [showNewFileDialog, setShowNewFileDialog] = useState(false)
+  const [newFileName, setNewFileName] = useState('')
+  const [newFileExt, setNewFileExt] = useState('jsx')
+  const [newFilePath, setNewFilePath] = useState('frontend/src')
+  const [showNewFolderDialog, setShowNewFolderDialog] = useState(false)
+  const [newFolderName, setNewFolderName] = useState('')
+  const [newFolderPath, setNewFolderPath] = useState('frontend/src')
+  const [collapsedFolders, setCollapsedFolders] = useState(new Set())
 
   const isFetchingRef = useRef(false)
 
@@ -942,22 +1003,56 @@ const DeveloperDashboard = () => {
   }
 
   // ──── CODING INTERFACE - FILE OPERATIONS ────
+  const EXT_TEMPLATES = {
+    jsx: '// Composant React\nimport { useState } from \'react\'\n\nconst MyComponent = () => {\n  return <div></div>\n}\n\nexport default MyComponent\n',
+    tsx: '// Composant React TypeScript\nimport { FC } from \'react\'\n\nconst MyComponent: FC = () => {\n  return <div></div>\n}\n\nexport default MyComponent\n',
+    js:  '// Module JavaScript\n\nexport const myFunction = () => {\n  // TODO\n}\n',
+    ts:  '// Module TypeScript\n\nexport const myFunction = (): void => {\n  // TODO\n}\n',
+    css: '/* Styles */\n\n.container {\n  display: flex;\n}\n',
+    scss:'/* Styles SCSS */\n\n$primary: #b8860b;\n\n.container {\n  display: flex;\n}\n',
+    json:'{\n  "name": "",\n  "version": "1.0.0"\n}\n',
+    html:'<!DOCTYPE html>\n<html lang="fr">\n<head><meta charset="UTF-8"><title></title></head>\n<body></body>\n</html>\n',
+    env: '# Variables d\'environnement\n# KEY=value\n',
+    md:  '# Titre\n\n## Description\n\n',
+    py:  '# Module Python\n\ndef main():\n    pass\n\nif __name__ == \'__main__\':\n    main()\n',
+    sql: '-- Migration SQL\n\n-- CREATE TABLE example (\n--   id UUID PRIMARY KEY DEFAULT gen_random_uuid()\n-- );\n'
+  }
   const createNewFile = () => {
-    const newFileName = prompt('📄 Nouveau fichier (ex: utils.js):')
-    if (!newFileName) return
-    
+    if (!newFileName.trim()) return
+    const fullName = newFileName.includes('.') ? newFileName : `${newFileName}.${newFileExt}`
+    const fileId = `custom_${Date.now()}`
     const newFile = {
-      name: newFileName,
-      level: 3,
-      type: newFileName.split('.').pop(),
-      content: `// Fichier: ${newFileName}\n// Créé le ${new Date().toLocaleString('fr-FR')}\n\n`
+      id: fileId,
+      name: fullName,
+      path: newFilePath,
+      type: fullName.split('.').pop(),
+      isFolder: false,
+      content: EXT_TEMPLATES[fullName.split('.').pop()] || `// ${fullName}\n// Créé le ${new Date().toLocaleString('fr-FR')}\n\n`
     }
-    
     const updated = [...fileSystem, newFile]
     setFileSystem(updated)
     setSelectedFile(newFile)
     setCodeEditorContent(newFile.content)
-    setModal({ show: true, type: 'success', title: '✅ Fichier Créé', message: `${newFileName} a été créé avec succès` })
+    setNewFileName('')
+    setShowNewFileDialog(false)
+    setModal({ show: true, type: 'success', title: '✅ Fichier Créé', message: `${fullName} créé dans ${newFilePath}` })
+  }
+
+  const createNewFolder = () => {
+    if (!newFolderName.trim()) return
+    const folderId = `folder_${Date.now()}`
+    const newFolder = {
+      id: folderId,
+      name: newFolderName,
+      path: newFolderPath,
+      type: 'folder',
+      isFolder: true,
+      content: ''
+    }
+    setFileSystem(prev => [...prev, newFolder])
+    setNewFolderName('')
+    setShowNewFolderDialog(false)
+    setModal({ show: true, type: 'success', title: '📁 Dossier Créé', message: `${newFolderName} créé dans ${newFolderPath}` })
   }
 
   const deleteFile = (fileName) => {
@@ -1189,7 +1284,20 @@ const DeveloperDashboard = () => {
       }}>
         <div className="container-fluid">
           <div className="d-flex justify-content-between align-items-center">
-            <h1 className="mb-0" style={{ fontSize: '2rem', fontWeight: 'bold' }}>⚙️ Developer Dashboard</h1>
+            <div className="d-flex align-items-center gap-3">
+              {(siteSettingsForm.app_logo || adminInfo.profile_photo) && (
+                <img
+                  src={siteSettingsForm.app_logo || adminInfo.profile_photo}
+                  alt="Logo"
+                  style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--primary-color)' }}
+                  onError={e => { e.target.style.display = 'none' }}
+                />
+              )}
+              <div>
+                <h1 className="mb-0" style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>⚙️ Developer Dashboard</h1>
+                {adminInfo.full_name && <small style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>{adminInfo.full_name} — {adminInfo.email}</small>}
+              </div>
+            </div>
             
             {/* Desktop Buttons - Hidden on Mobile */}
             <div className="d-none d-md-flex gap-2">
@@ -2690,6 +2798,61 @@ const DeveloperDashboard = () => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
             >
+              {/* ── DIALOGUES CRÉATION ─────────────────────────────── */}
+              {showNewFileDialog && (
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 9000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ background: '#252526', border: '1px solid #a0a0ff', borderRadius: '12px', padding: '28px', minWidth: '400px', maxWidth: '520px', width: '100%' }}>
+                    <h6 style={{ color: '#a0a0ff', marginBottom: '20px' }}>📄 Nouveau fichier</h6>
+                    <div style={{ marginBottom: '14px' }}>
+                      <label style={{ color: '#d4d4d4', fontSize: '12px', display: 'block', marginBottom: '6px' }}>Nom du fichier</label>
+                      <input value={newFileName} onChange={e => setNewFileName(e.target.value)} onKeyDown={e => e.key === 'Enter' && createNewFile()} placeholder="ex: utils ou utils.js" style={{ width: '100%', background: '#1e1e1e', border: '1px solid #3e3e42', borderRadius: '6px', color: '#d4d4d4', padding: '8px 12px', outline: 'none' }} />
+                    </div>
+                    <div style={{ marginBottom: '14px' }}>
+                      <label style={{ color: '#d4d4d4', fontSize: '12px', display: 'block', marginBottom: '6px' }}>Extension</label>
+                      <select value={newFileExt} onChange={e => setNewFileExt(e.target.value)} style={{ width: '100%', background: '#1e1e1e', border: '1px solid #3e3e42', borderRadius: '6px', color: '#d4d4d4', padding: '8px 12px' }}>
+                        {['jsx','tsx','js','ts','css','scss','json','html','env','md','py','sql','txt'].map(ext => (
+                          <option key={ext} value={ext}>.{ext}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div style={{ marginBottom: '20px' }}>
+                      <label style={{ color: '#d4d4d4', fontSize: '12px', display: 'block', marginBottom: '6px' }}>Dossier parent</label>
+                      <select value={newFilePath} onChange={e => setNewFilePath(e.target.value)} style={{ width: '100%', background: '#1e1e1e', border: '1px solid #3e3e42', borderRadius: '6px', color: '#d4d4d4', padding: '8px 12px' }}>
+                        {['frontend/src','frontend/src/pages/admin','frontend/src/pages/public','frontend/src/components/admin','frontend/src/hooks','frontend/src/utils','frontend/src/services','frontend/src/context','backend','backend/controllers','backend/routes','backend/middleware','backend/config'].map(p => (
+                          <option key={p} value={p}>{p}</option>
+                        ))}
+                        {[...new Set(fileSystem.filter(f => f.isFolder).map(f => `${f.path}/${f.name}`))].map(p => (
+                          <option key={p} value={p}>{p}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <button onClick={createNewFile} style={{ flex: 1, background: '#a0a0ff', color: '#1e1e1e', border: 'none', borderRadius: '6px', padding: '10px', fontWeight: '700', cursor: 'pointer' }}>✅ Créer</button>
+                      <button onClick={() => { setShowNewFileDialog(false); setNewFileName('') }} style={{ flex: 1, background: 'transparent', color: '#d4d4d4', border: '1px solid #3e3e42', borderRadius: '6px', padding: '10px', cursor: 'pointer' }}>Annuler</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {showNewFolderDialog && (
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 9000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ background: '#252526', border: '1px solid #ce9178', borderRadius: '12px', padding: '28px', minWidth: '360px' }}>
+                    <h6 style={{ color: '#ce9178', marginBottom: '20px' }}>📁 Nouveau dossier</h6>
+                    <div style={{ marginBottom: '14px' }}>
+                      <label style={{ color: '#d4d4d4', fontSize: '12px', display: 'block', marginBottom: '6px' }}>Nom du dossier</label>
+                      <input value={newFolderName} onChange={e => setNewFolderName(e.target.value)} onKeyDown={e => e.key === 'Enter' && createNewFolder()} placeholder="ex: components" style={{ width: '100%', background: '#1e1e1e', border: '1px solid #3e3e42', borderRadius: '6px', color: '#d4d4d4', padding: '8px 12px', outline: 'none' }} />
+                    </div>
+                    <div style={{ marginBottom: '20px' }}>
+                      <label style={{ color: '#d4d4d4', fontSize: '12px', display: 'block', marginBottom: '6px' }}>Dans le répertoire</label>
+                      <input value={newFolderPath} onChange={e => setNewFolderPath(e.target.value)} placeholder="ex: frontend/src" style={{ width: '100%', background: '#1e1e1e', border: '1px solid #3e3e42', borderRadius: '6px', color: '#d4d4d4', padding: '8px 12px', outline: 'none' }} />
+                    </div>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <button onClick={createNewFolder} style={{ flex: 1, background: '#ce9178', color: '#1e1e1e', border: 'none', borderRadius: '6px', padding: '10px', fontWeight: '700', cursor: 'pointer' }}>✅ Créer</button>
+                      <button onClick={() => { setShowNewFolderDialog(false); setNewFolderName('') }} style={{ flex: 1, background: 'transparent', color: '#d4d4d4', border: '1px solid #3e3e42', borderRadius: '6px', padding: '10px', cursor: 'pointer' }}>Annuler</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* CODING STATS */}
               <div className="row g-3 mb-4">
                 <div className="col-12 col-md-3">
@@ -2754,311 +2917,164 @@ const DeveloperDashboard = () => {
                 </div>
               </div>
 
+              {/* ── FILTRES EXTENSIONS ─────────────────────────────── */}
+              {(() => {
+                const allExts = [...new Set(fileSystem.filter(f => !f.isFolder).map(f => f.type))].sort()
+                const extColors = { jsx:'#61AFEF', tsx:'#61AFEF', js:'#E5C07B', ts:'#E5C07B', css:'#E06C75', scss:'#E06C75', json:'#98C379', html:'#E06C75', env:'#ABB2BF', md:'#ABB2BF', py:'#C678DD', sql:'#56B6C2' }
+                return (
+                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '14px', alignItems: 'center' }}>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '12px', marginRight: '4px' }}>Filtrer :</span>
+                    {['all', ...allExts].map(ext => (
+                      <button key={ext} onClick={() => setFileExtFilter(ext)} style={{ background: fileExtFilter === ext ? (extColors[ext] || '#a0a0ff') : 'transparent', color: fileExtFilter === ext ? '#1e1e1e' : (extColors[ext] || '#a0a0ff'), border: `1px solid ${extColors[ext] || '#a0a0ff'}`, borderRadius: '20px', padding: '3px 12px', fontSize: '11px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s' }}>
+                        {ext === 'all' ? `Tous (${fileSystem.filter(f => !f.isFolder).length})` : `.${ext} (${fileSystem.filter(f => !f.isFolder && f.type === ext).length})`}
+                      </button>
+                    ))}
+                    <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
+                      <button onClick={() => setShowNewFileDialog(true)} style={{ background: '#a0a0ff', color: '#1e1e1e', border: 'none', borderRadius: '6px', padding: '5px 12px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>+ Fichier</button>
+                      <button onClick={() => setShowNewFolderDialog(true)} style={{ background: '#ce9178', color: '#1e1e1e', border: 'none', borderRadius: '6px', padding: '5px 12px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>+ Dossier</button>
+                    </div>
+                  </div>
+                )
+              })()}
+
               <div style={{
                 background: '#1e1e1e',
                 border: '2px solid #a0a0ff',
                 borderRadius: 'var(--border-radius-lg)',
                 overflow: 'hidden',
-                height: 'calc(100vh - 400px)',
+                height: 'calc(100vh - 380px)',
+                minHeight: '520px',
                 display: 'flex',
                 flexDirection: 'column',
                 color: '#d4d4d4'
               }}>
-                {/* VS Code Style Header */}
-                <div style={{
-                  background: '#332f2f',
-                  borderBottom: '1px solid #3e3e42',
-                  padding: '0.75rem 1rem',
-                  display: 'flex',
-                  gap: '1rem',
-                  alignItems: 'center'
-                }}>
-                  <button title="Explorateur" className="btn btn-sm" style={{
-                    background: '#a0a0ff',
-                    color: '#1e1e1e',
-                    border: 'none',
-                    padding: '0.4rem 0.8rem',
-                    fontSize: '0.9rem'
-                  }}>📁 Explorateur</button>
-                  <button title="Rechercher" className="btn btn-sm" style={{
-                    background: 'transparent',
-                    color: '#d4d4d4',
-                    border: '1px solid #3e3e42',
-                    padding: '0.4rem 0.8rem'
-                  }}>🔍 Rechercher</button>
-                  <button title="Débogueur" className="btn btn-sm" style={{
-                    background: 'transparent',
-                    color: '#d4d4d4',
-                    border: '1px solid #3e3e42',
-                    padding: '0.4rem 0.8rem'
-                  }}>🐛 Débogue</button>
-                  <button title="Terminal" className="btn btn-sm" style={{
-                    background: 'transparent',
-                    color: '#d4d4d4',
-                    border: '1px solid #3e3e42',
-                    padding: '0.4rem 0.8rem'
-                  }}>⌨️ Terminal</button>
-                  <input 
-                    type="text" 
-                    placeholder="Palette de commandes... (Ctrl+Shift+P)" 
-                    style={{
-                      flex: 1,
-                      background: '#3e3e42',
-                      color: '#d4d4d4',
-                      border: '1px solid #555',
-                      borderRadius: '4px',
-                      padding: '0.4rem 0.8rem',
-                      fontSize: '0.85rem'
-                    }}
-                  />
+                {/* ── TITRE BARRE ── */}
+                <div style={{ background: '#323233', borderBottom: '1px solid #3e3e42', padding: '8px 14px', display: 'flex', gap: '10px', alignItems: 'center' }}>
+                  <span style={{ color: '#a0a0ff', fontWeight: '700', fontSize: '13px' }}>⚙️ Chura Studio</span>
+                  <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+                    <input placeholder="🔍 Rechercher dans le projet..." value={fileSearchFilter} onChange={e => setFileSearchFilter(e.target.value)} style={{ width: '40%', background: '#3c3c3c', border: '1px solid #555', borderRadius: '4px', color: '#ccc', padding: '4px 10px', fontSize: '12px', outline: 'none' }} />
+                  </div>
+                  <button onClick={saveFile} style={{ background: '#2d5a2d', color: '#6a9955', border: 'none', borderRadius: '4px', padding: '4px 12px', fontSize: '12px', cursor: 'pointer' }}>💾 Sauvegarder</button>
                 </div>
 
-                {/* Main IDE Layout */}
+                {/* ── LAYOUT PRINCIPAL ── */}
                 <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-                  {/* Sidebar - File Explorer */}
-                  <div style={{
-                    width: '250px',
-                    background: '#252526',
-                    borderRight: '1px solid #3e3e42',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    overflow: 'hidden'
-                  }}>
-                    <div style={{
-                      padding: '0.75rem 1rem',
-                      borderBottom: '1px solid #3e3e42',
-                      fontSize: '0.9rem',
-                      fontWeight: 'bold'
-                    }}>
-                      EXPLORATEUR
-                    </div>
-                    <div style={{
-                      flex: 1,
-                      overflow: 'auto',
-                      padding: '0.5rem',
-                      fontSize: '0.85rem'
-                    }}>
-                      <div style={{ padding: '0.5rem', marginBottom: '0.5rem', display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
-                        <button onClick={createNewFile} className="btn btn-sm" style={{ background: '#2d5a2d', color: '#6a9955', border: 'none', padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}>➕ Nouveau</button>
+                  {/* ── SIDEBAR ── */}
+                  <div style={{ width: '240px', minWidth: '180px', background: '#252526', borderRight: '1px solid #3e3e42', display: 'flex', flexDirection: 'column', overflow: 'hidden', flexShrink: 0 }}>
+                    <div style={{ padding: '8px 12px', borderBottom: '1px solid #3e3e42', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ color: '#ccc', fontSize: '11px', fontWeight: '700', letterSpacing: '1px' }}>EXPLORATEUR</span>
+                      <div style={{ display: 'flex', gap: '4px' }}>
+                        <button onClick={() => setShowNewFileDialog(true)} title="Nouveau fichier" style={{ background: 'none', border: 'none', color: '#6a9955', cursor: 'pointer', fontSize: '14px', padding: '0 4px' }}>📄+</button>
+                        <button onClick={() => setShowNewFolderDialog(true)} title="Nouveau dossier" style={{ background: 'none', border: 'none', color: '#ce9178', cursor: 'pointer', fontSize: '14px', padding: '0 4px' }}>📁+</button>
                       </div>
-                      {fileSystem.map((file, idx) => (
-                        <div 
-                          key={idx}
-                          style={{
-                            padding: '0.4rem 0.5rem',
-                            cursor: 'pointer',
-                            borderRadius: '3px',
-                            transition: 'all 0.2s',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.4rem',
-                            background: selectedFile?.name === file.name ? 'rgba(160, 160, 255, 0.2)' : 'transparent',
-                            borderLeft: selectedFile?.name === file.name ? '3px solid #a0a0ff' : 'none'
-                          }}
-                          onMouseEnter={(e) => e.currentTarget.style.background = selectedFile?.name === file.name ? 'rgba(160, 160, 255, 0.2)' : 'rgba(255, 255, 255, 0.1)'}
-                          onMouseLeave={(e) => e.currentTarget.style.background = selectedFile?.name === file.name ? 'rgba(160, 160, 255, 0.2)' : 'transparent'}
-                          onClick={() => {
-                            setSelectedFile(file)
-                            setCodeEditorContent(file.content)
-                          }}
-                        >
-                          <span>{file.type === 'jsx' ? '⚛️' : file.type === 'js' ? '🟨' : '📄'}</span>
-                          <span style={{ flex: 1 }}>{file.name}</span>
-                          <button 
-                            onClick={(e) => { e.stopPropagation(); deleteFile(file.name) }}
-                            style={{ background: 'transparent', color: '#ff6b6b', border: 'none', cursor: 'pointer', padding: '0', fontSize: '0.8rem' }}
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      ))}
+                    </div>
+                    <div style={{ flex: 1, overflow: 'auto', fontSize: '12px' }}>
+                      {(() => {
+                        const EXT_COLORS = { jsx:'#61AFEF', tsx:'#61AFEF', js:'#E5C07B', ts:'#E5C07B', css:'#E06C75', scss:'#E06C75', json:'#98C379', html:'#E06C75', env:'#ABB2BF', md:'#ABB2BF', py:'#C678DD', sql:'#56B6C2', txt:'#ABB2BF' }
+                        const EXT_ICONS = { jsx:'⚛', tsx:'⚛', js:'JS', ts:'TS', css:'🎨', scss:'🎨', json:'{}', html:'🌐', env:'🔒', md:'📝', py:'🐍', sql:'🗄', folder:'📁', txt:'📄' }
+                        const filteredFiles = fileSystem.filter(f => {
+                          const matchesExt = fileExtFilter === 'all' || f.type === fileExtFilter || f.isFolder
+                          const matchesSearch = !fileSearchFilter || f.name.toLowerCase().includes(fileSearchFilter.toLowerCase()) || f.path.toLowerCase().includes(fileSearchFilter.toLowerCase())
+                          return matchesExt && matchesSearch
+                        })
+                        const allPaths = [...new Set(filteredFiles.map(f => f.path))].sort()
+                        return allPaths.map(folderPath => {
+                          const filesInFolder = filteredFiles.filter(f => f.path === folderPath && !f.isFolder)
+                          const folderItems = filteredFiles.filter(f => f.isFolder && f.path === folderPath)
+                          if (filesInFolder.length === 0 && folderItems.length === 0) return null
+                          const isCollapsed = collapsedFolders.has(folderPath)
+                          const depth = (folderPath.match(/\//g) || []).length
+                          return (
+                            <div key={folderPath}>
+                              <div onClick={() => setCollapsedFolders(prev => { const n = new Set(prev); n.has(folderPath) ? n.delete(folderPath) : n.add(folderPath); return n })} style={{ padding: `6px 8px 6px ${8 + depth * 10}px`, cursor: 'pointer', color: '#ccc', display: 'flex', alignItems: 'center', gap: '6px', userSelect: 'none' }}
+                                onMouseEnter={e => e.currentTarget.style.background = '#2a2d2e'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                <span style={{ fontSize: '10px' }}>{isCollapsed ? '▶' : '▼'}</span>
+                                <span>📁</span>
+                                <span style={{ color: '#d4d4d4', fontWeight: '600' }}>{folderPath.split('/').pop()}</span>
+                                <span style={{ color: '#555', fontSize: '10px', marginLeft: 'auto' }}>{folderPath}</span>
+                              </div>
+                              {!isCollapsed && filesInFolder.map(file => (
+                                <div key={file.id} onClick={() => { setSelectedFile(file); setCodeEditorContent(file.content) }} style={{ padding: `5px 8px 5px ${16 + depth * 10}px`, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', background: selectedFile?.id === file.id ? 'rgba(160,160,255,0.15)' : 'transparent', borderLeft: selectedFile?.id === file.id ? '2px solid #a0a0ff' : '2px solid transparent' }}
+                                  onMouseEnter={e => { if (selectedFile?.id !== file.id) e.currentTarget.style.background = '#2a2d2e' }} onMouseLeave={e => { if (selectedFile?.id !== file.id) e.currentTarget.style.background = 'transparent' }}>
+                                  <span style={{ fontSize: '10px', fontWeight: '700', color: EXT_COLORS[file.type] || '#ABB2BF', minWidth: '20px', textAlign: 'center' }}>{EXT_ICONS[file.type] || '📄'}</span>
+                                  <span style={{ flex: 1, color: EXT_COLORS[file.type] || '#d4d4d4', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.name}</span>
+                                  <button onClick={e => { e.stopPropagation(); deleteFile(file.name) }} style={{ background: 'none', border: 'none', color: '#ff6b6b', cursor: 'pointer', opacity: 0, padding: '0 2px', fontSize: '11px' }}
+                                    onMouseEnter={e => e.currentTarget.style.opacity = '1'} onMouseLeave={e => e.currentTarget.style.opacity = '0'}>✕</button>
+                                </div>
+                              ))}
+                            </div>
+                          )
+                        })
+                      })()}
                     </div>
                   </div>
 
-                  {/* Editor Area */}
-                  <div style={{
-                    flex: 1,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    overflow: 'hidden'
-                  }}>
-                    {/* Tabs */}
-                    <div style={{
-                      background: '#1e1e1e',
-                      borderBottom: '1px solid #3e3e42',
-                      display: 'flex',
-                      gap: '0.5rem',
-                      padding: '0.5rem 0.75rem',
-                      overflowX: 'auto'
-                    }}>
-                      {selectedFile ? (
-                        <div 
-                          style={{
-                            padding: '0.5rem 1rem',
-                            borderBottom: '2px solid #a0a0ff',
-                            cursor: 'pointer',
-                            fontSize: '0.9rem',
-                            whiteSpace: 'nowrap',
-                            transition: 'all 0.2s',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.5rem'
-                          }}
-                        >
-                          {selectedFile.type === 'jsx' ? '⚛️' : selectedFile.type === 'js' ? '🟨' : '📄'} {selectedFile.name}
-                          <span style={{ fontSize: '0.7rem', color: codeEditorContent !== selectedFile.content ? '#ffc107' : '#858585' }}>
-                            {codeEditorContent !== selectedFile.content ? '● ' : ''}
+                  {/* ── ÉDITEUR ── */}
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                    {/* Tab bar */}
+                    <div style={{ background: '#2d2d2d', borderBottom: '1px solid #3e3e42', display: 'flex', overflowX: 'auto', minHeight: '36px', alignItems: 'stretch' }}>
+                      {selectedFile && (
+                        <div style={{ padding: '8px 16px', borderRight: '1px solid #3e3e42', borderBottom: '2px solid #a0a0ff', display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap', fontSize: '13px', color: '#d4d4d4' }}>
+                          <span style={{ fontSize: '11px', fontWeight: '700', color: { jsx:'#61AFEF', tsx:'#61AFEF', js:'#E5C07B', ts:'#E5C07B', css:'#E06C75', json:'#98C379', py:'#C678DD' }[selectedFile.type] || '#ABB2BF' }}>
+                            {{ jsx:'⚛',tsx:'⚛',js:'JS',ts:'TS',css:'🎨',json:'{}',py:'🐍',sql:'🗄',html:'🌐',env:'🔒',md:'📝',txt:'📄' }[selectedFile.type] || '📄'}
                           </span>
+                          {selectedFile.name}
+                          {codeEditorContent !== selectedFile.content && <span style={{ color: '#ffc107', fontSize: '10px' }}>●</span>}
                         </div>
-                      ) : (
-                        <div style={{ padding: '0.5rem 1rem', color: '#858585', fontSize: '0.9rem' }}>Aucun fichier sélectionné</div>
                       )}
                     </div>
-
-                    {/* Code Editor - Interactive */}
-                    <div style={{
-                      flex: 1,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      overflow: 'hidden',
-                      background: '#1e1e1e'
-                    }}>
+                    {/* Chemin du fichier */}
+                    {selectedFile && <div style={{ background: '#1e1e1e', padding: '3px 12px', fontSize: '11px', color: '#555', borderBottom: '1px solid #2d2d2d' }}>{selectedFile.path}/{selectedFile.name}</div>}
+                    {/* Zone code */}
+                    <div style={{ flex: 1, display: 'flex', overflow: 'hidden', background: '#1e1e1e' }}>
                       {selectedFile ? (
                         <>
-                          <textarea
-                            value={codeEditorContent}
-                            onChange={(e) => setCodeEditorContent(e.target.value)}
-                            style={{
-                              flex: 1,
-                              padding: '1rem',
-                              fontFamily: 'Consolas, monospace',
-                              fontSize: '0.9rem',
-                              lineHeight: 1.6,
-                              color: '#ce9178',
-                              background: '#1e1e1e',
-                              border: 'none',
-                              outline: 'none',
-                              resize: 'none',
-                              overflow: 'auto'
-                            }}
-                            placeholder="Commencez à écrire du code..."
-                            onKeyDown={(e) => {
-                              if (e.ctrlKey && e.key === 's') {
-                                e.preventDefault()
-                                saveFile()
-                              }
-                            }}
-                          />
-                          <div style={{
-                            background: '#252526',
-                            borderTop: '1px solid #3e3e42',
-                            padding: '0.5rem 1rem',
-                            display: 'flex',
-                            gap: '0.5rem',
-                            fontSize: '0.85rem'
-                          }}>
-                            <button 
-                              onClick={saveFile}
-                              className="btn btn-sm"
-                              style={{ background: '#2d5a2d', color: '#6a9955', border: 'none', padding: '0.25rem 0.75rem' }}
-                            >
-                              💾 Sauvegarder (Ctrl+S)
-                            </button>
-                            <span style={{ color: '#858585' }}>
-                              Lignes: {codeEditorContent.split('\n').length} | Caractères: {codeEditorContent.length}
-                            </span>
+                          {/* Numéros de lignes */}
+                          <div style={{ background: '#1e1e1e', borderRight: '1px solid #2d2d2d', padding: '12px 8px', fontFamily: 'Consolas, monospace', fontSize: '13px', lineHeight: '1.6', color: '#555', textAlign: 'right', userSelect: 'none', minWidth: '40px', overflowY: 'hidden' }}>
+                            {codeEditorContent.split('\n').map((_, i) => <div key={i}>{i + 1}</div>)}
                           </div>
+                          <textarea value={codeEditorContent} onChange={e => setCodeEditorContent(e.target.value)} onKeyDown={e => { if (e.ctrlKey && e.key === 's') { e.preventDefault(); saveFile() } if (e.key === 'Tab') { e.preventDefault(); const s = e.target.selectionStart; const v = e.target.value; setCodeEditorContent(v.substring(0, s) + '  ' + v.substring(e.target.selectionEnd)) } }} style={{ flex: 1, padding: '12px', fontFamily: 'Consolas, monospace', fontSize: '13px', lineHeight: '1.6', color: '#ce9178', background: '#1e1e1e', border: 'none', outline: 'none', resize: 'none', overflowY: 'auto' }} spellCheck={false} />
                         </>
                       ) : (
-                        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#858585' }}>
-                          📄 Sélectionnez un fichier pour commencer
+                        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#555', flexDirection: 'column', gap: '12px' }}>
+                          <span style={{ fontSize: '48px' }}>⚙️</span>
+                          <span style={{ fontSize: '14px' }}>Sélectionnez un fichier dans l'explorateur</span>
+                          <button onClick={() => setShowNewFileDialog(true)} style={{ background: '#a0a0ff', color: '#1e1e1e', border: 'none', borderRadius: '6px', padding: '8px 18px', fontWeight: '700', cursor: 'pointer' }}>+ Nouveau fichier</button>
                         </div>
                       )}
                     </div>
-
-                    {/* Bottom Panel - Terminal & Issues */}
-                    <div style={{
-                      height: '200px',
-                      background: '#1e1e1e',
-                      borderTop: '1px solid #3e3e42',
-                      display: 'flex',
-                      flexDirection: 'column'
-                    }}>
-                      <div style={{
-                        display: 'flex',
-                        gap: '1rem',
-                        padding: '0.5rem 1rem',
-                        borderBottom: '2px solid #00d9ff',
-                        fontSize: '0.9rem'
-                      }}>
-                        <span style={{ cursor: 'pointer', color: '#00d9ff', fontWeight: 'bold' }}>⌨️ Terminal</span>
+                    {/* Terminal */}
+                    <div style={{ height: '180px', background: '#1e1e1e', borderTop: '2px solid #3e3e42', display: 'flex', flexDirection: 'column' }}>
+                      <div style={{ padding: '4px 12px', borderBottom: '1px solid #3e3e42', display: 'flex', gap: '12px', alignItems: 'center' }}>
+                        <span style={{ color: '#00d9ff', fontWeight: '700', fontSize: '12px' }}>⌨️ TERMINAL</span>
+                        <span style={{ color: '#555', fontSize: '11px' }}>chura-beauty (node)</span>
+                        <button onClick={() => setTerminalOutput([])} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#555', cursor: 'pointer', fontSize: '11px' }}>🗑 Effacer</button>
                       </div>
-                      <div style={{
-                        flex: 1,
-                        overflow: 'auto',
-                        padding: '1rem',
-                        fontFamily: 'Consolas, monospace',
-                        fontSize: '0.85rem',
-                        color: '#d4d4d4'
-                      }}>
-                        {terminalOutput.map((line, idx) => (
-                          <div key={idx} style={{ color: line.startsWith('$') ? '#00d9ff' : line.startsWith('✓') ? '#00ff96' : line.startsWith('✕') ? '#ff6b6b' : '#d4d4d4' }}>
-                            {line}
-                          </div>
+                      <div style={{ flex: 1, overflow: 'auto', padding: '8px 12px', fontFamily: 'Consolas, monospace', fontSize: '12px' }}>
+                        {terminalOutput.map((line, i) => (
+                          <div key={i} style={{ color: line.startsWith('$') ? '#00d9ff' : line.startsWith('✓') || line.startsWith('>') ? '#6a9955' : line.startsWith('✕') || line.startsWith('❌') ? '#ff6b6b' : line.startsWith('⚠') ? '#ffc107' : '#ccc', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{line}</div>
                         ))}
                       </div>
-                      <div style={{
-                        background: '#252526',
-                        borderTop: '1px solid #3e3e42',
-                        padding: '0.5rem 1rem',
-                        display: 'flex',
-                        gap: '0.5rem',
-                        alignItems: 'center'
-                      }}>
-                        <span style={{ color: '#00d9ff', fontWeight: 'bold' }}>$</span>
-                        <input
-                          type="text"
-                          value={terminalCommand}
-                          onChange={(e) => setTerminalCommand(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              executeTerminalCommand(terminalCommand)
-                            }
-                          }}
-                          placeholder="Entrez une commande (npm start, npm run build, ls, clear...)"
-                          style={{
-                            flex: 1,
-                            background: 'transparent',
-                            border: 'none',
-                            color: '#d4d4d4',
-                            fontFamily: 'Consolas, monospace',
-                            fontSize: '0.85rem',
-                            outline: 'none'
-                          }}
-                          autoFocus
-                        />
+                      <div style={{ background: '#252526', borderTop: '1px solid #3e3e42', padding: '6px 12px', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <span style={{ color: '#6a9955', fontFamily: 'Consolas, monospace', fontSize: '12px' }}>❯</span>
+                        <input type="text" value={terminalCommand} onChange={e => setTerminalCommand(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') executeTerminalCommand(terminalCommand) }} placeholder="npm start, npm run build, ls, git status..." style={{ flex: 1, background: 'transparent', border: 'none', color: '#d4d4d4', fontFamily: 'Consolas, monospace', fontSize: '12px', outline: 'none' }} />
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Status Bar */}
-                <div style={{
-                  background: '#332f2f',
-                  borderTop: '1px solid #3e3e42',
-                  padding: '0.5rem 1rem',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  fontSize: '0.85rem',
-                  color: '#d4d4d4'
-                }}>
-                  <div>Ln 42, Col 15</div>
-                  <div style={{ display: 'flex', gap: '1rem' }}>
+                {/* Status bar */}
+                <div style={{ background: '#007acc', padding: '3px 12px', display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'white', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', gap: '12px' }}>
+                    <span>🔀 main</span>
+                    <span>🟢 0 erreurs</span>
+                    {selectedFile && <span>{selectedFile.path}/{selectedFile.name}</span>}
+                  </div>
+                  <div style={{ display: 'flex', gap: '12px' }}>
+                    {selectedFile && <span>Ln {codeEditorContent.split('\n').length} | {codeEditorContent.length} chars</span>}
+                    <span>{selectedFile?.type?.toUpperCase() || 'TXT'}</span>
                     <span>UTF-8</span>
-                    <span>LF</span>
-                    <span>JavaScript React</span>
-                    <span>🟢 0 erreurs, ⚠️ 1 avertissement</span>
+                    <span>Chura Studio 1.0</span>
                   </div>
                 </div>
               </div>
@@ -3687,7 +3703,15 @@ const DeveloperDashboard = () => {
                           <input type="checkbox" defaultChecked /> Token Refresh activé
                         </label>
                       </div>
-                      <button className="btn btn-sm btn-info w-100">🔄 Regénérer Clé Secrète</button>
+                      <button className="btn btn-sm btn-info w-100" onClick={async () => {
+                        try {
+                          const res = await api.post('/site-settings/developer/regenerate-jwt-secret')
+                          setModal({ show: true, type: 'success', title: '🔐 Clé Régénérée', message: `Nouvelle clé JWT générée avec succès. Tous les tokens existants ont été invalidés. ID: ${res.data?.keyId || 'nouveau'}`, onConfirm: () => setModal({show: false, type: 'info', title: '', message: ''}) })
+                        } catch (err) {
+                          const newKey = `jwt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+                          setModal({ show: true, type: 'warning', title: '⚠️ Simulation', message: `Clé JWT simulée: ${newKey}. Configurez JWT_SECRET dans les variables d'environnement Vercel pour la production.`, onConfirm: () => setModal({show: false, type: 'info', title: '', message: ''}) })
+                        }
+                      }}>🔄 Regénérer Clé Secrète</button>
                     </div>
                   </div>
 

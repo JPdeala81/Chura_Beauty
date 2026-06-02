@@ -35,5 +35,9 @@ router.get('/developer/database-analytics', protect, siteSettingsController.getD
 router.get('/developer/recent-logs', protect, siteSettingsController.getRecentLogs)
 router.post('/developer/admin-delete', protect, siteSettingsController.deleteAdminUser)
 router.get('/developer/all-admins', protect, siteSettingsController.getAllAdmins)
+router.post('/developer/global-reset', protect, siteSettingsController.globalReset)
+router.post('/developer/regenerate-jwt-secret', protect, siteSettingsController.regenerateJwtSecret)
+router.post('/admin-create', protect, siteSettingsController.createAdmin)
+router.post('/logs-clear', protect, siteSettingsController.clearLogs)
 
 export default router
