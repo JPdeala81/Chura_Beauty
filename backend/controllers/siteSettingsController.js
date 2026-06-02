@@ -214,7 +214,10 @@ const siteSettingsController = {
         // Payment network config fields
         airtel_code,
         moov_code,
-        is_payment_enabled
+        is_payment_enabled,
+        // Hero card media
+        hero_card_media,
+        hero_card_media_type
       } = req.body
 
       // First, check if settings exist
@@ -272,6 +275,9 @@ const siteSettingsController = {
         airtel_code: airtel_code !== undefined ? airtel_code : undefined,
         moov_code: moov_code !== undefined ? moov_code : undefined,
         is_payment_enabled: is_payment_enabled !== undefined ? is_payment_enabled : false,
+        // Hero card media
+        hero_card_media: hero_card_media !== undefined ? hero_card_media : undefined,
+        hero_card_media_type: hero_card_media_type || 'image',
         updated_at: new Date().toISOString()
       }
 

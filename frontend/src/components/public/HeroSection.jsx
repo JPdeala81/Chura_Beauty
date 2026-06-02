@@ -278,39 +278,63 @@ const HeroSection = ({ onScrollToServices }) => {
                   background: 'rgba(255, 255, 255, 0.1)',
                   border: '1px solid rgba(255, 215, 0, 0.3)',
                   borderRadius: '30px',
-                  padding: '40px',
+                  padding: siteSettings.heroCardMedia ? '0' : '40px',
                   backdropFilter: 'blur(20px)',
-                  textAlign: 'center'
+                  textAlign: 'center',
+                  overflow: 'hidden'
                 }}
               >
-                <div style={{ fontSize: '80px', lineHeight: 1 }}>💆‍♀️</div>
-                <h4 style={{
-                  marginTop: '20px',
-                  fontSize: '20px',
-                  fontWeight: '700',
-                  color: '#fff'
-                }}>
-                  {adminInfo.salonName}
-                </h4>
-                <p style={{
-                  fontSize: '14px',
-                  marginTop: '10px',
-                  color: 'rgba(255, 255, 255, 0.7)'
-                }}>
-                  Libreville, Gabon
-                </p>
-                <div className="d-flex justify-content-center gap-3 mt-3">
-                  {['💅', '🌸', '✨'].map((e, i) => (
-                    <motion.span
-                      key={i}
-                      style={{ fontSize: '24px' }}
-                      animate={{ y: [0, -8, 0] }}
-                      transition={{ duration: 2, repeat: Infinity, delay: i * 0.4 }}
-                    >
-                      {e}
-                    </motion.span>
-                  ))}
-                </div>
+                {siteSettings.heroCardMedia ? (
+                  /* ── MEDIA PERSONNALISÉ ── */
+                  siteSettings.heroCardMediaType === 'video' ? (
+                    <video
+                      src={siteSettings.heroCardMedia}
+                      autoPlay
+                      muted
+                      loop
+                      playsInline
+                      style={{ width: '100%', borderRadius: '30px', display: 'block', maxHeight: '380px', objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <img
+                      src={siteSettings.heroCardMedia}
+                      alt={adminInfo.salonName}
+                      style={{ width: '100%', borderRadius: '30px', display: 'block', maxHeight: '380px', objectFit: 'cover' }}
+                    />
+                  )
+                ) : (
+                  /* ── ANIMATION PAR DÉFAUT ── */
+                  <>
+                    <div style={{ fontSize: '80px', lineHeight: 1 }}>💆‍♀️</div>
+                    <h4 style={{
+                      marginTop: '20px',
+                      fontSize: '20px',
+                      fontWeight: '700',
+                      color: '#fff'
+                    }}>
+                      {adminInfo.salonName}
+                    </h4>
+                    <p style={{
+                      fontSize: '14px',
+                      marginTop: '10px',
+                      color: 'rgba(255, 255, 255, 0.7)'
+                    }}>
+                      {siteSettings.address || 'Libreville, Gabon'}
+                    </p>
+                    <div className="d-flex justify-content-center gap-3 mt-3">
+                      {['💅', '🌸', '✨'].map((e, i) => (
+                        <motion.span
+                          key={i}
+                          style={{ fontSize: '24px' }}
+                          animate={{ y: [0, -8, 0] }}
+                          transition={{ duration: 2, repeat: Infinity, delay: i * 0.4 }}
+                        >
+                          {e}
+                        </motion.span>
+                      ))}
+                    </div>
+                  </>
+                )}
               </motion.div>
             </motion.div>
           </div>

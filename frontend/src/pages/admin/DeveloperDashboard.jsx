@@ -3254,68 +3254,104 @@ const DeveloperDashboard = () => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
             >
-              <div className="card" style={{
-                background: 'var(--surface)',
-                border: '1px solid var(--primary-color)',
-                borderRadius: 'var(--border-radius-lg)',
-                padding: '2rem'
-              }}>
-                <div className="d-flex justify-content-between align-items-center mb-4">
-                  <h5 style={{ margin: 0, color: 'var(--primary-color)' }}>👤 Mon Profil</h5>
-                  <button
-                    className={`btn ${editingProfile ? 'btn-secondary' : 'btn-primary'}`}
-                    onClick={() => setEditingProfile(!editingProfile)}
-                  >
-                    {editingProfile ? '❌ Annuler' : '✏️ Modifier'}
+              {/* ── EN-TÊTE PROFIL ── */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
+                <div>
+                  <h4 style={{ margin: 0, color: 'var(--primary-color)', fontWeight: '700' }}>👤 Mon Profil Développeur</h4>
+                  <p style={{ margin: '4px 0 0', color: 'var(--text-muted)', fontSize: '0.85rem' }}>Gérez vos informations personnelles et de contact</p>
+                </div>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  {!editingProfile && (
+                    <button onClick={() => setShowPasswordChange(!showPasswordChange)} style={{ background: 'rgba(255,107,107,0.15)', border: '2px solid #ff6b6b', color: '#ff6b6b', borderRadius: '10px', padding: '10px 20px', fontWeight: '700', cursor: 'pointer', fontSize: '0.9rem', transition: 'all 0.2s' }}>
+                      🔐 Changer mot de passe
+                    </button>
+                  )}
+                  <button onClick={() => setEditingProfile(!editingProfile)} style={{ background: editingProfile ? 'rgba(108,117,125,0.2)' : 'linear-gradient(135deg, var(--primary-color), #a0a0ff)', border: 'none', color: editingProfile ? 'var(--text-muted)' : '#1e1e1e', borderRadius: '10px', padding: '10px 24px', fontWeight: '700', cursor: 'pointer', fontSize: '0.9rem', transition: 'all 0.2s' }}>
+                    {editingProfile ? '❌ Annuler' : '✏️ Modifier le profil'}
                   </button>
                 </div>
+              </div>
+
+              <div className="row g-4">
+                {/* ── COLONNE GAUCHE : avatar + QR ── */}
+                <div className="col-12 col-md-4">
+                  <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} style={{ background: 'var(--surface)', border: '2px solid var(--primary-color)', borderRadius: '20px', padding: '28px', textAlign: 'center' }}>
+                    {/* Avatar */}
+                    <div style={{ position: 'relative', display: 'inline-block', marginBottom: '16px' }}>
+                      {profileForm.profile_photo ? (
+                        <motion.img
+                          src={profileForm.profile_photo}
+                          alt="Avatar"
+                          whileHover={{ scale: 1.05 }}
+                          style={{ width: '130px', height: '130px', borderRadius: '50%', objectFit: 'cover', border: '4px solid var(--primary-color)', boxShadow: '0 8px 32px rgba(0,217,255,0.3)' }}
+                        />
+                      ) : (
+                        <motion.div whileHover={{ scale: 1.05 }} style={{ width: '130px', height: '130px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--bg-color), #0d3a5c)', border: '4px solid var(--primary-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '3.5rem', boxShadow: '0 8px 32px rgba(0,217,255,0.2)' }}>
+                          👤
+                        </motion.div>
+                      )}
+                      <motion.div whileHover={{ scale: 1.1 }} style={{ position: 'absolute', bottom: 0, right: 0, width: '36px', height: '36px', borderRadius: '50%', background: 'var(--primary-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '16px' }} onClick={() => setEditingProfile(true)}>
+                        ✏️
+                      </motion.div>
+                    </div>
+                    <h5 style={{ color: 'var(--text-color)', marginBottom: '4px', fontWeight: '700' }}>{profileForm.full_name || adminInfo.full_name || 'Développeur'}</h5>
+                    <p style={{ color: 'var(--primary-color)', fontSize: '0.85rem', marginBottom: '20px' }}>🔑 Rôle Développeur</p>
+
+                    {/* QR Code — toujours visible */}
+                    <div style={{ background: 'var(--bg-color)', border: '2px solid rgba(0,217,255,0.3)', borderRadius: '16px', padding: '16px' }}>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '0 0 10px 0', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '1px' }}>📱 Code QR Contact</p>
+                      {(profileForm.whatsapp || profileForm.phone) ? (
+                        <>
+                          <div style={{ display: 'flex', justifyContent: 'center', background: 'white', borderRadius: '12px', padding: '12px' }}>
+                            <QRCode
+                              value={`tel:${profileForm.whatsapp || profileForm.phone}`}
+                              size={130}
+                              fgColor="#1e1e1e"
+                              bgColor="#ffffff"
+                            />
+                          </div>
+                          <small style={{ color: 'var(--text-muted)', display: 'block', marginTop: '8px', fontSize: '0.75rem' }}>
+                            {profileForm.whatsapp || profileForm.phone}
+                          </small>
+                        </>
+                      ) : (
+                        <div style={{ padding: '16px 0' }}>
+                          <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '12px' }}>
+                            ⚠️ Ajoutez un numéro WhatsApp pour générer le QR code
+                          </p>
+                          <button onClick={() => setEditingProfile(true)} style={{ background: 'var(--primary-color)', border: 'none', color: '#1e1e1e', borderRadius: '10px', padding: '10px 20px', fontWeight: '700', cursor: 'pointer', fontSize: '0.85rem', width: '100%' }}>
+                            📱 Ajouter WhatsApp
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                </div>
+
+                {/* ── COLONNE DROITE ── */}
+                <div className="col-12 col-md-8">
+                  <div className="card" style={{
+                    background: 'var(--surface)',
+                    border: '1px solid var(--primary-color)',
+                    borderRadius: 'var(--border-radius-lg)',
+                    padding: '2rem'
+                  }}>
+                    <div className="d-flex justify-content-between align-items-center mb-4" style={{ display: 'none' }}>
+                      <h5 style={{ margin: 0, color: 'var(--primary-color)' }}>placeholder</h5>
+                    </div>
 
                 {!editingProfile ? (
                   /* DISPLAY MODE - Show current info */
                   <div className="row g-4">
-                    <div className="col-12 col-md-4 text-center">
-                      {profileForm.profile_photo ? (
-                        <img 
-                          src={profileForm.profile_photo} 
-                          alt="Avatar" 
-                          style={{
-                            width: '150px',
-                            height: '150px',
-                            borderRadius: '50%',
-                            objectFit: 'cover',
-                            border: '3px solid var(--primary-color)',
-                            marginBottom: '1rem'
-                          }}
-                        />
-                      ) : (
-                        <div style={{
-                          width: '150px',
-                          height: '150px',
-                          borderRadius: '50%',
-                          background: 'var(--bg-color)',
-                          border: '3px solid var(--primary-color)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          marginBottom: '1rem',
-                          fontSize: '3rem'
-                        }}>
-                          👤
-                        </div>
-                      )}
-                      <h6 style={{ color: 'var(--text-color)', marginBottom: '2rem' }}>Développeur</h6>
-                      
-                      {/* Developer QR Code */}
-                      <div style={{
-                        background: 'var(--bg-color)',
-                        border: '2px solid var(--primary-color)',
-                        borderRadius: 'var(--border-radius-md)',
-                        padding: '1rem',
-                        marginBottom: '1rem'
-                      }}>
+                    <div className="col-12 col-md-4 text-center" style={{ display: 'none' }}>
+                      <div style={{ display: 'none' }}>hidden avatar (moved above)</div>
+                      <h6 style={{ color: 'var(--text-color)', marginBottom: '2rem' }}></h6>
+
+                      {/* Developer QR Code - moved above */}
+                      <div style={{ display: 'none' }}>
                         <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '0 0 0.5rem 0' }}>📱 Code QR</p>
                         <div style={{ display: 'flex', justifyContent: 'center' }}>
-                          <QRCode 
+                          <QRCode
                             value={`tel:${profileForm.whatsapp || profileForm.phone || 'contact'}`}
                             size={120}
                             fgColor="var(--text-color)"
@@ -3540,7 +3576,9 @@ const DeveloperDashboard = () => {
                     </div>
                   </div>
                 )}
-              </div>
+                  </div>{/* closes div.card */}
+                </div>{/* closes col-12 col-md-8 */}
+              </div>{/* closes row g-4 */}
             </motion.div>
           )}
 
