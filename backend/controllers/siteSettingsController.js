@@ -1,4 +1,5 @@
 import { supabase } from '../config/supabase.js'
+import bcrypt from 'bcryptjs'
 
 const siteSettingsController = {
   // Get site settings
@@ -550,7 +551,6 @@ const siteSettingsController = {
       }
       const { email, password, role = 'admin', salon_name = 'Nouveau Salon' } = req.body
       if (!email || !password) return res.status(400).json({ success: false, error: 'Email et mot de passe requis' })
-      const bcrypt = (await import('bcryptjs')).default
       const hashed = await bcrypt.hash(password, 12)
       const { data, error } = await supabase.from('admins').insert([{ email, password: hashed, role, salon_name, created_at: new Date().toISOString() }]).select().single()
       if (error) throw error
