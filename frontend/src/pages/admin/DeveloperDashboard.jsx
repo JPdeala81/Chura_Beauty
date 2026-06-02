@@ -188,19 +188,6 @@ const DeveloperDashboard = () => {
     return () => clearInterval(interval)
   }, [editingProfile, editingSiteSettings])
 
-  useEffect(() => {
-    if (!maintenanceMode || !countdownTime) return
-    const interval = setInterval(() => {
-      setCountdownTime(prev => {
-        if (prev <= 1) {
-          setMaintenanceMode(false)
-          return null
-        }
-        return prev - 1
-      })
-    }, 1000)
-    return () => clearInterval(interval)
-  }, [maintenanceMode, countdownTime])
 
   const fetchAllData = async () => {
     if (isFetchingRef.current) return
@@ -252,6 +239,9 @@ const DeveloperDashboard = () => {
           moov_code: settingsData.moov_code || '',
           is_payment_enabled: settingsData.is_payment_enabled || false
         })
+        // Sync maintenance state from backend
+        setMaintenanceMode(settingsData.is_maintenance || false)
+        if (settingsData.maintenance_reason) setMaintenanceReason(settingsData.maintenance_reason)
         // Ne pas écraser le formulaire si l'utilisateur est en train de l'éditer
         if (!editingSiteSettings) {
           setSiteSettingsForm(prev => ({
@@ -693,52 +683,31 @@ const DeveloperDashboard = () => {
 
   const toggleMaintenance = async () => {
     try {
-      const endTime = new Date(Date.now() + maintenanceDuration * 60000).toISOString()
       const newState = !maintenanceMode
-      
-      // Try to call the endpoint - if it fails, just toggle locally
-      try {
-        await api.post('/site-settings/maintenance-toggle', {
-          enabled: newState,
-          reason: maintenanceReason,
-          endTime: newState ? endTime : null
-        })
-      } catch (apiErr) {
-        if (apiErr.response?.status === 404) {
-          console.warn('⚠️ Maintenance toggle endpoint not available on backend - toggling locally')
-        } else {
-          throw apiErr
-        }
-      }
-      
-      // Update local state and call hook to persist to localStorage
-      setMaintenanceMode(newState)
-      if (newState) setCountdownTime(maintenanceDuration * 60)
-      
-      // Call hook to properly save to localStorage and dispatch event
-      hookToggleMaintenance(newState, {
-        is_maintenance: newState,
-        reason: maintenanceReason,
-        endTime: newState ? endTime : null
+      await api.post('/site-settings/maintenance-toggle', {
+        enabled: newState,
+        reason: newState ? maintenanceReason : null,
+        endTime: null
       })
-      
-      setModal({ 
-        show: true, 
-        type: 'success', 
+      setMaintenanceMode(newState)
+      hookToggleMaintenance(newState, { is_maintenance: newState, reason: newState ? maintenanceReason : null })
+      setModal({
+        show: true,
+        type: 'success',
         title: newState ? '🔧 Maintenance Activée' : '✅ Maintenance Désactivée',
-        message: newState 
-          ? `Maintenance activée pour ${maintenanceDuration} minutes - Raison: ${maintenanceReason}. Les utilisateurs non-administrateurs verront une page de maintenance.`
-          : 'L\'application revient à la normale. Les utilisateurs peuvent à nouveau accéder au site.',
-        onConfirm: () => setModal({show: false, type: 'info', title: '', message: ''})
+        message: newState
+          ? `Maintenance activée — Raison : ${maintenanceReason}. Les visiteurs voient la page de maintenance.`
+          : 'Maintenance désactivée. L\'application est à nouveau accessible.',
+        onConfirm: () => setModal({ show: false, type: 'info', title: '', message: '' })
       })
     } catch (err) {
       console.error('Erreur maintenance toggle:', err)
-      setModal({ 
-        show: true, 
-        type: 'error', 
-        title: '❌ Erreur', 
-        message: 'Erreur lors du changement: ' + err.message,
-        onConfirm: () => setModal({show: false, type: 'info', title: '', message: ''})
+      setModal({
+        show: true,
+        type: 'error',
+        title: '❌ Erreur',
+        message: 'Erreur lors du changement : ' + (err.response?.data?.message || err.message),
+        onConfirm: () => setModal({ show: false, type: 'info', title: '', message: '' })
       })
     }
   }
@@ -1337,6 +1306,37 @@ const DeveloperDashboard = () => {
             ))}
           </div>
         </div>
+
+        {/* ===== BANNIÈRE MAINTENANCE ===== */}
+        {maintenanceMode && (
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(255,107,107,0.15), rgba(255,193,7,0.1))',
+            border: '2px solid #ff6b6b',
+            borderRadius: '8px',
+            padding: '12px 18px',
+            marginBottom: '16px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '12px',
+            flexWrap: 'wrap'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ fontSize: '1.4rem' }}>🔧</span>
+              <div>
+                <strong style={{ color: '#ff6b6b', fontSize: '0.95rem' }}>Application en mode MAINTENANCE</strong>
+                {maintenanceReason && <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem', marginTop: '2px' }}>Raison : {maintenanceReason}</div>}
+              </div>
+            </div>
+            <button
+              className="btn btn-success btn-sm"
+              onClick={toggleMaintenance}
+              style={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}
+            >
+              ✅ Désactiver la maintenance
+            </button>
+          </div>
+        )}
 
         {/* Content */}
         <AnimatePresence mode="wait">

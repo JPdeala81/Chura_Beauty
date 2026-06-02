@@ -136,7 +136,7 @@ const SuperAdminDashboard = () => {
   // Stop auto-refetch when editing forms
   useEffect(() => {
     if (editingProfile || editingSiteSettings) return
-    const interval = setInterval(fetchAllData, 5000)
+    const interval = setInterval(fetchAllData, 30000)
     return () => clearInterval(interval)
   }, [editingProfile, editingSiteSettings])
 
@@ -202,6 +202,7 @@ const SuperAdminDashboard = () => {
           // about_content removed - column doesn't exist in database
         }))
         setFormData(settingsData)
+        setAppClosureMode(settingsData.is_maintenance || false)
       }
       if (profileRes.status === 'fulfilled') {
         const adminData = profileRes.value.data?.admin || profileRes.value.data || {}
@@ -1173,7 +1174,6 @@ const SuperAdminDashboard = () => {
               { id: 'users', label: '👥 Utilisateurs' },
               { id: 'profile', label: '👤 Mon Profil' },
               { id: 'maintenance', label: '🔧 Maintenance' },
-              { id: 'app-closure', label: '🚪 Fermeture App' },
               { id: 'security', label: '🔐 Sécurité' },
               { id: 'qrcode', label: '📱 Code QR' },
               { id: 'payments', label: '💳 Paiements' },
@@ -1223,7 +1223,6 @@ const SuperAdminDashboard = () => {
                 { id: 'users', label: '👥 Utilisateurs' },
                 { id: 'profile', label: '👤 Mon Profil' },
                 { id: 'maintenance', label: '🔧 Maintenance' },
-                { id: 'app-closure', label: '🚪 Fermeture App' },
                 { id: 'security', label: '🔐 Sécurité' },
                 { id: 'qrcode', label: '📱 Code QR' },
                 { id: 'payments', label: '💳 Paiements' },
@@ -1234,6 +1233,37 @@ const SuperAdminDashboard = () => {
             </select>
           </div>
         </div>
+
+        {/* ===== BANNIÈRE MAINTENANCE ===== */}
+        {appClosureMode && (
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(255,193,7,0.15), rgba(255,107,107,0.1))',
+            border: '2px solid #ffc107',
+            borderRadius: '12px',
+            padding: '14px 20px',
+            marginBottom: '16px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '12px',
+            flexWrap: 'wrap'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ fontSize: '1.5rem' }}>🔧</span>
+              <div>
+                <strong style={{ color: '#ffc107', fontSize: '1rem' }}>Application en mode MAINTENANCE</strong>
+                {closureForm.reason && <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '2px' }}>Raison : {closureForm.reason}</div>}
+              </div>
+            </div>
+            <button
+              className="btn btn-success btn-sm"
+              onClick={toggleAppClosure}
+              style={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}
+            >
+              ✅ Désactiver la maintenance
+            </button>
+          </div>
+        )}
 
         {/* Main Content Area */}
         <AnimatePresence mode="wait">
@@ -3556,102 +3586,6 @@ const SuperAdminDashboard = () => {
             </motion.div>
           )}
 
-          {/* APP CLOSURE TAB */}
-          {activeTab === 'app-closure' && (
-            <motion.div
-              key="app-closure"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-            >
-              <div className="card" style={{
-                background: 'var(--surface)',
-                border: '2px solid #ff6b6b',
-                borderRadius: 'var(--border-radius-lg)',
-                padding: '2rem'
-              }}>
-                <h5 style={{ marginBottom: '1.5rem', color: '#ff6b6b' }}>🚪 Fermeture/Maintenance de l'Application</h5>
-                
-                <div className="row g-3 mb-4">
-                  <div className="col-12">
-                    <div className="form-check form-switch">
-                      <input
-                        className="form-check-input"
-                        type="checkbox"
-                        id="appClosureSwitch"
-                        checked={appClosureMode}
-                        onChange={(e) => setClosureForm(prev => ({ ...prev, enabled: e.target.checked }))}
-                        style={{ width: '3em', height: '1.5em' }}
-                      />
-                      <label className="form-check-label" htmlFor="appClosureSwitch">
-                        <strong style={{ color: appClosureMode ? '#ff6b6b' : 'var(--text-color)' }}>
-                          {appClosureMode ? '🔴 Application FERMÉE' : '✓ Application OUVERTE'}
-                        </strong>
-                      </label>
-                    </div>
-                  </div>
-
-                  <div className="col-12">
-                    <label className="form-label">Raison de Fermeture</label>
-                    <textarea
-                      className="form-control"
-                      name="reason"
-                      value={closureForm.reason}
-                      onChange={handleClosureChange}
-                      rows="3"
-                      placeholder="Raison affichée aux utilisateurs..."
-                      style={{ borderColor: '#ff6b6b', background: 'var(--bg-color)', color: 'var(--text-color)' }}
-                    />
-                  </div>
-
-                  {appClosureMode && (
-                    <>
-                      <div className="col-12 col-md-6">
-                        <label className="form-label">Date de Réouverture</label>
-                        <input
-                          type="date"
-                          className="form-control"
-                          name="reopenDate"
-                          value={closureForm.reopenDate}
-                          onChange={handleClosureChange}
-                          style={{ borderColor: '#ff6b6b', background: 'var(--bg-color)', color: 'var(--text-color)' }}
-                        />
-                      </div>
-                      <div className="col-12 col-md-6">
-                        <label className="form-label">Heure de Réouverture</label>
-                        <input
-                          type="time"
-                          className="form-control"
-                          name="reopenTime"
-                          value={closureForm.reopenTime}
-                          onChange={handleClosureChange}
-                          style={{ borderColor: '#ff6b6b', background: 'var(--bg-color)', color: 'var(--text-color)' }}
-                        />
-                      </div>
-                    </>
-                  )}
-                </div>
-
-                <div className="alert" style={{
-                  background: 'rgba(255, 107, 107, 0.1)',
-                  border: '2px solid #ff6b6b',
-                  borderRadius: 'var(--border-radius-lg)',
-                  color: 'var(--text-color)',
-                  marginBottom: '1.5rem'
-                }}>
-                  <strong style={{ color: '#ff6b6b' }}>⚠️ Attention:</strong> Quand la fermeture est activée, les utilisateurs voient une page de maintenance avec le décompte jusqu'à la réouverture.
-                </div>
-
-                <button
-                  className={`btn w-100 ${appClosureMode ? 'btn-success' : 'btn-danger'}`}
-                  onClick={toggleAppClosure}
-                  style={{ fontWeight: 'bold', padding: '1rem' }}
-                >
-                  {appClosureMode ? '🟢 Rouvrir Application' : '🔴 Fermer Application'}
-                </button>
-              </div>
-            </motion.div>
-          )}
 
           {/* SETTINGS TAB */}
           {activeTab === 'settings' && (

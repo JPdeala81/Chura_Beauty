@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate, Link } from 'react-router-dom'
 import { AuthContext } from '../../context/AuthContext'
 import api from '../../services/api'
+import { useMaintenanceCheck } from '../../hooks/useMaintenanceCheck'
 import ManageServices from './ManageServices'
 import ManageAppointments from './ManageAppointments'
 import Revenue from './Revenue'
@@ -34,6 +35,7 @@ const AdminDashboard = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const { logout } = useContext(AuthContext)
   const navigate = useNavigate()
+  const { isMaintenance, maintenanceData, toggleMaintenance: disableMaintenance } = useMaintenanceCheck()
 
   useEffect(() => {
     fetchDashboardData()
@@ -357,6 +359,60 @@ const AdminDashboard = () => {
 
       {/* ===== CONTENU PRINCIPAL ===== */}
       <div style={{ padding: isXS ? '12px' : isSM ? '16px' : '24px', maxWidth: '1400px', margin: '0 auto' }}>
+
+        {/* ===== BANNIÈRE MAINTENANCE ===== */}
+        {isMaintenance && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            style={{
+              background: 'linear-gradient(135deg, rgba(255,193,7,0.15), rgba(255,107,107,0.1))',
+              border: '2px solid #ffc107',
+              borderRadius: '14px',
+              padding: isXS ? '12px' : '14px 20px',
+              marginBottom: '20px',
+              display: 'flex',
+              alignItems: isXS ? 'flex-start' : 'center',
+              justifyContent: 'space-between',
+              gap: '12px',
+              flexDirection: isXS ? 'column' : 'row'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ fontSize: '1.5rem' }}>🔧</span>
+              <div>
+                <strong style={{ color: '#ffc107', fontSize: isXS ? '13px' : '15px' }}>Application en mode MAINTENANCE</strong>
+                {maintenanceData?.maintenance_reason && (
+                  <div style={{ color: '#6c757d', fontSize: '12px', marginTop: '2px' }}>
+                    Raison : {maintenanceData.maintenance_reason}
+                  </div>
+                )}
+              </div>
+            </div>
+            <button
+              onClick={async () => {
+                try {
+                  await api.post('/site-settings/maintenance-toggle', { enabled: false, reason: null, endTime: null })
+                  disableMaintenance(false, {})
+                } catch (e) { console.error(e) }
+              }}
+              style={{
+                background: 'linear-gradient(135deg, #28a745, #20c997)',
+                border: 'none',
+                borderRadius: '10px',
+                color: 'white',
+                padding: isXS ? '8px 14px' : '8px 18px',
+                fontWeight: '700',
+                fontSize: '13px',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                alignSelf: isXS ? 'stretch' : 'auto'
+              }}
+            >
+              ✅ Désactiver la maintenance
+            </button>
+          </motion.div>
+        )}
 
         {/* Alerte premier login */}
         <AnimatePresence>
