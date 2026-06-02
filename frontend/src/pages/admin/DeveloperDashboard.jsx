@@ -151,20 +151,7 @@ const DeveloperDashboard = () => {
     auditLogs: { enabled: true, retention: '90 days', logSensitiveData: false }
   })
 
-  // ──── CODING STATS - derived from actual fileSystem ────
-  useEffect(() => {
-    const jsxFiles = fileSystem.filter(f => !f.isFolder && (f.type === 'jsx' || f.type === 'tsx')).length
-    const jsFiles = fileSystem.filter(f => !f.isFolder && f.type === 'js').length
-    const cssFiles = fileSystem.filter(f => !f.isFolder && (f.type === 'css' || f.type === 'scss')).length
-    const otherFiles = fileSystem.filter(f => !f.isFolder && !['jsx','tsx','js','css','scss'].includes(f.type)).length
-    setCodingStats({
-      totalFiles: fileSystem.filter(f => !f.isFolder).length,
-      jsFiles: jsxFiles + jsFiles,
-      cssFiles,
-      otherFiles,
-      totalLines: fileSystem.filter(f => !f.isFolder).length * 180
-    })
-  }, [fileSystem])
+  // ──── CODING STATS placeholder (recalculated after fileSystem is declared below) ────
 
   // ──── CODING INTERFACE - FILE MANAGEMENT ────
   const INITIAL_FILE_SYSTEM = [
@@ -234,6 +221,21 @@ const DeveloperDashboard = () => {
   const [newFolderName, setNewFolderName] = useState('')
   const [newFolderPath, setNewFolderPath] = useState('frontend/src')
   const [collapsedFolders, setCollapsedFolders] = useState(new Set())
+
+  // ──── CODING STATS - derived from actual fileSystem ────
+  useEffect(() => {
+    const jsxFiles = fileSystem.filter(f => !f.isFolder && (f.type === 'jsx' || f.type === 'tsx')).length
+    const jsFiles = fileSystem.filter(f => !f.isFolder && f.type === 'js').length
+    const cssFiles = fileSystem.filter(f => !f.isFolder && (f.type === 'css' || f.type === 'scss')).length
+    const otherFiles = fileSystem.filter(f => !f.isFolder && !['jsx','tsx','js','css','scss'].includes(f.type)).length
+    setCodingStats({
+      totalFiles: fileSystem.filter(f => !f.isFolder).length,
+      jsFiles: jsxFiles + jsFiles,
+      cssFiles,
+      otherFiles,
+      totalLines: fileSystem.filter(f => !f.isFolder).length * 180
+    })
+  }, [fileSystem])
 
   const isFetchingRef = useRef(false)
 
