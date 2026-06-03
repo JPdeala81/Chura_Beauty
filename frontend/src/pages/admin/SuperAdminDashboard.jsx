@@ -38,6 +38,8 @@ const SuperAdminDashboard = () => {
     app_name: 'Chura Beauty',
     app_logo: '',
     hero_background_image: '',
+    hero_card_media: '',
+    hero_card_media_type: 'image',
     homepage_hero_title: 'Bienvenue',
     homepage_hero_subtitle: 'Services de beauté premium',
     tagline: 'Excellence et élégance',
@@ -186,6 +188,8 @@ const SuperAdminDashboard = () => {
           app_name: settingsData.app_name || prev.app_name,
           app_logo: settingsData.app_logo || prev.app_logo,
           hero_background_image: settingsData.hero_background_image || prev.hero_background_image,
+          hero_card_media: settingsData.hero_card_media || '',
+          hero_card_media_type: settingsData.hero_card_media_type || 'image',
           homepage_hero_title: settingsData.homepage_hero_title || prev.homepage_hero_title,
           homepage_hero_subtitle: settingsData.homepage_hero_subtitle || prev.homepage_hero_subtitle,
           tagline: settingsData.tagline || prev.tagline,
@@ -653,7 +657,9 @@ const SuperAdminDashboard = () => {
         footer_facebook: siteSettingsForm.footer_facebook || '',
         footer_twitter: siteSettingsForm.footer_twitter || '',
         privacy_policy: siteSettingsForm.privacy_policy || '',
-        terms_of_service: siteSettingsForm.terms_of_service || ''
+        terms_of_service: siteSettingsForm.terms_of_service || '',
+        hero_card_media: siteSettingsForm.hero_card_media || '',
+        hero_card_media_type: siteSettingsForm.hero_card_media_type || 'image'
       }
 
       console.log('📤 Étape 1: Envoi des paramètres texte...')
@@ -3561,12 +3567,100 @@ const SuperAdminDashboard = () => {
 
                     {/* about_content field removed - column doesn't exist in database schema */}
 
+                    {/* ── CARTE FLOTTANTE HERO ── */}
+                    <div className="col-12">
+                      <div style={{
+                        background: 'linear-gradient(135deg, rgba(184,134,11,0.08), rgba(44,24,16,0.05))',
+                        border: '2px solid rgba(184,134,11,0.3)',
+                        borderRadius: '16px',
+                        padding: '20px',
+                        marginTop: '8px'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                          <span style={{ fontSize: '28px' }}>💆‍♀️</span>
+                          <div>
+                            <h6 style={{ margin: 0, color: 'var(--primary-color)', fontWeight: '700' }}>
+                              Carte Flottante — Page d'Accueil
+                            </h6>
+                            <small style={{ color: 'var(--text-muted)' }}>
+                              La carte animée (💆‍♀️ + nom du salon + Libreville, Gabon + 💅 🌸 ✨) visible à droite de la page d'accueil
+                            </small>
+                          </div>
+                        </div>
+
+                        <div style={{
+                          background: 'var(--bg-color)',
+                          borderRadius: '10px',
+                          padding: '10px 14px',
+                          marginBottom: '14px',
+                          fontSize: '13px',
+                          color: 'var(--text-color)',
+                          border: '1px solid rgba(184,134,11,0.15)'
+                        }}>
+                          <strong>État actuel :</strong>{' '}
+                          {siteSettingsForm.hero_card_media
+                            ? `✅ Média personnalisé (${siteSettingsForm.hero_card_media_type}) configuré`
+                            : '✨ Animation par défaut (emoji + nom + ville)'
+                          }
+                        </div>
+
+                        <div className="row g-3">
+                          <div className="col-12 col-md-8">
+                            <label className="form-label" style={{ fontWeight: '600', color: 'var(--text-color)', fontSize: '13px' }}>
+                              🔗 URL image ou vidéo <small style={{ color: 'var(--text-muted)', fontWeight: '400' }}>(laisser vide = animation par défaut)</small>
+                            </label>
+                            <input
+                              type="url"
+                              className="form-control"
+                              value={siteSettingsForm.hero_card_media}
+                              onChange={e => setSiteSettingsForm(prev => ({ ...prev, hero_card_media: e.target.value }))}
+                              placeholder="https://exemple.com/image.jpg"
+                              style={{ borderColor: 'rgba(184,134,11,0.4)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                            />
+                            <small style={{ color: 'var(--text-muted)' }}>Formats : JPG, PNG, WebP, MP4, WebM</small>
+                          </div>
+                          <div className="col-12 col-md-4">
+                            <label className="form-label" style={{ fontWeight: '600', color: 'var(--text-color)', fontSize: '13px' }}>
+                              Type de média
+                            </label>
+                            <select
+                              className="form-select"
+                              value={siteSettingsForm.hero_card_media_type}
+                              onChange={e => setSiteSettingsForm(prev => ({ ...prev, hero_card_media_type: e.target.value }))}
+                              style={{ borderColor: 'rgba(184,134,11,0.4)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
+                            >
+                              <option value="image">🖼️ Image</option>
+                              <option value="video">🎥 Vidéo</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        {siteSettingsForm.hero_card_media && (
+                          <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            {siteSettingsForm.hero_card_media_type === 'video' ? (
+                              <video src={siteSettingsForm.hero_card_media} style={{ height: '60px', width: '90px', borderRadius: '8px', objectFit: 'cover' }} muted />
+                            ) : (
+                              <img src={siteSettingsForm.hero_card_media} alt="Aperçu" style={{ height: '60px', width: '90px', borderRadius: '8px', objectFit: 'cover' }} onError={e => e.target.style.display='none'} />
+                            )}
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-outline-danger"
+                              onClick={() => setSiteSettingsForm(prev => ({ ...prev, hero_card_media: '', hero_card_media_type: 'image' }))}
+                            >
+                              ✕ Supprimer (revenir à l'animation)
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
                     <div className="col-12">
                       <button
                         className="btn btn-success"
                         onClick={saveSiteSettings}
+                        style={{ fontWeight: '700', padding: '10px 28px', fontSize: '15px' }}
                       >
-                        💾 Sauvegarder
+                        💾 Sauvegarder les paramètres
                       </button>
                     </div>
                   </div>
