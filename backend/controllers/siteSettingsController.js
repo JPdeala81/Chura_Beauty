@@ -561,17 +561,55 @@ const siteSettingsController = {
   createAdmin: async (req, res) => {
     try {
       if (req.admin.role !== 'developer') {
-        return res.status(403).json({ success: false, error: 'Réservé au développeur' })
+        return res.status(403).json({ success: false, message: 'Admin creation restricted to developer role' })
       }
       const { email, password, role = 'admin', salon_name = 'Nouveau Salon' } = req.body
-      if (!email || !password) return res.status(400).json({ success: false, error: 'Email et mot de passe requis' })
-      const hashed = await bcrypt.hash(password, 12)
-      const { data, error } = await supabase.from('admins').insert([{ email, password: hashed, role, salon_name, created_at: new Date().toISOString() }]).select().single()
-      if (error) throw error
+
+      // Validate email
+      if (!email || typeof email !== 'string') {
+        return res.status(400).json({ success: false, message: 'Email is required' })
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (!emailRegex.test(email.trim())) {
+        return res.status(400).json({ success: false, message: 'Invalid email format' })
+      }
+
+      // Generate temporary password if not provided
+      let tempPassword = password
+      if (!password) {
+        tempPassword = `Temp_${Math.random().toString(36).substr(2, 9)}!`
+        console.log(`⚠️ Temporary password generated for ${email}: ${tempPassword}`)
+      }
+
+      const hashed = await bcrypt.hash(tempPassword, 12)
+      const { data, error } = await supabase
+        .from('admins')
+        .insert([{
+          email: email.trim(),
+          password: hashed,
+          role,
+          salon_name,
+          created_at: new Date().toISOString()
+        }])
+        .select()
+        .single()
+
+      if (error) {
+        if (error.message.includes('duplicate')) {
+          return res.status(409).json({ success: false, message: 'Email already exists' })
+        }
+        throw error
+      }
+
       const { password: _, ...adminWithoutPassword } = data
-      res.json({ success: true, admin: adminWithoutPassword })
+      res.json({
+        success: true,
+        message: `Admin created successfully. Temporary password: ${tempPassword}`,
+        admin: adminWithoutPassword
+      })
     } catch (err) {
-      res.status(500).json({ success: false, error: err.message })
+      console.error('❌ Create admin error:', err.message)
+      res.status(500).json({ success: false, message: err.message })
     }
   },
 

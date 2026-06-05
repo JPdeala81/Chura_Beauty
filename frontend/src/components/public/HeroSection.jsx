@@ -29,9 +29,10 @@ const HeroSection = ({ onScrollToServices }) => {
   }, [])
 
   const getResponsivePadding = () => {
-    if (windowWidth < 576) return '20px'
-    if (windowWidth < 768) return '30px'
-    return '40px'
+    if (windowWidth < 480) return '8px'
+    if (windowWidth < 576) return '12px'
+    if (windowWidth < 768) return '20px'
+    return '30px'
   }
 
   // Counter component

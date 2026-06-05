@@ -18,7 +18,9 @@
       "Bash(ls backend/vercel.json)",
       "Bash(ls frontend/vercel.json)",
       "Bash(python -c ' *)",
-      "Bash(xargs grep -l \"api\\\\.\\\\\\(get\\\\|post\\\\|put\\\\|delete\\\\|patch\\\\\\)\")"
+      "Bash(xargs grep -l \"api\\\\.\\\\\\(get\\\\|post\\\\|put\\\\|delete\\\\|patch\\\\\\)\")",
+      "Bash(xargs grep -l \"hero\\\\|Beauty\")",
+      "Bash(xargs grep -l \"Chura Beauty\")"
     ]
   }
 }
