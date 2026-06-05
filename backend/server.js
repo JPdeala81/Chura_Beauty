@@ -9,6 +9,7 @@ import fs from 'fs'
 
 import { supabase } from './config/supabase.js'
 import { errorHandler } from './middleware/errorMiddleware.js'
+import { handleUploadError } from './middleware/uploadMiddleware.js'
 
 import authRoutes from './routes/authRoutes.js'
 import serviceRoutes from './routes/serviceRoutes.js'
@@ -72,6 +73,9 @@ app.use('/api/revenue', revenueRoutes)
 app.use('/api/site-settings', siteSettingsRoutes)
 app.use('/api/owner-profile', ownerProfileRoutes)
 app.use('/api/payments', paymentRoutes)
+
+// Handle file upload errors
+app.use(handleUploadError)
 
 // Serve static files from frontend/dist (production) or public (development)
 const distPath = path.join(__dirname, '../frontend/dist')
