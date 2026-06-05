@@ -1,0 +1,313 @@
+/* Mobile-First Responsive Design System */
+
+/* ===== VIEWPORT & BASE STYLES ===== */
+* {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-size: clamp(0.875rem, 2vw, 1rem);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ===== RESPONSIVE TYPOGRAPHY ===== */
+h1, h2, h3, h4, h5, h6 {
+  line-height: 1.2;
+  margin-top: 0;
+  margin-bottom: clamp(0.5rem, 2vw, 1.5rem);
+}
+
+h1 {
+  font-size: clamp(1.5rem, 5vw, 2.5rem);
+  font-weight: 800;
+}
+
+h2 {
+  font-size: clamp(1.3rem, 4vw, 2.2rem);
+  font-weight: 700;
+}
+
+h3 {
+  font-size: clamp(1.1rem, 3vw, 2rem);
+  font-weight: 700;
+}
+
+h4 {
+  font-size: clamp(1rem, 2.5vw, 1.7rem);
+  font-weight: 600;
+}
+
+h5 {
+  font-size: clamp(0.95rem, 2vw, 1.5rem);
+  font-weight: 600;
+}
+
+h6 {
+  font-size: clamp(0.9rem, 1.5vw, 1.25rem);
+  font-weight: 600;
+}
+
+p {
+  margin-top: 0;
+  margin-bottom: clamp(0.5rem, 1vw, 1rem);
+}
+
+/* ===== RESPONSIVE SPACING ===== */
+:root {
+  --space-xs: clamp(0.5rem, 1vw, 0.75rem);
+  --space-sm: clamp(0.75rem, 2vw, 1rem);
+  --space-md: clamp(1rem, 3vw, 1.5rem);
+  --space-lg: clamp(1.25rem, 4vw, 2rem);
+  --space-xl: clamp(1.5rem, 5vw, 2.5rem);
+  --space-2xl: clamp(2rem, 6vw, 3rem);
+
+  --gap-sm: clamp(0.5rem, 1.5vw, 1rem);
+  --gap-md: clamp(0.75rem, 2vw, 1.5rem);
+  --gap-lg: clamp(1rem, 3vw, 2rem);
+}
+
+/* ===== CONTAINERS & PADDING ===== */
+.container {
+  padding: var(--space-md);
+  max-width: 100%;
+}
+
+@media (min-width: 480px) {
+  .container {
+    padding: var(--space-lg);
+  }
+}
+
+@media (min-width: 768px) {
+  .container {
+    padding: var(--space-xl);
+  }
+}
+
+@media (min-width: 992px) {
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+  }
+}
+
+@media (min-width: 1200px) {
+  .container {
+    max-width: 1140px;
+  }
+}
+
+/* ===== BUTTONS & INTERACTIVE ELEMENTS ===== */
+button,
+a[role="button"],
+input[type="button"],
+input[type="submit"],
+input[type="reset"] {
+  min-height: 2.75rem; /* 44px minimum for iOS */
+  min-width: 2.75rem;
+  padding: clamp(0.5rem, 2vw, 0.75rem) clamp(0.75rem, 3vw, 1.25rem);
+  font-size: clamp(0.875rem, 2vw, 1rem);
+  border-radius: clamp(0.375rem, 1vw, 0.625rem);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+button:active,
+a[role="button"]:active {
+  transform: scale(0.98);
+}
+
+/* ===== FORMS ===== */
+input,
+textarea,
+select {
+  font-size: clamp(0.875rem, 2vw, 1rem);
+  padding: clamp(0.5rem, 1.5vw, 0.75rem) clamp(0.75rem, 2vw, 1rem);
+  border-radius: clamp(0.25rem, 0.75vw, 0.5rem);
+  min-height: 2.75rem;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(184, 134, 11, 0.1);
+}
+
+/* ===== RESPONSIVE IMAGES ===== */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* ===== CARDS ===== */
+.card,
+[class*="card"] {
+  padding: clamp(1rem, 4vw, 1.5rem);
+  border-radius: clamp(0.5rem, 2vw, 1rem);
+  transition: all 0.3s ease;
+}
+
+/* ===== RESPONSIVE GRIDS ===== */
+.grid {
+  display: grid;
+  gap: var(--gap-md);
+  grid-template-columns: 1fr; /* Mobile-first: 1 column */
+}
+
+.grid.cols-2 {
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 480px) {
+  .grid.cols-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.grid.cols-3 {
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 768px) {
+  .grid.cols-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.grid.cols-4 {
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 768px) {
+  .grid.cols-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 992px) {
+  .grid.cols-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* ===== RESPONSIVE FLEX ===== */
+.flex {
+  display: flex;
+  gap: var(--gap-md);
+  flex-wrap: wrap;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+@media (min-width: 768px) {
+  .flex-col-md {
+    flex-direction: row;
+  }
+}
+
+/* ===== RESPONSIVE NAVBAR/SIDEBAR ===== */
+nav {
+  padding: var(--space-md);
+  overflow-x: auto;
+}
+
+@media (min-width: 768px) {
+  nav {
+    padding: var(--space-lg);
+  }
+}
+
+/* ===== MODAL & OVERLAY RESPONSIVENESS ===== */
+.modal,
+.overlay {
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: var(--space-md);
+}
+
+@media (min-width: 768px) {
+  .modal,
+  .overlay {
+    padding: var(--space-lg);
+  }
+}
+
+/* ===== TEXT TRUNCATION FOR SMALL SCREENS ===== */
+@media (max-width: 479px) {
+  .text-truncate-mobile {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .hide-text-mobile {
+    font-size: 0;
+  }
+
+  .hide-text-mobile::before {
+    font-size: 1rem;
+    content: attr(data-label);
+  }
+}
+
+/* ===== ORIENTATION ADJUSTMENTS ===== */
+@media (orientation: landscape) and (max-height: 600px) {
+  body {
+    font-size: 0.875rem;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    margin-bottom: clamp(0.25rem, 1vw, 0.75rem);
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    padding: clamp(0.25rem, 1vw, 0.5rem) clamp(0.5rem, 1.5vw, 0.75rem);
+  }
+}
+
+/* ===== HIGH DPI DEVICES ===== */
+@media (min-resolution: 2dppx) {
+  body {
+    -webkit-font-smoothing: subpixel-antialiased;
+  }
+}
+
+/* ===== SAFE AREA INSETS (iPhone notch) ===== */
+@supports (padding: env(safe-area-inset-left)) {
+  body {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* ===== ACCESSIBILITY ===== */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+  }
+}

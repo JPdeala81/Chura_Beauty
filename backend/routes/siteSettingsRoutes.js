@@ -1,6 +1,7 @@
 import express from 'express'
 import siteSettingsController from '../controllers/siteSettingsController.js'
 import { protect } from '../middleware/authMiddleware.js'
+import upload from '../middleware/uploadMiddleware.js'
 
 const router = express.Router()
 
@@ -35,6 +36,9 @@ router.get('/developer/database-analytics', protect, siteSettingsController.getD
 router.get('/developer/recent-logs', protect, siteSettingsController.getRecentLogs)
 router.post('/developer/admin-delete', protect, siteSettingsController.deleteAdminUser)
 router.get('/developer/all-admins', protect, siteSettingsController.getAllAdmins)
+// POST upload media for hero card (image or video → Cloudinary)
+router.post('/upload-hero-media', protect, upload.single('hero_media'), siteSettingsController.uploadHeroMedia)
+
 router.post('/developer/global-reset', protect, siteSettingsController.globalReset)
 router.post('/developer/regenerate-jwt-secret', protect, siteSettingsController.regenerateJwtSecret)
 router.post('/admin-create', protect, siteSettingsController.createAdmin)

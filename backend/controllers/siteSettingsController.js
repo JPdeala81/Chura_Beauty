@@ -516,6 +516,20 @@ const siteSettingsController = {
     }
   },
 
+  // Upload hero card media (image or video) to Cloudinary
+  uploadHeroMedia: async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ success: false, error: 'Aucun fichier fourni' })
+      }
+      const mediaUrl = req.file.path
+      const mediaType = req.file.mimetype.startsWith('video/') ? 'video' : 'image'
+      res.json({ success: true, url: mediaUrl, type: mediaType })
+    } catch (err) {
+      res.status(500).json({ success: false, error: err.message })
+    }
+  },
+
   // Global Reset - Resets all appointments and logs (NOT services or admins)
   globalReset: async (req, res) => {
     try {

@@ -3604,25 +3604,82 @@ const SuperAdminDashboard = () => {
                           }
                         </div>
 
+                        {/* ── UPLOAD FICHIER ── */}
+                        <div style={{ marginBottom: '14px' }}>
+                          <label className="form-label" style={{ fontWeight: '600', color: 'var(--text-color)', fontSize: '13px' }}>
+                            📁 Choisir depuis votre appareil
+                          </label>
+                          <div
+                            style={{
+                              border: '2px dashed rgba(184,134,11,0.5)',
+                              borderRadius: '12px',
+                              padding: '20px',
+                              textAlign: 'center',
+                              background: 'rgba(184,134,11,0.03)',
+                              cursor: 'pointer',
+                              position: 'relative'
+                            }}
+                            onClick={() => document.getElementById('heroCardMediaInput').click()}
+                          >
+                            <input
+                              id="heroCardMediaInput"
+                              type="file"
+                              accept="image/*,video/*"
+                              style={{ display: 'none' }}
+                              onChange={async (e) => {
+                                const file = e.target.files[0]
+                                if (!file) return
+                                const isVideo = file.type.startsWith('video/')
+                                setSiteSettingsForm(prev => ({ ...prev, hero_card_media_type: isVideo ? 'video' : 'image' }))
+                                setModal({ show: true, type: 'info', title: '⏳ Upload en cours...', message: `Envoi de "${file.name}" vers Cloudinary...` })
+                                try {
+                                  const formData = new FormData()
+                                  formData.append('hero_media', file)
+                                  const res = await api.post('/site-settings/upload-hero-media', formData, {
+                                    headers: { 'Content-Type': 'multipart/form-data' }
+                                  })
+                                  if (res.data.success) {
+                                    setSiteSettingsForm(prev => ({
+                                      ...prev,
+                                      hero_card_media: res.data.url,
+                                      hero_card_media_type: res.data.type
+                                    }))
+                                    setModal({ show: true, type: 'success', title: '✅ Upload réussi', message: `"${file.name}" uploadé avec succès !`, onConfirm: () => setModal({ show: false, type: 'info', title: '', message: '' }) })
+                                  }
+                                } catch (err) {
+                                  setModal({ show: true, type: 'error', title: '❌ Erreur upload', message: err.response?.data?.error || err.message, onConfirm: () => setModal({ show: false, type: 'info', title: '', message: '' }) })
+                                }
+                                e.target.value = ''
+                              }}
+                            />
+                            <div style={{ fontSize: '32px', marginBottom: '8px' }}>📂</div>
+                            <div style={{ color: 'var(--primary-color)', fontWeight: '600', fontSize: '14px' }}>
+                              Cliquez pour sélectionner une image ou vidéo
+                            </div>
+                            <div style={{ color: 'var(--text-muted)', fontSize: '12px', marginTop: '4px' }}>
+                              JPG, PNG, WebP, GIF, MP4, WebM — Max 50 MB
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* ── OU URL DIRECTE ── */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+                          <div style={{ flex: 1, height: '1px', background: 'rgba(184,134,11,0.2)' }} />
+                          <span style={{ color: 'var(--text-muted)', fontSize: '12px', whiteSpace: 'nowrap' }}>ou coller une URL directement</span>
+                          <div style={{ flex: 1, height: '1px', background: 'rgba(184,134,11,0.2)' }} />
+                        </div>
                         <div className="row g-3">
                           <div className="col-12 col-md-8">
-                            <label className="form-label" style={{ fontWeight: '600', color: 'var(--text-color)', fontSize: '13px' }}>
-                              🔗 URL image ou vidéo <small style={{ color: 'var(--text-muted)', fontWeight: '400' }}>(laisser vide = animation par défaut)</small>
-                            </label>
                             <input
                               type="url"
                               className="form-control"
                               value={siteSettingsForm.hero_card_media}
                               onChange={e => setSiteSettingsForm(prev => ({ ...prev, hero_card_media: e.target.value }))}
-                              placeholder="https://exemple.com/image.jpg"
+                              placeholder="https://res.cloudinary.com/... ou autre URL"
                               style={{ borderColor: 'rgba(184,134,11,0.4)', background: 'var(--bg-color)', color: 'var(--text-color)' }}
                             />
-                            <small style={{ color: 'var(--text-muted)' }}>Formats : JPG, PNG, WebP, MP4, WebM</small>
                           </div>
                           <div className="col-12 col-md-4">
-                            <label className="form-label" style={{ fontWeight: '600', color: 'var(--text-color)', fontSize: '13px' }}>
-                              Type de média
-                            </label>
                             <select
                               className="form-select"
                               value={siteSettingsForm.hero_card_media_type}
@@ -3636,19 +3693,22 @@ const SuperAdminDashboard = () => {
                         </div>
 
                         {siteSettingsForm.hero_card_media && (
-                          <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <div style={{ marginTop: '14px', display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(40,167,69,0.06)', borderRadius: '10px', padding: '10px 14px', border: '1px solid rgba(40,167,69,0.2)' }}>
                             {siteSettingsForm.hero_card_media_type === 'video' ? (
-                              <video src={siteSettingsForm.hero_card_media} style={{ height: '60px', width: '90px', borderRadius: '8px', objectFit: 'cover' }} muted />
+                              <video src={siteSettingsForm.hero_card_media} style={{ height: '60px', width: '90px', borderRadius: '8px', objectFit: 'cover' }} muted controls />
                             ) : (
                               <img src={siteSettingsForm.hero_card_media} alt="Aperçu" style={{ height: '60px', width: '90px', borderRadius: '8px', objectFit: 'cover' }} onError={e => e.target.style.display='none'} />
                             )}
-                            <button
-                              type="button"
-                              className="btn btn-sm btn-outline-danger"
-                              onClick={() => setSiteSettingsForm(prev => ({ ...prev, hero_card_media: '', hero_card_media_type: 'image' }))}
-                            >
-                              ✕ Supprimer (revenir à l'animation)
-                            </button>
+                            <div>
+                              <div style={{ color: '#28a745', fontWeight: '700', fontSize: '13px', marginBottom: '4px' }}>✅ Média configuré</div>
+                              <button
+                                type="button"
+                                className="btn btn-sm btn-outline-danger"
+                                onClick={() => setSiteSettingsForm(prev => ({ ...prev, hero_card_media: '', hero_card_media_type: 'image' }))}
+                              >
+                                ✕ Supprimer — revenir à l'animation
+                              </button>
+                            </div>
                           </div>
                         )}
                       </div>
