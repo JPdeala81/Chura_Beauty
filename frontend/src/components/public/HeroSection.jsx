@@ -29,10 +29,10 @@ const HeroSection = ({ onScrollToServices }) => {
   }, [])
 
   const getResponsivePadding = () => {
-    if (windowWidth < 480) return '8px'
-    if (windowWidth < 576) return '12px'
-    if (windowWidth < 768) return '20px'
-    return '30px'
+    if (windowWidth < 480) return '2px'
+    if (windowWidth < 576) return '4px'
+    if (windowWidth < 768) return '8px'
+    return '20px'
   }
 
   // Counter component
@@ -130,7 +130,10 @@ const HeroSection = ({ onScrollToServices }) => {
       </div>
 
       <div className="container position-relative" style={{ zIndex: 2 }}>
-        <div className="row align-items-center min-vh-100 py-5">
+        <div className="row align-items-center min-vh-100" style={{
+          paddingTop: windowWidth < 480 ? '0.25rem' : windowWidth < 768 ? '0.5rem' : '1.5rem',
+          paddingBottom: windowWidth < 480 ? '0.25rem' : windowWidth < 768 ? '0.5rem' : '3rem'
+        }}>
           <div className="col-lg-7">
             <motion.div
               initial={{ opacity: 0, x: -50 }}
@@ -138,7 +141,7 @@ const HeroSection = ({ onScrollToServices }) => {
               transition={{ duration: 0.8 }}
             >
               <motion.span
-                className="d-inline-block mb-3 px-4 py-2 rounded-pill"
+                className="d-inline-block px-4 py-2 rounded-pill"
                 style={{
                   background: 'rgba(255, 215, 0, 0.15)',
                   border: '1px solid rgba(255, 215, 0, 0.4)',
@@ -146,7 +149,8 @@ const HeroSection = ({ onScrollToServices }) => {
                   fontSize: '14px',
                   fontWeight: '600',
                   letterSpacing: '2px',
-                  textTransform: 'uppercase'
+                  textTransform: 'uppercase',
+                  marginBottom: windowWidth < 480 ? '0.5rem' : '1rem'
                 }}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -156,13 +160,14 @@ const HeroSection = ({ onScrollToServices }) => {
               </motion.span>
 
               <motion.h1
-                className="hero-title mb-4"
+                className="hero-title"
                 style={{
                   color: '#fff',
                   textShadow: '0 4px 20px rgba(0,0,0,0.3)',
                   fontSize: 'clamp(32px, 8vw, 64px)',
                   fontWeight: '800',
-                  lineHeight: '1.2'
+                  lineHeight: '1.2',
+                  marginBottom: windowWidth < 480 ? '0.75rem' : windowWidth < 768 ? '1rem' : '1.5rem'
                 }}
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -180,12 +185,13 @@ const HeroSection = ({ onScrollToServices }) => {
               </motion.h1>
 
               <motion.p
-                className="hero-subtitle mb-5"
+                className="hero-subtitle"
                 style={{
                   color: 'rgba(255, 255, 255, 0.85)',
                   fontSize: 'clamp(16px, 3vw, 20px)',
                   lineHeight: '1.8',
-                  maxWidth: '500px'
+                  maxWidth: '500px',
+                  marginBottom: windowWidth < 480 ? '1rem' : windowWidth < 768 ? '1.25rem' : '2rem'
                 }}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
