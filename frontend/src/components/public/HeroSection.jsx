@@ -29,9 +29,7 @@ const HeroSection = ({ onScrollToServices }) => {
   }, [])
 
   const getResponsivePadding = () => {
-    if (windowWidth < 480) return '2px'
-    if (windowWidth < 576) return '4px'
-    if (windowWidth < 768) return '8px'
+    if (windowWidth < 768) return '0px'
     return '20px'
   }
 
@@ -131,8 +129,8 @@ const HeroSection = ({ onScrollToServices }) => {
 
       <div className="container position-relative" style={{ zIndex: 2 }}>
         <div className="row align-items-center min-vh-100" style={{
-          paddingTop: windowWidth < 480 ? '0.25rem' : windowWidth < 768 ? '0.5rem' : '1.5rem',
-          paddingBottom: windowWidth < 480 ? '0.25rem' : windowWidth < 768 ? '0.5rem' : '3rem'
+          paddingTop: windowWidth < 768 ? '0' : '1.5rem',
+          paddingBottom: windowWidth < 768 ? '0' : '3rem'
         }}>
           <div className="col-lg-7">
             <motion.div
