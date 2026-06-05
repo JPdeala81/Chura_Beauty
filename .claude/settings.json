@@ -17,7 +17,8 @@
       "Bash(node --input-type=module -e ' *)",
       "Bash(ls backend/vercel.json)",
       "Bash(ls frontend/vercel.json)",
-      "Bash(python -c ' *)"
+      "Bash(python -c ' *)",
+      "Bash(xargs grep -l \"api\\\\.\\\\\\(get\\\\|post\\\\|put\\\\|delete\\\\|patch\\\\\\)\")"
     ]
   }
 }

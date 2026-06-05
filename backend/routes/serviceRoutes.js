@@ -6,8 +6,6 @@ import {
   updateService,
   deleteService,
   toggleServiceStatus,
-  debugAllServices,
-  activateAllServices,
 } from '../controllers/serviceController.js';
 import { protect } from '../middleware/authMiddleware.js';
 import upload from '../middleware/uploadMiddleware.js';
@@ -16,8 +14,6 @@ const router = express.Router();
 
 // Public routes
 router.get('/', getAllServices);
-router.get('/debug/all', debugAllServices);
-router.post('/debug/activate-all', activateAllServices);
 router.get('/:id', getServiceById);
 
 // Protected routes

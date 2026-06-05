@@ -41,7 +41,4 @@ router.post('/reset-password/:token', resetPassword);
 router.put('/admin/password', protect, updatePassword);
 router.put('/admin/payment-config', protect, updatePaymentConfig);
 
-// Debug routes - DEVELOPMENT ONLY
-router.get('/debug/admins', getAllAdmins);
-
 export default router;
