@@ -52,9 +52,18 @@ export const updateSecurity = async (req, res) => {
 export const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
-    if (!email) return res.status(400).json({ message: 'Email requis.' });
-    
-    const { data: admin, error } = await supabase.from('admins').select('*').eq('email', email).single();
+
+    // Validate email input
+    if (!email || typeof email !== 'string') {
+      return res.status(400).json({ success: false, message: 'Email is required' });
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      return res.status(400).json({ success: false, message: 'Invalid email format' });
+    }
+
+    const { data: admin, error } = await supabase.from('admins').select('*').eq('email', email.trim()).single();
     if (error || !admin) return res.status(404).json({ message: 'Admin introuvable.' });
     
     const token = crypto.randomBytes(32).toString('hex');
