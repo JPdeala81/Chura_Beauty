@@ -9,7 +9,10 @@ const Navbar = () => {
   const [salonName, setSalonName] = useState('Chura Beauty Salon')
   const [menuOpen, setMenuOpen] = useState(false)
   const location = useLocation()
-  const { token, logout } = useContext(AuthContext)
+  const { token, logout, admin } = useContext(AuthContext)
+  
+  // Check if user is admin or developer (restrict booking)
+  const isAdminOrDeveloper = token && admin && (admin.role === 'admin' || admin.role === 'developer')
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50)
@@ -58,7 +61,8 @@ const Navbar = () => {
           <ul className="navbar-nav mx-auto gap-1">
             {[
               { path: '/', label: 'Accueil' },
-              { path: '/services', label: 'Services' }
+              { path: '/services', label: 'Services' },
+              { path: '/help', label: 'Aide' }
             ].map(({ path, label }) => (
               <li key={path} className="nav-item">
                 <Link
@@ -72,29 +76,84 @@ const Navbar = () => {
             ))}
           </ul>
 
-          <div className="d-flex align-items-center gap-2">
-            <Link to="/services" className="btn-luxury-outline d-none d-lg-inline-block" style={{ padding: '8px 20px', fontSize: '13px' }}>
-              Prendre RDV
-            </Link>
+          <div className="d-flex align-items-center gap-3">
+            {/* Book Appointment Button - DISABLED FOR ADMIN/DEVELOPER */}
+            {isAdminOrDeveloper ? (
+              <motion.div
+                title="Vous êtes administrateur - action non autorisée"
+                className="btn-luxury-appointment"
+                style={{
+                  opacity: 0.5,
+                  cursor: 'not-allowed',
+                  pointerEvents: 'none',
+                  padding: 'clamp(8px, 2vw, 12px) clamp(12px, 3vw, 20px)',
+                  fontSize: 'clamp(12px, 1.8vw, 16px)'
+                }}
+              >
+                <span>🚫</span>
+                <span className="d-none d-sm-inline" style={{ textDecoration: 'line-through' }}>Prendre RDV</span>
+              </motion.div>
+            ) : (
+              <Link 
+                to="/services" 
+                className="btn-luxury-appointment"
+                onClick={() => setMenuOpen(false)}
+                style={{
+                  padding: 'clamp(8px, 2vw, 12px) clamp(12px, 3vw, 20px)',
+                  fontSize: 'clamp(12px, 1.8vw, 16px)'
+                }}
+              >
+                <span>📅</span>
+                <span className="d-none d-sm-inline">Prendre RDV</span>
+              </Link>
+            )}
             {token ? (
               <>
                 <Link 
-                  to="/admin/dashboard" 
-                  className="btn-admin-login nav-link-luxury"
+                  to="/admin" 
+                  className="btn-luxury-gradient"
                   onClick={() => setMenuOpen(false)}
+                  style={{ 
+                    padding: 'clamp(8px, 2vw, 10px) clamp(12px, 3vw, 24px)',
+                    fontSize: 'clamp(11px, 1.8vw, 14px)',
+                    fontWeight: '600',
+                    borderRadius: '8px',
+                    background: 'var(--gradient-primary)',
+                    color: 'white',
+                    textDecoration: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    whiteSpace: 'nowrap'
+                  }}
                 >
-                  📊 Dashboard
+                  <span>👑</span>
+                  <span className="d-none d-sm-inline">Dashboard</span>
                 </Link>
                 <button
-                  className="btn-admin-logout nav-link-luxury"
+                  className="btn-admin-logout"
                   onClick={handleLogout}
+                  style={{
+                    padding: 'clamp(8px, 2vw, 9px) clamp(12px, 3vw, 18px)',
+                    fontSize: 'clamp(11px, 1.8vw, 13px)',
+                    whiteSpace: 'nowrap'
+                  }}
                 >
-                  🚪 Déconnexion
+                  🚪 <span className="d-none d-sm-inline">Déconnexion</span>
                 </button>
               </>
             ) : (
-              <Link to="/admin/login" className="btn-admin-login nav-link-luxury">
-                Connexion
+              <Link 
+                to="/admin/login" 
+                className="btn-admin-login"
+                onClick={() => setMenuOpen(false)}
+                style={{
+                  padding: 'clamp(8px, 2vw, 9px) clamp(12px, 3vw, 22px)',
+                  fontSize: 'clamp(11px, 1.8vw, 13px)',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                🔐 <span className="d-none d-sm-inline">Connexion</span>
               </Link>
             )}
           </div>
