@@ -958,7 +958,7 @@ img { max-width: 100%; height: auto; }
   backdrop-filter: blur(30px) saturate(180%);
   border-bottom: 1px solid rgba(212,165,116,0.1);
   transition: var(--transition-smooth);
-  padding: 14px 0;
+  padding: 6px 0;
   position: fixed;
   top: 0; left: 0; right: 0;
   z-index: 1050;
@@ -978,7 +978,7 @@ img { max-width: 100%; height: auto; }
 .navbar-luxury.scrolled {
   background: var(--navbar-bg) !important;
   box-shadow: var(--shadow-navbar);
-  padding: 8px 0;
+  padding: 4px 0;
   border-bottom-color: rgba(212,165,116,0.2);
 }
 
