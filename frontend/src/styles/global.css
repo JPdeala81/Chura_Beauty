@@ -958,7 +958,7 @@ img { max-width: 100%; height: auto; }
   backdrop-filter: blur(30px) saturate(180%);
   border-bottom: 1px solid rgba(212,165,116,0.1);
   transition: var(--transition-smooth);
-  padding: 6px 0;
+  padding: 3px 0;
   position: fixed;
   top: 0; left: 0; right: 0;
   z-index: 1050;
@@ -978,7 +978,7 @@ img { max-width: 100%; height: auto; }
 .navbar-luxury.scrolled {
   background: var(--navbar-bg) !important;
   box-shadow: var(--shadow-navbar);
-  padding: 4px 0;
+  padding: 2px 0;
   border-bottom-color: rgba(212,165,116,0.2);
 }
 
@@ -1009,7 +1009,7 @@ img { max-width: 100%; height: auto; }
   font-weight: 500;
   font-size: 14px;
   letter-spacing: 0.8px;
-  padding: 9px 18px !important;
+  padding: 5px 12px !important;
   border-radius: var(--border-radius-pill);
   transition: var(--transition-smooth);
   position: relative;
@@ -3003,9 +3003,9 @@ img { max-width: 100%; height: auto; }
 }
 
 @media (max-width: 768px) {
-  .navbar-luxury { padding: 10px 0; }
+  .navbar-luxury { padding: 3px 0; }
   .navbar-brand-luxury { font-size: 16px; }
-  .navbar-toggler { padding: 6px 10px; }
+  .navbar-toggler { padding: 3px 6px; }
   .nav-link-luxury { font-size: 12px; padding: 6px 12px !important; }
   .btn-admin-login, .btn-admin-logout, .btn-luxury-appointment {
     padding: 8px 16px !important;
@@ -3029,9 +3029,9 @@ img { max-width: 100%; height: auto; }
 }
 
 @media (max-width: 576px) {
-  .navbar-luxury { padding: 8px 0; }
+  .navbar-luxury { padding: 2px 0; }
   .navbar-brand-luxury { font-size: 14px; }
-  .navbar-toggler { padding: 4px 8px; }
+  .navbar-toggler { padding: 2px 4px; }
   .nav-link-luxury { font-size: 11px; padding: 5px 10px !important; }
   .btn-admin-login, .btn-admin-logout, .btn-luxury-appointment {
     padding: 7px 14px !important;
